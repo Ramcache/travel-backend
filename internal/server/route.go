@@ -17,6 +17,7 @@ import (
 func NewRouter(
 	authHandler *handlers.AuthHandler,
 	userHandler *handlers.UserHandler,
+	currencyHandler *handlers.CurrencyHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 ) http.Handler {
@@ -38,6 +39,7 @@ func NewRouter(
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Post("/auth/register", authHandler.Register)
 		api.Post("/auth/login", authHandler.Login)
+		api.Get("/currency", currencyHandler.GetRates)
 
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))

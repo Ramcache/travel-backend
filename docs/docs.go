@@ -286,6 +286,25 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/currency": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "Get currency rates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.CurrencyRate"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -387,6 +406,18 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "services.CurrencyRate": {
+            "type": "object",
+            "properties": {
+                "sar": {
+                    "description": "риял",
+                    "type": "number"
+                },
+                "usd": {
+                    "type": "number"
                 }
             }
         }
