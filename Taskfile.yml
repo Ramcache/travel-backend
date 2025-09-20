@@ -33,9 +33,14 @@ tasks:
         fi
 
   test:
-    desc: Run all tests
+    desc: Run all tests locally with race detector
     cmds:
-      - go test ./... -v -race -cover
+      - CGO_ENABLED=1 go test ./... -v -race -cover
+
+  test:ci:
+    desc: Run all tests in CI (faster, no race)
+    cmds:
+      - go test ./... -v -cover
 
   build:
     desc: Build binary for Linux amd64 (prod)
@@ -43,5 +48,5 @@ tasks:
       - GOOS=linux GOARCH=amd64 go build -o {{.BIN}} ./cmd/api
 
   ci:
-    desc: Run full CI pipeline (lint, test, build)
-    deps: [lint, test, build]
+    desc: Run full CI pipeline (lint, test:ci, build)
+    deps: [lint, test:ci, build]
