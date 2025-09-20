@@ -73,7 +73,8 @@ jobs:
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           source: "migrations"
-          target: "/root/travel-backend/migrations"
+          target: "/root/travel-backend"
+
 
       - name: Fix permissions
         uses: appleboy/ssh-action@v1.1.0
