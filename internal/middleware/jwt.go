@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/Ramcache/travel-backend/internal/helpers"
 )
 
 type contextKey string
 
-const UserIDKey contextKey = "userID"
+const (
+	UserIDKey contextKey = "userID"
+	RoleIDKey contextKey = "roleID"
+)
 
 func JWTAuth(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -22,18 +25,40 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 			}
 			tokenStr := strings.TrimPrefix(auth, "Bearer ")
 
-			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-				return []byte(secret), nil
-			})
-			if err != nil || !token.Valid {
+			claims, err := helpers.ParseJWT(secret, tokenStr)
+			if err != nil {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
 			}
 
-			claims := token.Claims.(jwt.MapClaims)
-			userID := int(claims["user_id"].(float64))
+			// user_id
+			rawUID, ok := claims["user_id"]
+			if !ok {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+			uidFloat, ok := rawUID.(float64)
+			if !ok {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
 
-			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			// role_id
+			rawRole, ok := claims["role_id"]
+			if !ok {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+			roleFloat, ok := rawRole.(float64)
+			if !ok {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			// add to context
+			ctx := context.WithValue(r.Context(), UserIDKey, int(uidFloat))
+			ctx = context.WithValue(ctx, RoleIDKey, int(roleFloat))
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

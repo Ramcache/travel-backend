@@ -7,6 +7,7 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
 	FullName  string    `json:"full_name"`
+	RoleID    int       `json:"role_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -24,4 +25,16 @@ type LoginRequest struct {
 
 type AuthResponse struct {
 	Token string `json:"token"`
+}
+
+type CreateUserRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	FullName string `json:"full_name"`
+	RoleID   int    `json:"role_id"`
+}
+
+type UpdateUserRequest struct {
+	FullName *string `json:"full_name,omitempty"`
+	RoleID   *int    `json:"role_id,omitempty"`
 }

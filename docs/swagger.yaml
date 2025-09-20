@@ -1,0 +1,248 @@
+basePath: /api/v1
+definitions:
+  helpers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  models.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  models.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        type: string
+      role_id:
+        type: integer
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UpdateUserRequest:
+    properties:
+      full_name:
+        type: string
+      role_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      role_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for Travel project
+  title: Travel API
+  version: "1.0"
+paths:
+  /admin/users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      security:
+      - Bearer: []
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - Bearer: []
+      summary: Create user
+      tags:
+      - users
+  /admin/users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - Bearer: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - Bearer: []
+      summary: Get user by id
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User update
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - Bearer: []
+      summary: Update user
+      tags:
+      - users
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: login payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: You are authorized
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Me
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: register payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      summary: Register
+      tags:
+      - auth
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

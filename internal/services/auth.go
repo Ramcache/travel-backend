@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	"go.uber.org/zap"
 
+	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/repository"
 )
@@ -15,27 +15,32 @@ import (
 type AuthService struct {
 	repo      *repository.UserRepository
 	jwtSecret string
+	log       *zap.SugaredLogger
 }
 
-func NewAuthService(repo *repository.UserRepository, jwtSecret string) *AuthService {
-	return &AuthService{repo: repo, jwtSecret: jwtSecret}
+func NewAuthService(repo *repository.UserRepository, jwtSecret string, log *zap.SugaredLogger) *AuthService {
+	return &AuthService{repo: repo, jwtSecret: jwtSecret, log: log}
 }
 
 func (s *AuthService) Register(ctx context.Context, req models.RegisterRequest) (*models.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hash, err := helpers.HashPassword(req.Password)
 	if err != nil {
+		s.log.Errorw("hash_password_failed", "err", err)
 		return nil, err
 	}
 
 	user := &models.User{
 		Email:    req.Email,
-		Password: string(hash),
+		Password: hash,
 		FullName: req.FullName,
+		RoleID:   1,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
+		s.log.Warnw("user_create_failed", "email", req.Email, "err", err)
 		return nil, err
 	}
+	s.log.Infow("user_registered", "user_id", user.ID, "email", user.Email)
 	return user, nil
 }
 
@@ -44,15 +49,15 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 	if err != nil {
 		return "", errors.New("invalid email or password")
 	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	if !helpers.CheckPassword(user.Password, req.Password) {
 		return "", errors.New("invalid email or password")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	return token.SignedString([]byte(s.jwtSecret))
+	token, err := helpers.GenerateJWT(s.jwtSecret, user.ID, user.RoleID, 24*time.Hour)
+	if err != nil {
+		s.log.Errorw("jwt_generate_failed", "user_id", user.ID, "err", err)
+		return "", err
+	}
+	s.log.Infow("user_login", "user_id", user.ID)
+	return token, nil
 }

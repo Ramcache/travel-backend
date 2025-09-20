@@ -3,18 +3,17 @@ package cli
 import (
 	"context"
 	"fmt"
+	"github.com/Ramcache/travel-backend/internal/logger"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
-	"go.uber.org/zap"
-
 	"github.com/Ramcache/travel-backend/internal/app"
 	"github.com/Ramcache/travel-backend/internal/config"
 	"github.com/Ramcache/travel-backend/internal/server"
 	"github.com/Ramcache/travel-backend/internal/storage"
+	"github.com/spf13/cobra"
 )
 
 func NewServeCmd() *cobra.Command {
@@ -24,9 +23,8 @@ func NewServeCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg := config.Load()
 
-			logger, _ := zap.NewProduction()
-			defer logger.Sync()
-			sugar := logger.Sugar()
+			log := logger.New(cfg.AppEnv)
+			defer log.Sync()
 
 			ctx := context.Background()
 
@@ -39,35 +37,31 @@ func NewServeCmd() *cobra.Command {
 				IdleTimeout: cfg.DB.IdleTimeout,
 			})
 			if err != nil {
-				sugar.Fatalw("db connect error", "err", err)
+				log.Fatalw("db connect error", "err", err)
 			}
 			defer pool.Close()
 
-			// 🏗️ DI-контейнер
-			application := app.New(ctx, cfg, pool)
+			application := app.New(ctx, cfg, pool, log)
+			r := server.NewRouter(application.AuthHandler, application.UserHandler, cfg.JWTSecret, log)
 
-			// 🌐 Router
-			r := server.NewRouter(application.AuthHandler, cfg.JWTSecret)
 			addr := fmt.Sprintf(":%s", cfg.AppPort)
 
-			sugar.Infow("server started", "addr", addr)
+			log.Infow("server started", "addr", addr)
 			srv := server.NewHttpServer(r, addr)
 
-			// 🔄 async run
 			go func() {
 				if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-					sugar.Fatalw("server error", "err", err)
+					log.Fatalw("server error", "err", err)
 				}
 			}()
 
-			// ⏳ graceful shutdown
 			quit := make(chan os.Signal, 1)
 			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 			<-quit
 
-			sugar.Infow("server shutting down")
+			log.Infow("server shutting down")
 			if err := srv.Shutdown(ctx); err != nil {
-				sugar.Errorw("shutdown error", "err", err)
+				log.Errorw("shutdown error", "err", err)
 			}
 		},
 	}

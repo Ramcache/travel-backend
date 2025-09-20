@@ -32,6 +32,8 @@ jobs:
         run: |
           curl -sL https://taskfile.dev/install.sh | sh
           sudo mv ./bin/task /usr/local/bin/task
+      - name: Install swag CLI
+        run: go install github.com/swaggo/swag/cmd/swag@latest
 
       - name: Run CI pipeline (lint + test + build)
         run: task ci

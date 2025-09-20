@@ -52,9 +52,18 @@ func NewMigrateCmd() *cobra.Command {
 				if err := goose.Status(db, dir); err != nil {
 					log.Fatalf("migrate status: %v", err)
 				}
+			case "create":
+				if len(args) < 2 {
+					log.Fatal("migrate create <name>")
+				}
+				name := args[1]
+				if err := goose.Create(db, dir, name, "sql"); err != nil {
+					log.Fatalf("migrate create: %v", err)
+				}
 			default:
-				fmt.Println("unknown migrate command. use: up | down | status")
+				fmt.Println("unknown migrate command. use: up | down | status | create")
 			}
+
 		},
 	}
 

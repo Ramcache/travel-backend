@@ -4,12 +4,6 @@ vars:
   BIN: bin/travel-api
 
 tasks:
-  # ==== Local Dev ====
-  run:
-    desc: Run API server locally
-    cmds:
-      - go run ./cmd/api serve
-
   migrate:up:
     desc: Apply migrations
     cmds:
@@ -19,6 +13,28 @@ tasks:
     desc: Rollback last migration
     cmds:
       - go run ./cmd/api migrate down
+
+  migrate:status:
+    desc: Show migration status
+    cmds:
+      - go run ./cmd/api migrate status
+
+  migrate:create:
+    desc: Create new migration
+    cmds:
+      - go run ./cmd/api migrate create {{.name}}
+
+
+  swagger:install:
+    desc: Install swag CLI
+    cmds:
+      - go install github.com/swaggo/swag/cmd/swag@latest
+
+  swagger:gen:
+    desc: Generate Swagger docs
+    deps: [swagger:install]
+    cmds:
+      - swag init -g cmd/api/main.go -o docs
 
   # ==== CI/CD Tasks ====
   lint:
@@ -48,5 +64,5 @@ tasks:
       - GOOS=linux GOARCH=amd64 go build -o {{.BIN}} ./cmd/api
 
   ci:
-    desc: Run full CI pipeline (lint, test:ci, build)
-    deps: [lint, test:ci, build]
+    desc: Run full CI pipeline (lint, test:ci, swagger, build)
+    deps: [lint, test:ci, swagger:gen, build]

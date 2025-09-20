@@ -1,24 +1,37 @@
 package logger
 
 import (
-	"log/slog"
 	"os"
-	"strings"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func New(level string) *slog.Logger {
-	var lvl slog.Level
-	switch strings.ToLower(level) {
-	case "debug":
-		lvl = slog.LevelDebug
-	case "warn":
-		lvl = slog.LevelWarn
-	case "error":
-		lvl = slog.LevelError
-	default:
-		lvl = slog.LevelInfo
+func New(env string) *zap.SugaredLogger {
+	var level zapcore.Level
+	if env == "prod" {
+		level = zapcore.InfoLevel
+	} else {
+		level = zapcore.DebugLevel
 	}
 
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
-	return slog.New(handler)
+	// Настраиваем lumberjack для ротации файлов // потом в config
+	fileWriter := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "logs/app.log", // можно вынести в конфиг
+		MaxSize:    50,             // мегабайты
+		MaxBackups: 7,              // количество файлов
+		MaxAge:     30,             // дни хранения
+		Compress:   true,           // сжатие старых логов
+	})
+
+	consoleWriter := zapcore.Lock(os.Stdout)
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), fileWriter, level),
+		zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), consoleWriter, level),
+	)
+
+	log := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	return log.Sugar()
 }
