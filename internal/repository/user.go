@@ -16,7 +16,11 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (r *UserRepository) GetAll(ctx context.Context) ([]models.User, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, email, full_name, role_id, created_at, updated_at FROM users`)
+	rows, err := r.db.Query(ctx, `
+        SELECT id, email, full_name, role_id, created_at, updated_at
+        FROM users
+        ORDER BY id ASC
+    `)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +35,14 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.User, error) {
 		users = append(users, u)
 	}
 	return users, nil
+}
+
+func (r *UserRepository) UpdatePassword(ctx context.Context, id int, password string) error {
+	_, err := r.db.Exec(ctx,
+		`UPDATE users SET password=$1, updated_at=now() WHERE id=$2`,
+		password, id,
+	)
+	return err
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
@@ -65,11 +77,12 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
 }
 
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	query := `SELECT id, email, password, full_name, created_at, updated_at FROM users WHERE email=$1`
-	row := r.db.QueryRow(ctx, query, email)
-
 	var u models.User
-	if err := row.Scan(&u.ID, &u.Email, &u.Password, &u.FullName, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	err := r.db.QueryRow(ctx,
+		`SELECT id, email, password, full_name, role_id, created_at, updated_at
+         FROM users WHERE email=$1`, email).
+		Scan(&u.ID, &u.Email, &u.Password, &u.FullName, &u.RoleID, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
 		return nil, err
 	}
 	return &u, nil

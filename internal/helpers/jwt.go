@@ -16,7 +16,7 @@ func GenerateJWT(secret string, userID int, roleID int, ttl time.Duration) (stri
 }
 
 func ParseJWT(secret, tokenStr string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
@@ -25,5 +25,5 @@ func ParseJWT(secret, tokenStr string) (jwt.MapClaims, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}
-	return nil, jwt.ErrSignatureInvalid
+	return nil, err
 }

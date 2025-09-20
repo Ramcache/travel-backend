@@ -58,6 +58,7 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 		s.log.Errorw("jwt_generate_failed", "user_id", user.ID, "err", err)
 		return "", err
 	}
-	s.log.Infow("user_login", "user_id", user.ID)
+	s.log.Infow("user_login", "user_id", user.ID, "role_id", user.RoleID)
+
 	return token, nil
 }

@@ -1,23 +1,23 @@
 package middleware
 
 import (
-	"net/http"
-	"strconv"
-
+	"fmt"
 	"github.com/Ramcache/travel-backend/internal/helpers"
+	"net/http"
 )
 
 func RoleAuth(requiredRoles ...int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			roleIDRaw := r.Context().Value("role_id")
-			if roleIDRaw == nil {
+			raw := r.Context().Value("role_id")
+			if raw == nil {
 				helpers.Error(w, http.StatusForbidden, "no role")
 				return
 			}
-			roleID, ok := roleIDRaw.(int)
+
+			roleID, ok := raw.(int)
 			if !ok {
-				helpers.Error(w, http.StatusForbidden, "invalid role")
+				helpers.Error(w, http.StatusForbidden, "invalid role type")
 				return
 			}
 
@@ -28,10 +28,9 @@ func RoleAuth(requiredRoles ...int) func(http.Handler) http.Handler {
 					break
 				}
 			}
-
 			if !allowed {
 				helpers.Error(w, http.StatusForbidden,
-					"forbidden: need role "+strconv.Itoa(requiredRoles[0]))
+					fmt.Sprintf("forbidden: need role %v", requiredRoles))
 				return
 			}
 
