@@ -42,7 +42,7 @@ func NewServeCmd() *cobra.Command {
 			defer pool.Close()
 
 			application := app.New(ctx, cfg, pool, log)
-			r := server.NewRouter(application.AuthHandler, application.UserHandler, cfg.JWTSecret, log)
+			r := server.NewRouter(application.AuthHandler, application.UserHandler, application.CurrencyHandler, cfg.JWTSecret, log)
 
 			addr := fmt.Sprintf(":%s", cfg.AppPort)
 

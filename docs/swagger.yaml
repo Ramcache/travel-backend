@@ -66,6 +66,14 @@ definitions:
       updated_at:
         type: string
     type: object
+  services.CurrencyRate:
+    properties:
+      sar:
+        description: риял
+        type: number
+      usd:
+        type: number
+    type: object
 info:
   contact: {}
   description: API for Travel project
@@ -240,6 +248,18 @@ paths:
       summary: Register
       tags:
       - auth
+  /currency:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.CurrencyRate'
+      summary: Get currency rates
+      tags:
+      - currency
 securityDefinitions:
   Bearer:
     in: header
