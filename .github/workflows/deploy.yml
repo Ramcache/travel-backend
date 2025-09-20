@@ -63,7 +63,17 @@ jobs:
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           source: "travel-api"
-          target: "/home/${{ secrets.PROD_USER }}/travel-backend/bin"
+          target: "/root/travel-backend/bin"
+
+      - name: Fix permissions
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            chmod +x /root/travel-backend/bin/travel-api
+            chown root:root /root/travel-backend/bin/travel-api
 
       - name: Restart service + run migrations
         uses: appleboy/ssh-action@v1.1.0
@@ -74,4 +84,4 @@ jobs:
           script: |
             systemctl restart travel-api
             systemctl status travel-api --no-pager
-            /home/${{ secrets.PROD_USER }}/travel-backend/bin/travel-api migrate up
+            /root/travel-backend/bin/travel-api migrate up
