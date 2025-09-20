@@ -56,7 +56,7 @@ jobs:
           name: travel-api
           path: .
 
-      - name: Deploy to production
+      - name: Deploy binary
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -64,6 +64,16 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           source: "travel-api"
           target: "/root/travel-backend/bin"
+
+
+      - name: Deploy migrations
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "migrations/*"
+          target: "/root/travel-backend/migrations"
 
       - name: Fix permissions
         uses: appleboy/ssh-action@v1.1.0
@@ -74,6 +84,7 @@ jobs:
           script: |
             chmod +x /root/travel-backend/bin/travel-api
             chown root:root /root/travel-backend/bin/travel-api
+            chown root:root /root/travel-backend/.env
 
       - name: Restart service + run migrations
         uses: appleboy/ssh-action@v1.1.0
