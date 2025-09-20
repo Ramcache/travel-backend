@@ -1,0 +1,47 @@
+version: '3'
+
+vars:
+  BIN: bin/travel-api
+
+tasks:
+  # ==== Local Dev ====
+  run:
+    desc: Run API server locally
+    cmds:
+      - go run ./cmd/api serve
+
+  migrate:up:
+    desc: Apply migrations
+    cmds:
+      - go run ./cmd/api migrate up
+
+  migrate:down:
+    desc: Rollback last migration
+    cmds:
+      - go run ./cmd/api migrate down
+
+  # ==== CI/CD Tasks ====
+  lint:
+    desc: Run go vet and staticcheck
+    cmds:
+      - go vet ./...
+      - |
+        if command -v staticcheck > /dev/null; then
+          staticcheck ./...
+        else
+          echo "⚠️ staticcheck not installed, skipping"
+        fi
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test ./... -v -race -cover
+
+  build:
+    desc: Build binary for Linux amd64 (prod)
+    cmds:
+      - GOOS=linux GOARCH=amd64 go build -o {{.BIN}} ./cmd/api
+
+  ci:
+    desc: Run full CI pipeline (lint, test, build)
+    deps: [lint, test, build]
