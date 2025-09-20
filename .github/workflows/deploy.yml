@@ -72,7 +72,7 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          source: "migrations/*"
+          source: "migrations"
           target: "/root/travel-backend/migrations"
 
       - name: Fix permissions
