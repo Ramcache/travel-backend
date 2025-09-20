@@ -98,4 +98,5 @@ jobs:
           script: |
             systemctl restart travel-api
             systemctl status travel-api --no-pager
-            /root/travel-backend/bin/travel-api migrate up
+            cd /root/travel-backend && ./bin/travel-api migrate up
+      
