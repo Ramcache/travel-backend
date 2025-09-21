@@ -22,6 +22,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
+                "description": "Создание нового тура (только админ)",
                 "consumes": [
                     "application/json"
                 ],
@@ -49,6 +50,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Trip"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
@@ -60,6 +79,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
+                "description": "Обновление данных тура (только админ)",
                 "consumes": [
                     "application/json"
                 ],
@@ -94,6 +114,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Trip"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             },
@@ -103,6 +141,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
+                "description": "Удаление тура (только админ)",
                 "tags": [
                     "trips"
                 ],
@@ -119,6 +158,15 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
@@ -416,6 +464,7 @@ const docTemplate = `{
         },
         "/trips": {
             "get": {
+                "description": "Публичный поиск туров с фильтрацией",
                 "produces": [
                     "application/json"
                 ],
@@ -432,13 +481,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Тип тура",
+                        "description": "Тип тура (пляжный, экскурсионный, семейный)",
                         "name": "trip_type",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Сезон",
+                        "description": "Сезон (например: 2025 или лето 2025)",
                         "name": "season",
                         "in": "query"
                     }
@@ -458,6 +507,7 @@ const docTemplate = `{
         },
         "/trips/{id}": {
             "get": {
+                "description": "Публичный просмотр тура",
                 "produces": [
                     "application/json"
                 ],
@@ -479,6 +529,15 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Trip"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }

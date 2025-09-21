@@ -159,6 +159,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: Создание нового тура (только админ)
       parameters:
       - description: Trip data
         in: body
@@ -173,6 +174,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: Create trip (admin)
@@ -180,6 +193,7 @@ paths:
       - trips
   /admin/trips/{id}:
     delete:
+      description: Удаление тура (только админ)
       parameters:
       - description: Trip ID
         in: path
@@ -189,6 +203,12 @@ paths:
       responses:
         "204":
           description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: Delete trip (admin)
@@ -197,6 +217,7 @@ paths:
     put:
       consumes:
       - application/json
+      description: Обновление данных тура (только админ)
       parameters:
       - description: Trip ID
         in: path
@@ -216,6 +237,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - Bearer: []
       summary: Update trip (admin)
@@ -403,16 +436,17 @@ paths:
       - currency
   /trips:
     get:
+      description: Публичный поиск туров с фильтрацией
       parameters:
       - description: Город вылета
         in: query
         name: departure_city
         type: string
-      - description: Тип тура
+      - description: Тип тура (пляжный, экскурсионный, семейный)
         in: query
         name: trip_type
         type: string
-      - description: Сезон
+      - description: 'Сезон (например: 2025 или лето 2025)'
         in: query
         name: season
         type: string
@@ -430,6 +464,7 @@ paths:
       - trips
   /trips/{id}:
     get:
+      description: Публичный просмотр тура
       parameters:
       - description: Trip ID
         in: path
@@ -443,6 +478,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Trip'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Get trip by id
       tags:
       - trips
