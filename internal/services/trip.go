@@ -32,17 +32,23 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 	start, _ := time.Parse("2006-01-02", req.StartDate)
 	end, _ := time.Parse("2006-01-02", req.EndDate)
 
+	var deadline time.Time
+	if req.BookingDeadline != "" {
+		deadline, _ = time.Parse(time.RFC3339, req.BookingDeadline)
+	}
+
 	trip := &models.Trip{
-		Title:         req.Title,
-		Description:   req.Description,
-		PhotoURL:      req.PhotoURL,
-		DepartureCity: req.DepartureCity,
-		TripType:      req.TripType,
-		Season:        req.Season,
-		Price:         req.Price,
-		Currency:      req.Currency,
-		StartDate:     start,
-		EndDate:       end,
+		Title:           req.Title,
+		Description:     req.Description,
+		PhotoURL:        req.PhotoURL,
+		DepartureCity:   req.DepartureCity,
+		TripType:        req.TripType,
+		Season:          req.Season,
+		Price:           req.Price,
+		Currency:        req.Currency,
+		StartDate:       start,
+		EndDate:         end,
+		BookingDeadline: deadline,
 	}
 
 	if err := s.repo.Create(ctx, trip); err != nil {
@@ -87,6 +93,9 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	}
 	if req.EndDate != nil {
 		trip.EndDate, _ = time.Parse("2006-01-02", *req.EndDate)
+	}
+	if req.BookingDeadline != nil {
+		trip.BookingDeadline, _ = time.Parse(time.RFC3339, *req.BookingDeadline)
 	}
 
 	if err := s.repo.Update(ctx, trip); err != nil {

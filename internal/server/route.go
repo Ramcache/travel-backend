@@ -45,6 +45,7 @@ func NewRouter(
 		// public
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
+		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
 
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))

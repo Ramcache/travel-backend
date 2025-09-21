@@ -542,6 +542,37 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/trips/{id}/countdown": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Get booking countdown",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -564,6 +595,9 @@ const docTemplate = `{
         "models.CreateTripRequest": {
             "type": "object",
             "properties": {
+                "booking_deadline": {
+                    "type": "string"
+                },
                 "currency": {
                     "type": "string"
                 },
@@ -650,6 +684,9 @@ const docTemplate = `{
         "models.Trip": {
             "type": "object",
             "properties": {
+                "booking_deadline": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -694,6 +731,9 @@ const docTemplate = `{
         "models.UpdateTripRequest": {
             "type": "object",
             "properties": {
+                "booking_deadline": {
+                    "type": "string"
+                },
                 "currency": {
                     "type": "string"
                 },

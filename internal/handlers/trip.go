@@ -135,6 +135,44 @@ func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Countdown
+// Deadline
+// @Summary Get booking countdown
+// @Tags trips
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Success 200 {object} map[string]int
+// @Router /trips/{id}/countdown [get]
+func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	trip, err := h.service.Get(r.Context(), id)
+	if err != nil {
+		helpers.Error(w, http.StatusNotFound, "trip not found")
+		return
+	}
+
+	now := time.Now()
+	diff := trip.BookingDeadline.Sub(now)
+	if diff < 0 {
+		helpers.JSON(w, http.StatusOK, map[string]int{
+			"days": 0, "hours": 0, "minutes": 0, "seconds": 0,
+		})
+		return
+	}
+
+	days := int(diff.Hours()) / 24
+	hours := int(diff.Hours()) % 24
+	minutes := int(diff.Minutes()) % 60
+	seconds := int(diff.Seconds()) % 60
+
+	helpers.JSON(w, http.StatusOK, map[string]int{
+		"days":    days,
+		"hours":   hours,
+		"minutes": minutes,
+		"seconds": seconds,
+	})
+}
+
 // helper
 func parseDate(s string) time.Time {
 	t, _ := time.Parse("2006-01-02", s)
