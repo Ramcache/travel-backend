@@ -28,6 +28,7 @@ func NewRouter(
 	r.Use(chimw.RealIP)
 	r.Use(chimw.Recoverer)
 	r.Use(middleware.ZapLogger(log))
+	r.Use(middleware.CORS())
 
 	// swagger
 	docs.SwaggerInfo.Title = "Travel API"

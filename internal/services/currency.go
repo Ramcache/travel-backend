@@ -9,7 +9,7 @@ import (
 
 type CurrencyRate struct {
 	USD float64 `json:"usd"`
-	SAR float64 `json:"sar"` // риял
+	SAR float64 `json:"sar"` // риал
 }
 
 type CurrencyService struct {
@@ -31,7 +31,6 @@ func (s *CurrencyService) GetRates() (CurrencyRate, error) {
 	}
 	s.mu.RUnlock()
 
-	// 🔗 API ЦБ РФ
 	resp, err := http.Get("https://www.cbr-xml-daily.ru/daily_json.js")
 	if err != nil {
 		return CurrencyRate{}, err
@@ -47,7 +46,6 @@ func (s *CurrencyService) GetRates() (CurrencyRate, error) {
 		return CurrencyRate{}, err
 	}
 
-	// курс $ и риала (SAR)
 	rates := CurrencyRate{
 		USD: data.Valute["USD"].Value,
 		SAR: data.Valute["SAR"].Value,
