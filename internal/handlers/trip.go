@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Ramcache/travel-backend/internal/models"
-	"github.com/Ramcache/travel-backend/internal/services"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/Ramcache/travel-backend/internal/helpers"
+	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/Ramcache/travel-backend/internal/services"
 )
 
 type TripHandler struct {
@@ -21,13 +22,13 @@ func NewTripHandler(service *services.TripService) *TripHandler {
 }
 
 // List
-// Public search
 // @Summary List trips
+// @Description Публичный поиск туров с фильтрацией
 // @Tags trips
 // @Produce json
 // @Param departure_city query string false "Город вылета"
-// @Param trip_type query string false "Тип тура"
-// @Param season query string false "Сезон"
+// @Param trip_type query string false "Тип тура (пляжный, экскурсионный, семейный)"
+// @Param season query string false "Сезон (например: 2025 или лето 2025)"
 // @Success 200 {array} models.Trip
 // @Router /trips [get]
 func (h *TripHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -45,10 +46,12 @@ func (h *TripHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Get
 // @Summary Get trip by id
+// @Description Публичный просмотр тура
 // @Tags trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} models.Trip
+// @Failure 404 {object} map[string]string
 // @Router /trips/{id} [get]
 func (h *TripHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
@@ -62,12 +65,15 @@ func (h *TripHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // Create
 // @Summary Create trip (admin)
+// @Description Создание нового тура (только админ)
 // @Tags trips
 // @Security Bearer
 // @Accept json
 // @Produce json
 // @Param data body models.CreateTripRequest true "Trip data"
 // @Success 200 {object} models.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
 // @Router /admin/trips [post]
 func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateTripRequest
@@ -85,6 +91,7 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Update trip (admin)
+// @Description Обновление данных тура (только админ)
 // @Tags trips
 // @Security Bearer
 // @Accept json
@@ -92,6 +99,8 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Trip ID"
 // @Param data body models.UpdateTripRequest true "Trip update"
 // @Success 200 {object} models.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /admin/trips/{id} [put]
 func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
@@ -110,10 +119,12 @@ func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Delete trip (admin)
+// @Description Удаление тура (только админ)
 // @Tags trips
 // @Security Bearer
 // @Param id path int true "Trip ID"
 // @Success 204 "No Content"
+// @Failure 404 {object} map[string]string
 // @Router /admin/trips/{id} [delete]
 func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
