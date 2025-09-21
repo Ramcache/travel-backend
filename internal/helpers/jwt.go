@@ -6,11 +6,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateJWT(secret string, userID int, roleID int, ttl time.Duration) (string, error) {
+func GenerateJWT(secret string, userID int, fullName string, roleID int, ttl time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": userID,
-		"role_id": roleID,
-		"exp":     time.Now().Add(ttl).Unix(),
+		"user_id":   userID,
+		"full_name": fullName,
+		"role_id":   roleID,
+		"exp":       time.Now().Add(ttl).Unix(),
 	})
 	return token.SignedString([]byte(secret))
 }

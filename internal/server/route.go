@@ -19,6 +19,7 @@ func NewRouter(
 	userHandler *handlers.UserHandler,
 	currencyHandler *handlers.CurrencyHandler,
 	tripHandler *handlers.TripHandler,
+	newsHandler *handlers.NewsHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 ) http.Handler {
@@ -46,6 +47,8 @@ func NewRouter(
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+		api.Get("/news", newsHandler.PublicList)
+		api.Get("/news/{slug_or_id}", newsHandler.PublicGet)
 
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))
@@ -68,6 +71,11 @@ func NewRouter(
 			admin.Post("/admin/trips", tripHandler.Create)
 			admin.Put("/admin/trips/{id}", tripHandler.Update)
 			admin.Delete("/admin/trips/{id}", tripHandler.Delete)
+
+			admin.Get("/admin/news", newsHandler.AdminList)
+			admin.Post("/admin/news", newsHandler.Create)
+			admin.Put("/admin/news/{id}", newsHandler.Update)
+			admin.Delete("/admin/news/{id}", newsHandler.Delete)
 		})
 	})
 

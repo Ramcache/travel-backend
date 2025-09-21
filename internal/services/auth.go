@@ -53,7 +53,7 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 		return "", errors.New("invalid email or password")
 	}
 
-	token, err := helpers.GenerateJWT(s.jwtSecret, user.ID, user.RoleID, 24*time.Hour)
+	token, err := helpers.GenerateJWT(s.jwtSecret, user.ID, user.FullName, user.RoleID, 24*time.Hour)
 	if err != nil {
 		s.log.Errorw("jwt_generate_failed", "user_id", user.ID, "err", err)
 		return "", err
