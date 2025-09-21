@@ -1,0 +1,146 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"strings"
+
+	"github.com/Ramcache/travel-backend/internal/models"
+)
+
+type NewsRepository struct{ db *pgxpool.Pool }
+
+func NewNewsRepository(db *pgxpool.Pool) *NewsRepository { return &NewsRepository{db: db} }
+
+type NewsFilter struct {
+	Category  string
+	MediaType string
+	Search    string
+	Status    string
+	Limit     int
+	Offset    int
+}
+
+func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News, int, error) {
+	var (
+		where []string
+		args  []any
+		idx   = 1
+	)
+	if f.Status != "" {
+		where = append(where, fmt.Sprintf("status=$%d", idx))
+		args = append(args, f.Status)
+		idx++
+	}
+	if f.Category != "" {
+		where = append(where, fmt.Sprintf("category=$%d", idx))
+		args = append(args, f.Category)
+		idx++
+	}
+	if f.MediaType != "" {
+		where = append(where, fmt.Sprintf("media_type=$%d", idx))
+		args = append(args, f.MediaType)
+		idx++
+	}
+	if f.Search != "" {
+		where = append(where, fmt.Sprintf("(title ILIKE $%d OR excerpt ILIKE $%d)", idx, idx+1))
+		args = append(args, "%"+f.Search+"%", "%"+f.Search+"%")
+		idx += 2
+	}
+
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	// total
+	var total int
+	if err := r.db.QueryRow(ctx, "SELECT count(*) FROM news "+whereSQL, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// items
+	args = append(args, f.Limit, f.Offset)
+	q := `SELECT id, slug, title, excerpt, content, category, media_type, preview_url, video_url,
+comments_count, reposts_count, views_count, author_id, status, published_at, created_at, updated_at
+FROM news ` + whereSQL + `
+ORDER BY published_at DESC, id DESC
+LIMIT $` + fmt.Sprint(idx) + ` OFFSET $` + fmt.Sprint(idx+1)
+
+	rows, err := r.db.Query(ctx, q, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var items []models.News
+	for rows.Next() {
+		var n models.News
+		if err := rows.Scan(&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content, &n.Category, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount, &n.AuthorID, &n.Status, &n.PublishedAt, &n.CreatedAt, &n.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, n)
+	}
+	return items, total, rows.Err()
+}
+
+func (r *NewsRepository) GetByID(ctx context.Context, id int) (*models.News, error) {
+	return r.getOne(ctx, "id", id)
+}
+func (r *NewsRepository) GetBySlug(ctx context.Context, slug string) (*models.News, error) {
+	return r.getOne(ctx, "slug", slug)
+}
+
+func (r *NewsRepository) getOne(ctx context.Context, by string, val any) (*models.News, error) {
+	q := `SELECT id, slug, title, excerpt, content, category, media_type, preview_url, video_url,
+comments_count, reposts_count, views_count, author_id, status, published_at, created_at, updated_at
+FROM news WHERE ` + by + ` = $1`
+	var n models.News
+	err := r.db.QueryRow(ctx, q, val).Scan(&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content, &n.Category, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount, &n.AuthorID, &n.Status, &n.PublishedAt, &n.CreatedAt, &n.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
+func (r *NewsRepository) Create(ctx context.Context, n *models.News) error {
+	return r.db.QueryRow(ctx, `INSERT INTO news (slug, title, excerpt, content, category, media_type, preview_url, video_url,
+comments_count, reposts_count, views_count, author_id, status, published_at)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,0,0,$9,$10,$11)
+RETURNING id, created_at, updated_at`,
+		n.Slug, n.Title, n.Excerpt, n.Content, n.Category, n.MediaType, n.PreviewURL, n.VideoURL, n.AuthorID, n.Status, n.PublishedAt,
+	).Scan(&n.ID, &n.CreatedAt, &n.UpdatedAt)
+}
+
+func (r *NewsRepository) Update(ctx context.Context, n *models.News) error {
+	return r.db.QueryRow(ctx, `UPDATE news SET slug=$1, title=$2, excerpt=$3, content=$4, category=$5, media_type=$6,
+preview_url=$7, video_url=$8, status=$9, published_at=$10, updated_at=now()
+WHERE id=$11 RETURNING updated_at`,
+		n.Slug, n.Title, n.Excerpt, n.Content, n.Category, n.MediaType, n.PreviewURL, n.VideoURL, n.Status, n.PublishedAt, n.ID,
+	).Scan(&n.UpdatedAt)
+}
+
+func (r *NewsRepository) Delete(ctx context.Context, id int) error {
+	_, err := r.db.Exec(ctx, `DELETE FROM news WHERE id=$1`, id)
+	return err
+}
+
+func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, error) {
+	var exists bool
+	if err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM news WHERE slug=$1)`, slug).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *NewsRepository) IncrementViews(ctx context.Context, id int) error {
+	_, err := r.db.Exec(ctx, `UPDATE news SET views_count = views_count + 1 WHERE id=$1`, id)
+	return err
+}
