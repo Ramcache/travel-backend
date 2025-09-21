@@ -81,11 +81,11 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 
 func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 	return r.db.QueryRow(ctx,
-		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date, booking_deadline)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
          RETURNING id, created_at, updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
-		t.Price, t.Currency, t.StartDate, t.EndDate,
+		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline,
 	).Scan(&t.ID, &t.CreatedAt, &t.UpdatedAt)
 }
 
@@ -93,11 +93,11 @@ func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
 	return r.db.QueryRow(ctx,
 		`UPDATE trips
          SET title=$1, description=$2, photo_url=$3, departure_city=$4, trip_type=$5, season=$6,
-             price=$7, currency=$8, start_date=$9, end_date=$10, updated_at=now()
-         WHERE id=$11
+             price=$7, currency=$8, start_date=$9, end_date=$10, booking_deadline=$11, updated_at=now()
+         WHERE id=$12
          RETURNING updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
-		t.Price, t.Currency, t.StartDate, t.EndDate, t.ID,
+		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.ID,
 	).Scan(&t.UpdatedAt)
 }
 
