@@ -80,6 +80,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Delete("/admin/news/{id}", newsHandler.Delete)
 
 			admin.Get("/admin/news/categories", categoryHandler.List)
+			admin.Get("/admin/news/categories/{id}", categoryHandler.Get)
 			admin.Post("/admin/news/categories", categoryHandler.Create)
 			admin.Put("/admin/news/categories/{id}", categoryHandler.Update)
 			admin.Delete("/admin/news/categories/{id}", categoryHandler.Delete)
