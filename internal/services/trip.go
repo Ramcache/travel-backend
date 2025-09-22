@@ -60,7 +60,7 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 
 	var deadline *time.Time
 	if req.BookingDeadline != "" {
-		parsed, err := time.Parse(time.RFC3339, req.BookingDeadline)
+		parsed, err := helpers.ParseFlexibleDate(req.BookingDeadline)
 		if err != nil {
 			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
 		}
@@ -141,7 +141,7 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 		if *req.BookingDeadline == "" {
 			trip.BookingDeadline = nil
 		} else {
-			parsed, err := time.Parse(time.RFC3339, *req.BookingDeadline)
+			parsed, err := helpers.ParseFlexibleDate(*req.BookingDeadline)
 			if err != nil {
 				return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
 			}
