@@ -452,8 +452,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.Stats"
                         }
                     }
                 }
@@ -1500,6 +1499,19 @@ const docTemplate = `{
                 }
             }
         },
+        "models.KV": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "key": {
+                    "type": "string",
+                    "example": "admin"
+                }
+            }
+        },
         "models.LoginRequest": {
             "type": "object",
             "required": [
@@ -1607,6 +1619,53 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 6
+                }
+            }
+        },
+        "models.Stats": {
+            "type": "object",
+            "properties": {
+                "news_by_category": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.KV"
+                    }
+                },
+                "news_by_status": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.KV"
+                    }
+                },
+                "total_news": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "total_trips": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "total_users": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "trips_by_city": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.KV"
+                    }
+                },
+                "trips_by_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.KV"
+                    }
+                },
+                "users_by_role": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.KV"
+                    }
                 }
             }
         },
