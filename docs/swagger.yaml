@@ -1,8 +1,17 @@
 basePath: /api/v1
 definitions:
-  helpers.ErrorResponse:
+  helpers.ErrorData:
     properties:
-      error:
+      code:
+        description: машинный код ошибки
+        type: string
+      fields:
+        additionalProperties:
+          type: string
+        description: ошибки по полям (для валидации)
+        type: object
+      message:
+        description: человеко-читаемый текст (на русском)
         type: string
     type: object
   models.AuthResponse:
@@ -10,10 +19,19 @@ definitions:
       token:
         type: string
     type: object
+  models.CreateNewsCategoryRequest:
+    properties:
+      slug:
+        example: hajj_news
+        type: string
+      title:
+        example: Новости хаджа
+        type: string
+    type: object
   models.CreateNewsRequest:
     properties:
-      category:
-        type: string
+      category_id:
+        type: integer
       content:
         type: string
       excerpt:
@@ -23,8 +41,6 @@ definitions:
       preview_url:
         type: string
       published_at:
-        type: string
-      slug:
         type: string
       status:
         type: string
@@ -85,6 +101,8 @@ definitions:
         type: integer
       category:
         type: string
+      category_id:
+        type: integer
       comments_count:
         type: integer
       content:
@@ -115,6 +133,19 @@ definitions:
         type: string
       views_count:
         type: integer
+    type: object
+  models.NewsCategory:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      slug:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
     type: object
   models.RegisterRequest:
     properties:
@@ -160,10 +191,17 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.UpdateNewsCategoryRequest:
+    properties:
+      slug:
+        type: string
+      title:
+        type: string
+    type: object
   models.UpdateNewsRequest:
     properties:
-      category:
-        type: string
+      category_id:
+        type: integer
       content:
         type: string
       excerpt:
@@ -181,6 +219,13 @@ definitions:
       title:
         type: string
       video_url:
+        type: string
+    type: object
+  models.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      full_name:
         type: string
     type: object
   models.UpdateTripRequest:
@@ -217,6 +262,8 @@ definitions:
     type: object
   models.User:
     properties:
+      avatar:
+        type: string
       created_at:
         type: string
       email:
@@ -279,6 +326,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "500":
+          description: Не удалось получить список новостей
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: List news (admin)
@@ -301,6 +352,14 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/models.News'
+        "400":
+          description: Некорректный JSON или ошибка валидации
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Create news (admin)
@@ -319,6 +378,14 @@ paths:
           description: No Content
           schema:
             type: string
+        "404":
+          description: Новость не найдена
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Delete news (admin)
@@ -346,11 +413,153 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.News'
+        "400":
+          description: Некорректный JSON или ошибка валидации
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Новость не найдена
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Update news (admin)
       tags:
       - admin-news
+  /admin/news/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.NewsCategory'
+            type: array
+        "500":
+          description: Не удалось получить категории
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить список категорий новостей
+      tags:
+      - news-categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные категории
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateNewsCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.NewsCategory'
+        "400":
+          description: Некорректное тело запроса или ошибка валидации
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось создать категорию
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Создать категорию новостей
+      tags:
+      - news-categories
+  /admin/news/categories/{id}:
+    delete:
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Категория успешно удалена
+        "404":
+          description: Категория не найдена
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось удалить категорию
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Удалить категорию новостей
+      tags:
+      - news-categories
+    get:
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NewsCategory'
+        "404":
+          description: Категория не найдена
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при получении категории
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить категорию по ID
+      tags:
+      - news-categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateNewsCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NewsCategory'
+        "400":
+          description: Некорректное тело запроса или ошибка валидации
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Категория не найдена
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось обновить категорию
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Обновить категорию новостей
+      tags:
+      - news-categories
   /admin/trips:
     post:
       consumes:
@@ -371,17 +580,13 @@ paths:
           schema:
             $ref: '#/definitions/models.Trip'
         "400":
-          description: Bad Request
+          description: Некорректные данные
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Internal Server Error
+          description: Ошибка при создании тура
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Create trip (admin)
@@ -400,11 +605,13 @@ paths:
         "204":
           description: No Content
         "404":
-          description: Not Found
+          description: Тур не найден
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при удалении тура
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Delete trip (admin)
@@ -434,17 +641,17 @@ paths:
           schema:
             $ref: '#/definitions/models.Trip'
         "400":
-          description: Bad Request
+          description: Некорректные данные
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
         "404":
-          description: Not Found
+          description: Тур не найден
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при обновлении тура
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
       summary: Update trip (admin)
@@ -461,9 +668,13 @@ paths:
             items:
               $ref: '#/definitions/models.User'
             type: array
+        "500":
+          description: Не удалось получить список пользователей
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
-      summary: Get all users
+      summary: Получить всех пользователей
       tags:
       - users
     post:
@@ -483,9 +694,17 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.User'
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при создании пользователя
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
-      summary: Create user
+      summary: Создать пользователя
       tags:
       - users
   /admin/users/{id}:
@@ -499,9 +718,17 @@ paths:
       responses:
         "204":
           description: No Content
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при удалении пользователя
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
-      summary: Delete user
+      summary: Удалить пользователя
       tags:
       - users
     get:
@@ -518,9 +745,17 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.User'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при получении пользователя
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
-      summary: Get user by id
+      summary: Получить пользователя по ID
       tags:
       - users
     put:
@@ -545,9 +780,21 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.User'
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при обновлении пользователя
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       security:
       - Bearer: []
-      summary: Update user
+      summary: Обновить данные пользователя
       tags:
       - users
   /auth/login:
@@ -568,29 +815,19 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.AuthResponse'
-        "401":
-          description: Unauthorized
+        "400":
+          description: Некорректный запрос
           schema:
-            $ref: '#/definitions/helpers.ErrorResponse'
+            $ref: '#/definitions/helpers.ErrorData'
+        "401":
+          description: Неверный email или пароль
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Login
-      tags:
-      - auth
-  /auth/me:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: You are authorized
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/helpers.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Me
       tags:
       - auth
   /auth/register:
@@ -612,9 +849,17 @@ paths:
           schema:
             $ref: '#/definitions/models.User'
         "400":
-          description: Bad Request
+          description: Некорректные данные
           schema:
-            $ref: '#/definitions/helpers.ErrorResponse'
+            $ref: '#/definitions/helpers.ErrorData'
+        "409":
+          description: Email уже зарегистрирован
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Register
       tags:
       - auth
@@ -627,7 +872,11 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/services.CurrencyRate'
-      summary: Get currency rates
+        "500":
+          description: Ошибка получения курсов валют
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить курсы валют
       tags:
       - currency
   /news:
@@ -662,6 +911,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "500":
+          description: Не удалось получить список новостей
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: List news (public)
       tags:
       - news
@@ -673,11 +926,6 @@ paths:
         name: slug_or_id
         required: true
         type: string
-      - description: ID новости
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -686,12 +934,126 @@ paths:
           schema:
             $ref: '#/definitions/models.News'
         "404":
-          description: Not Found
+          description: Новость не найдена
           schema:
-            $ref: '#/definitions/helpers.ErrorResponse'
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось получить новость
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Get news by slug or id (public)
       tags:
       - news
+  /news/popular:
+    get:
+      parameters:
+      - description: Количество новостей (по умолчанию 5)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.News'
+            type: array
+        "500":
+          description: Не удалось получить популярные новости
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get popular news
+      tags:
+      - news
+  /news/recent:
+    get:
+      parameters:
+      - description: Количество новостей (по умолчанию 3)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.News'
+            type: array
+        "500":
+          description: Не удалось получить последние новости
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get recent news
+      tags:
+      - news
+  /profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при загрузке профиля
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Получить профиль текущего пользователя
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные профиля
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при обновлении профиля
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Обновить профиль текущего пользователя
+      tags:
+      - profile
   /trips:
     get:
       description: Публичный поиск туров с фильтрацией
@@ -717,6 +1079,10 @@ paths:
             items:
               $ref: '#/definitions/models.Trip'
             type: array
+        "500":
+          description: Ошибка при получении списка туров
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: List trips
       tags:
       - trips
@@ -737,16 +1103,19 @@ paths:
           schema:
             $ref: '#/definitions/models.Trip'
         "404":
-          description: Not Found
+          description: Тур не найден
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при получении тура
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Get trip by id
       tags:
       - trips
   /trips/{id}/countdown:
     get:
+      description: Получить обратный отсчёт до конца бронирования
       parameters:
       - description: Trip ID
         in: path
@@ -762,6 +1131,14 @@ paths:
             additionalProperties:
               type: integer
             type: object
+        "404":
+          description: Тур не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при получении тура
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Get booking countdown
       tags:
       - trips

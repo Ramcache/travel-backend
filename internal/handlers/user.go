@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -23,58 +24,76 @@ func NewUserHandler(repo *repository.UserRepository, log *zap.SugaredLogger) *Us
 }
 
 // List
-// @Summary Get all users
+// @Summary Получить всех пользователей
 // @Tags users
 // @Security Bearer
 // @Produce json
 // @Success 200 {array} models.User
+// @Failure 500 {object} helpers.ErrorData "Не удалось получить список пользователей"
 // @Router /admin/users [get]
 func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	users, err := h.repo.GetAll(r.Context())
 	if err != nil {
-		helpers.Error(w, http.StatusInternalServerError, err.Error())
+		h.log.Errorw("Ошибка получения списка пользователей", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список пользователей")
 		return
 	}
+
+	h.log.Infow("Список пользователей успешно получен", "count", len(users))
 	helpers.JSON(w, http.StatusOK, users)
 }
 
 // Get
-// @Summary Get user by id
+// @Summary Получить пользователя по ID
 // @Tags users
 // @Security Bearer
 // @Produce json
 // @Param id path int true "User ID"
 // @Success 200 {object} models.User
+// @Failure 404 {object} helpers.ErrorData "Пользователь не найден"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при получении пользователя"
 // @Router /admin/users/{id} [get]
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	user, err := h.repo.GetByID(r.Context(), id)
-	if err != nil {
-		helpers.Error(w, http.StatusNotFound, "user not found")
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		h.log.Warnw("Пользователь не найден", "id", id)
+		helpers.Error(w, http.StatusNotFound, "Пользователь не найден")
+		return
+	case err != nil:
+		h.log.Errorw("Ошибка получения пользователя", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить пользователя")
 		return
 	}
+
+	h.log.Infow("Пользователь успешно получен", "id", id)
 	helpers.JSON(w, http.StatusOK, user)
 }
 
 // Create
-// @Summary Create user
+// @Summary Создать пользователя
 // @Tags users
 // @Security Bearer
 // @Accept json
 // @Produce json
 // @Param data body models.CreateUserRequest true "User data"
 // @Success 200 {object} models.User
+// @Failure 400 {object} helpers.ErrorData "Некорректное тело запроса"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при создании пользователя"
 // @Router /admin/users [post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		helpers.Error(w, http.StatusBadRequest, "invalid request")
+		h.log.Errorw("Некорректный JSON при создании пользователя", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
 
 	hash, err := helpers.HashPassword(req.Password)
 	if err != nil {
-		helpers.Error(w, http.StatusInternalServerError, "cannot hash password")
+		h.log.Errorw("Ошибка хэширования пароля", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать пароль")
 		return
 	}
 
@@ -86,14 +105,17 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Create(r.Context(), user); err != nil {
-		helpers.Error(w, http.StatusInternalServerError, err.Error())
+		h.log.Errorw("Ошибка создания пользователя", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать пользователя")
 		return
 	}
+
+	h.log.Infow("Пользователь успешно создан", "id", user.ID, "email", user.Email)
 	helpers.JSON(w, http.StatusOK, user)
 }
 
 // Update
-// @Summary Update user
+// @Summary Обновить данные пользователя
 // @Tags users
 // @Security Bearer
 // @Accept json
@@ -101,18 +123,28 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "User ID"
 // @Param data body models.UpdateUserRequest true "User update"
 // @Success 200 {object} models.User
+// @Failure 400 {object} helpers.ErrorData "Некорректное тело запроса"
+// @Failure 404 {object} helpers.ErrorData "Пользователь не найден"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при обновлении пользователя"
 // @Router /admin/users/{id} [put]
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	var req models.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		helpers.Error(w, http.StatusBadRequest, "invalid request")
+		h.log.Errorw("Некорректный JSON при обновлении пользователя", "id", id, "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
 
 	user, err := h.repo.GetByID(r.Context(), id)
-	if err != nil {
-		helpers.Error(w, http.StatusNotFound, "user not found")
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		h.log.Warnw("Пользователь не найден для обновления", "id", id)
+		helpers.Error(w, http.StatusNotFound, "Пользователь не найден")
+		return
+	case err != nil:
+		h.log.Errorw("Ошибка поиска пользователя для обновления", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить пользователя")
 		return
 	}
 
@@ -124,24 +156,44 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Update(r.Context(), user); err != nil {
-		helpers.Error(w, http.StatusInternalServerError, err.Error())
+		switch {
+		case errors.Is(err, repository.ErrNotFound):
+			h.log.Warnw("Пользователь не найден при обновлении", "id", id)
+			helpers.Error(w, http.StatusNotFound, "Пользователь не найден")
+		default:
+			h.log.Errorw("Ошибка обновления пользователя", "id", id, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Не удалось обновить пользователя")
+		}
 		return
 	}
+
+	h.log.Infow("Пользователь успешно обновлён", "id", id)
 	helpers.JSON(w, http.StatusOK, user)
 }
 
 // Delete
-// @Summary Delete user
+// @Summary Удалить пользователя
 // @Tags users
 // @Security Bearer
 // @Param id path int true "User ID"
 // @Success 204 "No Content"
+// @Failure 404 {object} helpers.ErrorData "Пользователь не найден"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при удалении пользователя"
 // @Router /admin/users/{id} [delete]
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	if err := h.repo.Delete(r.Context(), id); err != nil {
-		helpers.Error(w, http.StatusInternalServerError, err.Error())
+	err := h.repo.Delete(r.Context(), id)
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		h.log.Warnw("Пользователь не найден для удаления", "id", id)
+		helpers.Error(w, http.StatusNotFound, "Пользователь не найден")
+		return
+	case err != nil:
+		h.log.Errorw("Ошибка удаления пользователя", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить пользователя")
 		return
 	}
+
+	h.log.Infow("Пользователь успешно удалён", "id", id)
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -14,23 +14,19 @@ import (
 	"github.com/Ramcache/travel-backend/internal/middleware"
 )
 
-func NewRouter(
-	authHandler *handlers.AuthHandler,
-	userHandler *handlers.UserHandler,
-	currencyHandler *handlers.CurrencyHandler,
-	tripHandler *handlers.TripHandler,
-	newsHandler *handlers.NewsHandler,
-	jwtSecret string,
-	log *zap.SugaredLogger,
-) http.Handler {
+func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler, newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler, categoryHandler *handlers.NewsCategoryHandler, jwtSecret string, log *zap.SugaredLogger) http.Handler {
 	r := chi.NewRouter()
 
 	// middlewares
+	r.Use(middleware.CORS())
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
-	r.Use(chimw.Recoverer)
 	r.Use(middleware.ZapLogger(log))
-	r.Use(middleware.CORS())
+	r.Use(middleware.Recoverer(log))
+
+	// кастомные 404/405
+	r.NotFound(middleware.NotFoundHandler())
+	r.MethodNotAllowed(middleware.MethodNotAllowedHandler())
 
 	// swagger
 	docs.SwaggerInfo.Title = "Travel API"
@@ -42,20 +38,26 @@ func NewRouter(
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Post("/auth/register", authHandler.Register)
 		api.Post("/auth/login", authHandler.Login)
+
 		api.Get("/currency", currencyHandler.GetRates)
-		// public
+
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+
 		api.Get("/news", newsHandler.PublicList)
 		api.Get("/news/{slug_or_id}", newsHandler.PublicGet)
+		api.Get("/news/recent", newsHandler.Recent)
+		api.Get("/news/popular", newsHandler.Popular)
 
+		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))
-			pr.Get("/auth/me", authHandler.Me)
+			pr.Get("/profile", profileHandler.Get)
+			pr.Put("/profile", profileHandler.Update)
 		})
 
-		// admin
+		// admin (JWT + роль 2)
 		api.Group(func(admin chi.Router) {
 			admin.Use(middleware.JWTAuth(jwtSecret))
 			admin.Use(middleware.RoleAuth(2))
@@ -76,6 +78,11 @@ func NewRouter(
 			admin.Post("/admin/news", newsHandler.Create)
 			admin.Put("/admin/news/{id}", newsHandler.Update)
 			admin.Delete("/admin/news/{id}", newsHandler.Delete)
+
+			admin.Get("/admin/news/categories", categoryHandler.List)
+			admin.Post("/admin/news/categories", categoryHandler.Create)
+			admin.Put("/admin/news/categories/{id}", categoryHandler.Update)
+			admin.Delete("/admin/news/categories/{id}", categoryHandler.Delete)
 		})
 	})
 

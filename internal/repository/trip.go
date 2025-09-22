@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/Ramcache/travel-backend/internal/models"
 )
 
 type TripRepository struct {
@@ -39,7 +41,7 @@ func (r *TripRepository) List(ctx context.Context, departureCity, tripType, seas
 		i++
 	}
 
-	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date, created_at, updated_at FROM trips`
+	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date, booking_deadline, created_at, updated_at FROM trips`
 	if len(filters) > 0 {
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
@@ -57,22 +59,25 @@ func (r *TripRepository) List(ctx context.Context, departureCity, tripType, seas
 		if err := rows.Scan(
 			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
 			&t.DepartureCity, &t.TripType, &t.Season, &t.Price, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.CreatedAt, &t.UpdatedAt,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
 		trips = append(trips, t)
 	}
-	return trips, nil
+	return trips, rows.Err()
 }
 
 func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, error) {
 	var t models.Trip
 	err := r.db.QueryRow(ctx,
-		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date, created_at, updated_at
+		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency, start_date, end_date, booking_deadline, created_at, updated_at
          FROM trips WHERE id=$1`, id).
 		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.CreatedAt, &t.UpdatedAt)
+			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.CreatedAt, &t.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +95,7 @@ func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 }
 
 func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
-	return r.db.QueryRow(ctx,
+	err := r.db.QueryRow(ctx,
 		`UPDATE trips
          SET title=$1, description=$2, photo_url=$3, departure_city=$4, trip_type=$5, season=$6,
              price=$7, currency=$8, start_date=$9, end_date=$10, booking_deadline=$11, updated_at=now()
@@ -99,9 +104,19 @@ func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
 		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.ID,
 	).Scan(&t.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return ErrNotFound
+	}
+	return err
 }
 
 func (r *TripRepository) Delete(ctx context.Context, id int) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM trips WHERE id=$1`, id)
-	return err
+	tag, err := r.db.Exec(ctx, `DELETE FROM trips WHERE id=$1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

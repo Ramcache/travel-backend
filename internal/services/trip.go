@@ -2,12 +2,19 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/repository"
+)
+
+var (
+	ErrTripNotFound = errors.New("trip not found")
+	ErrInvalidTrip  = errors.New("invalid trip data")
 )
 
 type TripService struct {
@@ -19,22 +26,45 @@ func NewTripService(repo *repository.TripRepository, log *zap.SugaredLogger) *Tr
 	return &TripService{repo: repo, log: log}
 }
 
+// List — список туров
 func (s *TripService) List(ctx context.Context, city, ttype, season string) ([]models.Trip, error) {
 	s.log.Debugw("list_trips", "city", city, "type", ttype, "season", season)
 	return s.repo.List(ctx, city, ttype, season)
 }
 
+// Get — получить тур по ID
 func (s *TripService) Get(ctx context.Context, id int) (*models.Trip, error) {
-	return s.repo.GetByID(ctx, id)
+	trip, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if trip == nil {
+		return nil, ErrTripNotFound
+	}
+	return trip, nil
 }
 
+// Create — создать новый тур
 func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error) {
-	start, _ := time.Parse("2006-01-02", req.StartDate)
-	end, _ := time.Parse("2006-01-02", req.EndDate)
+	if req.Title == "" || req.DepartureCity == "" || req.TripType == "" {
+		return nil, helpers.ErrInvalidInput("Название тура, город вылета и тип тура обязательны")
+	}
+
+	start, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		return nil, helpers.ErrInvalidInput("Некорректная дата начала")
+	}
+	end, err := time.Parse("2006-01-02", req.EndDate)
+	if err != nil {
+		return nil, helpers.ErrInvalidInput("Некорректная дата окончания")
+	}
 
 	var deadline time.Time
 	if req.BookingDeadline != "" {
-		deadline, _ = time.Parse(time.RFC3339, req.BookingDeadline)
+		deadline, err = time.Parse(time.RFC3339, req.BookingDeadline)
+		if err != nil {
+			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
+		}
 	}
 
 	trip := &models.Trip{
@@ -52,16 +82,22 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 	}
 
 	if err := s.repo.Create(ctx, trip); err != nil {
+		s.log.Errorw("trip_create_failed", "title", req.Title, "err", err)
 		return nil, err
 	}
+
 	s.log.Infow("trip_created", "id", trip.ID, "title", trip.Title)
 	return trip, nil
 }
 
+// Update — обновить тур
 func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if trip == nil {
+		return nil, ErrTripNotFound
 	}
 
 	if req.Title != nil {
@@ -89,26 +125,43 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 		trip.Currency = *req.Currency
 	}
 	if req.StartDate != nil {
-		trip.StartDate, _ = time.Parse("2006-01-02", *req.StartDate)
+		parsed, err := time.Parse("2006-01-02", *req.StartDate)
+		if err != nil {
+			return nil, helpers.ErrInvalidInput("Некорректная дата начала")
+		}
+		trip.StartDate = parsed
 	}
 	if req.EndDate != nil {
-		trip.EndDate, _ = time.Parse("2006-01-02", *req.EndDate)
+		parsed, err := time.Parse("2006-01-02", *req.EndDate)
+		if err != nil {
+			return nil, helpers.ErrInvalidInput("Некорректная дата окончания")
+		}
+		trip.EndDate = parsed
 	}
 	if req.BookingDeadline != nil {
-		trip.BookingDeadline, _ = time.Parse(time.RFC3339, *req.BookingDeadline)
+		parsed, err := time.Parse(time.RFC3339, *req.BookingDeadline)
+		if err != nil {
+			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
+		}
+		trip.BookingDeadline = parsed
 	}
 
 	if err := s.repo.Update(ctx, trip); err != nil {
+		s.log.Errorw("trip_update_failed", "id", id, "err", err)
 		return nil, err
 	}
+
 	s.log.Infow("trip_updated", "id", trip.ID)
 	return trip, nil
 }
 
+// Delete — удалить тур
 func (s *TripService) Delete(ctx context.Context, id int) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
+		s.log.Errorw("trip_delete_failed", "id", id, "err", err)
 		return err
 	}
+
 	s.log.Infow("trip_deleted", "id", id)
 	return nil
 }
