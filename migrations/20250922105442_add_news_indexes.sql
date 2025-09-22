@@ -9,7 +9,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_news_slug_lower
 
 -- Индекс для фильтрации по category/media_type
 CREATE INDEX IF NOT EXISTS idx_news_category_media_type
-    ON news (category, media_type);
+    ON news (category_id, media_type);
 
 -- +goose Down
 DROP INDEX IF EXISTS idx_news_status_published_at_id_desc;

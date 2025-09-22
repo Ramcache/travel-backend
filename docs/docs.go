@@ -1325,6 +1325,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/{id}/buy": {
+            "post": {
+                "description": "Заглушка покупки тура (вернёт success)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Buy trip (stub)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Тур не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/{id}/countdown": {
             "get": {
                 "description": "Получить обратный отсчёт до конца бронирования",
