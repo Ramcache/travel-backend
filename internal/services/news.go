@@ -20,16 +20,16 @@ var (
 )
 
 type NewsService struct {
-	repo *repository.NewsRepository
-	log  *zap.SugaredLogger
+	repo    *repository.NewsRepository
+	catRepo *repository.NewsCategoryRepository
+	log     *zap.SugaredLogger
 }
 
-func NewNewsService(r *repository.NewsRepository, log *zap.SugaredLogger) *NewsService {
-	return &NewsService{repo: r, log: log}
+func NewNewsService(r *repository.NewsRepository, c *repository.NewsCategoryRepository, log *zap.SugaredLogger) *NewsService {
+	return &NewsService{repo: r, catRepo: c, log: log}
 }
 
 var (
-	allowedCat    = map[string]struct{}{"hadj": {}, "company": {}, "other": {}}
 	allowedType   = map[string]struct{}{"photo": {}, "video": {}}
 	allowedStatus = map[string]struct{}{"draft": {}, "published": {}, "archived": {}}
 )
@@ -43,12 +43,12 @@ func (s *NewsService) ListPublic(ctx context.Context, p models.ListNewsParams) (
 		p.Limit = 12
 	}
 	f := repository.NewsFilter{
-		Category:  p.Category,
-		MediaType: p.MediaType,
-		Search:    p.Search,
-		Status:    "published",
-		Limit:     p.Limit,
-		Offset:    (p.Page - 1) * p.Limit,
+		CategoryID: p.CategoryID,
+		MediaType:  p.MediaType,
+		Search:     p.Search,
+		Status:     "published",
+		Limit:      p.Limit,
+		Offset:     (p.Page - 1) * p.Limit,
 	}
 	return s.repo.List(ctx, f)
 }
@@ -91,12 +91,12 @@ func (s *NewsService) AdminList(ctx context.Context, p models.ListNewsParams) ([
 		p.Limit = 20
 	}
 	f := repository.NewsFilter{
-		Category:  p.Category,
-		MediaType: p.MediaType,
-		Search:    p.Search,
-		Status:    p.Status,
-		Limit:     p.Limit,
-		Offset:    (p.Page - 1) * p.Limit,
+		CategoryID: p.CategoryID,
+		MediaType:  p.MediaType,
+		Search:     p.Search,
+		Status:     p.Status,
+		Limit:      p.Limit,
+		Offset:     (p.Page - 1) * p.Limit,
 	}
 	return s.repo.List(ctx, f)
 }
@@ -106,7 +106,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 	if req.Title == "" {
 		return nil, helpers.ErrInvalidInput("Заголовок обязателен")
 	}
-	if _, ok := allowedCat[req.Category]; !ok {
+	if ok, _ := s.catRepo.Exists(ctx, req.CategoryID); !ok {
 		return nil, helpers.ErrInvalidInput("Некорректная категория")
 	}
 	if _, ok := allowedType[req.MediaType]; !ok {
@@ -152,7 +152,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		Title:       req.Title,
 		Excerpt:     req.Excerpt,
 		Content:     req.Content,
-		Category:    req.Category,
+		CategoryID:  req.CategoryID,
 		MediaType:   req.MediaType,
 		PreviewURL:  req.PreviewURL,
 		VideoURL:    req.VideoURL,
@@ -191,11 +191,11 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 	if v := req.Content; v != nil {
 		n.Content = *v
 	}
-	if v := req.Category; v != nil {
-		if _, ok := allowedCat[*v]; !ok {
+	if v := req.CategoryID; v != nil {
+		if ok, _ := s.catRepo.Exists(ctx, *v); !ok {
 			return nil, helpers.ErrInvalidInput("Некорректная категория")
 		}
-		n.Category = *v
+		n.CategoryID = *v
 	}
 	if v := req.MediaType; v != nil {
 		if _, ok := allowedType[*v]; !ok {
@@ -242,7 +242,17 @@ func (s *NewsService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// вспомогательные функции
+// GetRecent
+func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
+	return s.repo.GetRecent(ctx, limit)
+}
+
+// GetPopular
+func (s *NewsService) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
+	return s.repo.GetPopular(ctx, limit)
+}
+
+// helpers
 func tryAtoi(s string) (int, bool) {
 	var n int
 	for _, r := range s {
@@ -271,10 +281,10 @@ func itoa(n int) string {
 var spacesRe = regexp.MustCompile(`\s+`)
 
 func slugify(s string) string {
-	// простая транслитерация ru -> lat
 	repl := map[rune]string{
-		'а': "a", 'б': "b", 'в': "v", 'г': "g", 'д': "d", 'е': "e", 'ё': "e", 'ж': "zh", 'з': "z", 'и': "i", 'й': "y", 'к': "k", 'л': "l", 'м': "m", 'н': "n", 'о': "o", 'п': "p", 'р': "r", 'с': "s", 'т': "t", 'у': "u", 'ф': "f", 'х': "h", 'ц': "c", 'ч': "ch", 'ш': "sh", 'щ': "sch", 'ъ': "", 'ы': "y", 'ь': "", 'э': "e", 'ю': "yu", 'я': "ya",
-		'А': "a", 'Б': "b", 'В': "v", 'Г': "g", 'Д': "d", 'Е': "e", 'Ё': "e", 'Ж': "zh", 'З': "z", 'И': "i", 'Й': "y", 'К': "k", 'Л': "l", 'М': "m", 'Н': "n", 'О': "o", 'П': "p", 'Р': "r", 'С': "s", 'Т': "t", 'У': "u", 'Ф': "f", 'Х': "h", 'Ц': "c", 'Ч': "ch", 'Ш': "sh", 'Щ': "sch", 'Ъ': "", 'Ы': "y", 'Ь': "", 'Э': "e", 'Ю': "yu", 'Я': "ya",
+		'а': "a", 'б': "b", 'в': "v", 'г': "g", 'д': "d", 'е': "e", 'ё': "e", 'ж': "zh", 'з': "z", 'и': "i", 'й': "y",
+		'к': "k", 'л': "l", 'м': "m", 'н': "n", 'о': "o", 'п': "p", 'р': "r", 'с': "s", 'т': "t", 'у': "u", 'ф': "f",
+		'х': "h", 'ц': "c", 'ч': "ch", 'ш': "sh", 'щ': "sch", 'ъ': "", 'ы': "y", 'ь': "", 'э': "e", 'ю': "yu", 'я': "ya",
 	}
 	var b strings.Builder
 	for _, r := range s {
@@ -287,7 +297,7 @@ func slugify(s string) string {
 	out := strings.ToLower(b.String())
 	out = spacesRe.ReplaceAllString(out, "-")
 
-	// оставить только латиницу, цифры и '-'
+	// убрать все кроме латиницы, цифр и "-"
 	cleaned := make([]rune, 0, len(out))
 	for _, r := range out {
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
@@ -295,7 +305,7 @@ func slugify(s string) string {
 		}
 	}
 
-	// схлопнуть повторяющиеся '-'
+	// схлопнуть "--"
 	res := make([]rune, 0, len(cleaned))
 	var prevDash bool
 	for _, r := range cleaned {
@@ -310,12 +320,4 @@ func slugify(s string) string {
 		res = append(res, r)
 	}
 	return strings.Trim(string(res), "-")
-}
-
-func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
-	return s.repo.GetRecent(ctx, limit)
-}
-
-func (s *NewsService) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
-	return s.repo.GetPopular(ctx, limit)
 }

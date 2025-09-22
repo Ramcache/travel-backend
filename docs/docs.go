@@ -132,6 +132,205 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/news/categories": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "news-categories"
+                ],
+                "summary": "Получить список категорий новостей",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.NewsCategory"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить категории",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "news-categories"
+                ],
+                "summary": "Создать категорию новостей",
+                "parameters": [
+                    {
+                        "description": "Данные категории",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateNewsCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.NewsCategory"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса или ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось создать категорию",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/news/categories/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "news-categories"
+                ],
+                "summary": "Получить категорию по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.NewsCategory"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении категории",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "news-categories"
+                ],
+                "summary": "Обновить категорию новостей",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateNewsCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.NewsCategory"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса или ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось обновить категорию",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "news-categories"
+                ],
+                "summary": "Удалить категорию новостей",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Категория успешно удалена"
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось удалить категорию",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/news/{id}": {
             "put": {
                 "security": [
@@ -1176,11 +1375,24 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateNewsCategoryRequest": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "example": "hajj_news"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Новости хаджа"
+                }
+            }
+        },
         "models.CreateNewsRequest": {
             "type": "object",
             "properties": {
-                "category": {
-                    "type": "string"
+                "category_id": {
+                    "type": "integer"
                 },
                 "content": {
                     "type": "string"
@@ -1195,9 +1407,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "published_at": {
-                    "type": "string"
-                },
-                "slug": {
                     "type": "string"
                 },
                 "status": {
@@ -1290,6 +1499,9 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
+                "category_id": {
+                    "type": "integer"
+                },
                 "comments_count": {
                     "type": "integer"
                 },
@@ -1334,6 +1546,26 @@ const docTemplate = `{
                 },
                 "views_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.NewsCategory": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
@@ -1403,11 +1635,22 @@ const docTemplate = `{
                 }
             }
         },
+        "models.UpdateNewsCategoryRequest": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "models.UpdateNewsRequest": {
             "type": "object",
             "properties": {
-                "category": {
-                    "type": "string"
+                "category_id": {
+                    "type": "integer"
                 },
                 "content": {
                     "type": "string"

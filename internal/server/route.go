@@ -14,16 +14,7 @@ import (
 	"github.com/Ramcache/travel-backend/internal/middleware"
 )
 
-func NewRouter(
-	authHandler *handlers.AuthHandler,
-	userHandler *handlers.UserHandler,
-	currencyHandler *handlers.CurrencyHandler,
-	tripHandler *handlers.TripHandler,
-	newsHandler *handlers.NewsHandler,
-	profileHandler *handlers.ProfileHandler,
-	jwtSecret string,
-	log *zap.SugaredLogger,
-) http.Handler {
+func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler, newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler, categoryHandler *handlers.NewsCategoryHandler, jwtSecret string, log *zap.SugaredLogger) http.Handler {
 	r := chi.NewRouter()
 
 	// middlewares
@@ -87,6 +78,11 @@ func NewRouter(
 			admin.Post("/admin/news", newsHandler.Create)
 			admin.Put("/admin/news/{id}", newsHandler.Update)
 			admin.Delete("/admin/news/{id}", newsHandler.Delete)
+
+			admin.Get("/admin/news/categories", categoryHandler.List)
+			admin.Post("/admin/news/categories", categoryHandler.Create)
+			admin.Put("/admin/news/categories/{id}", categoryHandler.Update)
+			admin.Delete("/admin/news/categories/{id}", categoryHandler.Delete)
 		})
 	})
 

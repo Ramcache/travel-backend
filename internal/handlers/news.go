@@ -41,13 +41,16 @@ func (h *NewsHandler) PublicList(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(q.Get("page"))
 	limit, _ := strconv.Atoi(q.Get("limit"))
 
+	catID, _ := strconv.Atoi(q.Get("category_id"))
+
 	items, total, err := h.service.ListPublic(r.Context(), models.ListNewsParams{
-		Category:  q.Get("category"),
-		MediaType: q.Get("media_type"),
-		Search:    q.Get("search"),
-		Page:      page,
-		Limit:     limit,
+		CategoryID: catID,
+		MediaType:  q.Get("media_type"),
+		Search:     q.Get("search"),
+		Page:       page,
+		Limit:      limit,
 	})
+
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка новостей", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список новостей")
@@ -108,14 +111,17 @@ func (h *NewsHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(q.Get("page"))
 	limit, _ := strconv.Atoi(q.Get("limit"))
 
+	catID, _ := strconv.Atoi(q.Get("category_id"))
+
 	items, total, err := h.service.AdminList(r.Context(), models.ListNewsParams{
-		Category:  q.Get("category"),
-		MediaType: q.Get("media_type"),
-		Search:    q.Get("search"),
-		Status:    q.Get("status"),
-		Page:      page,
-		Limit:     limit,
+		CategoryID: catID,
+		MediaType:  q.Get("media_type"),
+		Search:     q.Get("search"),
+		Status:     q.Get("status"),
+		Page:       page,
+		Limit:      limit,
 	})
+
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка новостей (admin)", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список новостей")
