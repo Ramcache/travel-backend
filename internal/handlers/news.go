@@ -28,7 +28,7 @@ func NewNewsHandler(s *services.NewsService, log *zap.SugaredLogger) *NewsHandle
 // @Description Публичный список новостей с фильтрами и пагинацией
 // @Tags news
 // @Produce json
-// @Param category query string false "Фильтр: hadj|company"
+// @Param category_id query string false "Фильтр: hadj|company"
 // @Param media_type query string false "Тип медиа: photo|video"
 // @Param search query string false "Поиск по заголовку или excerpt"
 // @Param page query int false "Номер страницы (1)"
@@ -98,7 +98,7 @@ func (h *NewsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 // @Tags admin-news
 // @Produce json
 // @Param status query string false "Статус: draft|published|archived"
-// @Param category query string false "Фильтр по категории"
+// @Param category_id query string false "Фильтр по категории"
 // @Param media_type query string false "Фильтр по типу медиа"
 // @Param search query string false "Поиск по заголовку/анонсу"
 // @Param page query int false "Номер страницы"
