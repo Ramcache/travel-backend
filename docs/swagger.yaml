@@ -99,8 +99,6 @@ definitions:
     properties:
       author_id:
         type: integer
-      category:
-        type: string
       category_id:
         type: integer
       comments_count:
@@ -300,7 +298,7 @@ paths:
         type: string
       - description: Фильтр по категории
         in: query
-        name: category
+        name: category_id
         type: string
       - description: Фильтр по типу медиа
         in: query
@@ -560,6 +558,21 @@ paths:
       summary: Обновить категорию новостей
       tags:
       - news-categories
+  /admin/stats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Admin statistics
+      tags:
+      - admin
   /admin/trips:
     post:
       consumes:
@@ -885,7 +898,7 @@ paths:
       parameters:
       - description: 'Фильтр: hadj|company'
         in: query
-        name: category
+        name: category_id
         type: string
       - description: 'Тип медиа: photo|video'
         in: query

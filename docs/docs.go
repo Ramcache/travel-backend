@@ -39,7 +39,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Фильтр по категории",
-                        "name": "category",
+                        "name": "category_id",
                         "in": "query"
                     },
                     {
@@ -429,6 +429,31 @@ const docTemplate = `{
                         "description": "Ошибка сервера",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/stats": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Admin statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -952,7 +977,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Фильтр: hadj|company",
-                        "name": "category",
+                        "name": "category_id",
                         "in": "query"
                     },
                     {
@@ -1495,9 +1520,6 @@ const docTemplate = `{
             "properties": {
                 "author_id": {
                     "type": "integer"
-                },
-                "category": {
-                    "type": "string"
                 },
                 "category_id": {
                     "type": "integer"

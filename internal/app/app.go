@@ -23,6 +23,7 @@ type App struct {
 	tripRepo         *repository.TripRepository
 	newsRepo         *repository.NewsRepository
 	newsCategoryRepo *repository.NewsCategoryRepository
+	statsRepo        *repository.StatsRepository
 
 	// services
 	AuthService         *services.AuthService
@@ -30,6 +31,7 @@ type App struct {
 	tripService         *services.TripService
 	newsService         *services.NewsService
 	newsCategoryService *services.NewsCategoryService
+	statsService        *services.StatsService
 
 	// handlers
 	AuthHandler         *handlers.AuthHandler
@@ -39,6 +41,7 @@ type App struct {
 	NewsHandler         *handlers.NewsHandler
 	ProfileHandler      *handlers.ProfileHandler
 	NewsCategoryHandler *handlers.NewsCategoryHandler
+	StatsHandler        *handlers.StatsHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -47,6 +50,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	tripRepo := repository.NewTripRepository(pool)
 	newsRepo := repository.NewNewsRepository(pool)
 	newsCategoryRepo := repository.NewNewsCategoryRepository(pool)
+	statsRepo := repository.NewStatsRepository(pool)
 
 	// services
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret, log)
@@ -54,6 +58,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	tripService := services.NewTripService(tripRepo, log)
 	newsService := services.NewNewsService(newsRepo, newsCategoryRepo, log)
 	newsCategoryService := services.NewNewsCategoryService(newsCategoryRepo, log)
+	statsService := services.NewStatsService(statsRepo)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
@@ -63,6 +68,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	newsHandler := handlers.NewNewsHandler(newsService, log)
 	profileHandler := handlers.NewProfileHandler(authService, log)
 	newsCategoryHandler := handlers.NewNewsCategoryHandler(newsCategoryService, log)
+	statsHandler := handlers.NewStatsHandler(statsService, log)
 
 	return &App{
 		Config:              cfg,
@@ -82,5 +88,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		NewsHandler:         newsHandler,
 		ProfileHandler:      profileHandler,
 		NewsCategoryHandler: newsCategoryHandler,
+		StatsHandler:        statsHandler,
 	}
 }
