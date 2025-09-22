@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,24 +15,8 @@ func NewStatsRepository(db *pgxpool.Pool) *StatsRepository {
 	return &StatsRepository{db: db}
 }
 
-type KV struct {
-	Key   string `json:"key"`
-	Count int64  `json:"count"`
-}
-
-type Stats struct {
-	TotalUsers     int64 `json:"total_users"`
-	TotalNews      int64 `json:"total_news"`
-	TotalTrips     int64 `json:"total_trips"`
-	UsersByRole    []KV  `json:"users_by_role"`
-	NewsByStatus   []KV  `json:"news_by_status"`
-	NewsByCategory []KV  `json:"news_by_category"`
-	TripsByType    []KV  `json:"trips_by_type"`
-	TripsByCity    []KV  `json:"trips_by_city"`
-}
-
-func (r *StatsRepository) Get(ctx context.Context) (Stats, error) {
-	var out Stats
+func (r *StatsRepository) Get(ctx context.Context) (models.Stats, error) {
+	var out models.Stats
 
 	if err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&out.TotalUsers); err != nil {
 		return out, err
@@ -43,15 +28,16 @@ func (r *StatsRepository) Get(ctx context.Context) (Stats, error) {
 		return out, err
 	}
 
-	qKV := func(sql string) ([]KV, error) {
+	qKV := func(sql string) ([]models.KV, error) {
 		rows, err := r.db.Query(ctx, sql)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
-		var res []KV
+
+		var res []models.KV
 		for rows.Next() {
-			var kv KV
+			var kv models.KV
 			if err := rows.Scan(&kv.Key, &kv.Count); err != nil {
 				return nil, err
 			}

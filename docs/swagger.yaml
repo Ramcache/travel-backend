@@ -85,6 +85,15 @@ definitions:
       role_id:
         type: integer
     type: object
+  models.KV:
+    properties:
+      count:
+        example: 42
+        type: integer
+      key:
+        example: admin
+        type: string
+    type: object
   models.LoginRequest:
     properties:
       email:
@@ -157,6 +166,38 @@ definitions:
     required:
     - email
     - password
+    type: object
+  models.Stats:
+    properties:
+      news_by_category:
+        items:
+          $ref: '#/definitions/models.KV'
+        type: array
+      news_by_status:
+        items:
+          $ref: '#/definitions/models.KV'
+        type: array
+      total_news:
+        example: 25
+        type: integer
+      total_trips:
+        example: 12
+        type: integer
+      total_users:
+        example: 100
+        type: integer
+      trips_by_city:
+        items:
+          $ref: '#/definitions/models.KV'
+        type: array
+      trips_by_type:
+        items:
+          $ref: '#/definitions/models.KV'
+        type: array
+      users_by_role:
+        items:
+          $ref: '#/definitions/models.KV'
+        type: array
     type: object
   models.Trip:
     properties:
@@ -566,8 +607,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.Stats'
       security:
       - Bearer: []
       summary: Admin statistics

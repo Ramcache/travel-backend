@@ -23,7 +23,7 @@ func NewStatsHandler(svc *services.StatsService, log *zap.SugaredLogger) *StatsH
 // @Tags admin
 // @Security Bearer
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} models.Stats
 // @Router /admin/stats [get]
 func (h *StatsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	data, err := h.svc.Get(r.Context())
