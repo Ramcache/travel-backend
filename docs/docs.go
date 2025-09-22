@@ -74,6 +74,12 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": true
                         }
+                    },
+                    "500": {
+                        "description": "Не удалось получить список новостей",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             },
@@ -109,6 +115,18 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/models.News"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный JSON или ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -155,6 +173,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.News"
                         }
+                    },
+                    "400": {
+                        "description": "Некорректный JSON или ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Новость не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             },
@@ -182,6 +218,18 @@ const docTemplate = `{
                         "description": "No Content",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Новость не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -224,21 +272,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректные данные",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Ошибка при создании тура",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -288,21 +330,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректные данные",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Тур не найден",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении тура",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -332,12 +374,15 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Тур не найден",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении тура",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -356,7 +401,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Get all users",
+                "summary": "Получить всех пользователей",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -365,6 +410,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/models.User"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить список пользователей",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -384,7 +435,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Create user",
+                "summary": "Создать пользователя",
                 "parameters": [
                     {
                         "description": "User data",
@@ -401,6 +452,18 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при создании пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -419,7 +482,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Get user by id",
+                "summary": "Получить пользователя по ID",
                 "parameters": [
                     {
                         "type": "integer",
@@ -434,6 +497,18 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -453,7 +528,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Update user",
+                "summary": "Обновить данные пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -478,6 +553,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.User"
                         }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             },
@@ -490,7 +583,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Delete user",
+                "summary": "Удалить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -503,6 +596,18 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             }
@@ -537,40 +642,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.AuthResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "400": {
+                        "description": "Некорректный запрос",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/me": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Me",
-                "responses": {
-                    "200": {
-                        "description": "You are authorized",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Неверный email или пароль",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -607,9 +694,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректные данные",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "409": {
+                        "description": "Email уже зарегистрирован",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -623,12 +722,18 @@ const docTemplate = `{
                 "tags": [
                     "currency"
                 ],
-                "summary": "Get currency rates",
+                "summary": "Получить курсы валют",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/services.CurrencyRate"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка получения курсов валют",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -683,6 +788,12 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": true
                         }
+                    },
+                    "500": {
+                        "description": "Не удалось получить список новостей",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             }
@@ -715,9 +826,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Не удалось получить популярные новости",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -751,9 +862,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Не удалось получить последние новости",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -775,13 +886,6 @@ const docTemplate = `{
                         "name": "slug_or_id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID новости",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -792,9 +896,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Новость не найдена",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить новость",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -813,7 +923,7 @@ const docTemplate = `{
                 "tags": [
                     "profile"
                 ],
-                "summary": "Get current user profile",
+                "summary": "Получить профиль текущего пользователя",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -822,9 +932,21 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Неавторизованный доступ",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при загрузке профиля",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -844,10 +966,10 @@ const docTemplate = `{
                 "tags": [
                     "profile"
                 ],
-                "summary": "Update current user profile",
+                "summary": "Обновить профиль текущего пользователя",
                 "parameters": [
                     {
-                        "description": "profile",
+                        "description": "Данные профиля",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -864,15 +986,27 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректное тело запроса",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Неавторизованный доступ",
                         "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении профиля",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -917,6 +1051,12 @@ const docTemplate = `{
                                 "$ref": "#/definitions/models.Trip"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении списка туров",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             }
@@ -948,12 +1088,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Тур не найден",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении тура",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -961,6 +1104,7 @@ const docTemplate = `{
         },
         "/trips/{id}/countdown": {
             "get": {
+                "description": "Получить обратный отсчёт до конца бронирования",
                 "produces": [
                     "application/json"
                 ],
@@ -986,16 +1130,40 @@ const docTemplate = `{
                                 "type": "integer"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Тур не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении тура",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
-        "helpers.ErrorResponse": {
+        "helpers.ErrorData": {
             "type": "object",
             "properties": {
-                "error": {
+                "code": {
+                    "description": "машинный код ошибки",
+                    "type": "string"
+                },
+                "fields": {
+                    "description": "ошибки по полям (для валидации)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "description": "человеко-читаемый текст (на русском)",
                     "type": "string"
                 }
             }

@@ -2,13 +2,17 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"strings"
 
 	"github.com/Ramcache/travel-backend/internal/models"
 )
+
+var ErrNotFound = errors.New("record not found")
 
 type NewsRepository struct{ db *pgxpool.Pool }
 
@@ -55,7 +59,7 @@ func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News,
 		whereSQL = "WHERE " + strings.Join(where, " AND ")
 	}
 
-	// total
+	// total count
 	var total int
 	if err := r.db.QueryRow(ctx, "SELECT count(*) FROM news "+whereSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
@@ -102,7 +106,7 @@ FROM news WHERE ` + by + ` = $1`
 	err := r.db.QueryRow(ctx, q, val).Scan(&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content, &n.Category, &n.MediaType, &n.PreviewURL, &n.VideoURL,
 		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount, &n.AuthorID, &n.Status, &n.PublishedAt, &n.CreatedAt, &n.UpdatedAt)
 	if err == pgx.ErrNoRows {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -120,16 +124,26 @@ RETURNING id, created_at, updated_at`,
 }
 
 func (r *NewsRepository) Update(ctx context.Context, n *models.News) error {
-	return r.db.QueryRow(ctx, `UPDATE news SET slug=$1, title=$2, excerpt=$3, content=$4, category=$5, media_type=$6,
+	err := r.db.QueryRow(ctx, `UPDATE news SET slug=$1, title=$2, excerpt=$3, content=$4, category=$5, media_type=$6,
 preview_url=$7, video_url=$8, status=$9, published_at=$10, updated_at=now()
 WHERE id=$11 RETURNING updated_at`,
 		n.Slug, n.Title, n.Excerpt, n.Content, n.Category, n.MediaType, n.PreviewURL, n.VideoURL, n.Status, n.PublishedAt, n.ID,
 	).Scan(&n.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return ErrNotFound
+	}
+	return err
 }
 
 func (r *NewsRepository) Delete(ctx context.Context, id int) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM news WHERE id=$1`, id)
-	return err
+	tag, err := r.db.Exec(ctx, `DELETE FROM news WHERE id=$1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, error) {
@@ -155,7 +169,7 @@ func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.New
         ORDER BY published_at DESC, id DESC
         LIMIT $1
     `
-	rows, err := r.db.Query(ctx, query, limit) // ✅ исправлено
+	rows, err := r.db.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +187,6 @@ func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.New
 		}
 		list = append(list, n)
 	}
-
 	return list, rows.Err()
 }
 
@@ -204,6 +217,5 @@ func (r *NewsRepository) GetPopular(ctx context.Context, limit int) ([]models.Ne
 		}
 		list = append(list, n)
 	}
-
-	return list, nil
+	return list, rows.Err()
 }

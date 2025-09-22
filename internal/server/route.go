@@ -27,11 +27,15 @@ func NewRouter(
 	r := chi.NewRouter()
 
 	// middlewares
+	r.Use(middleware.CORS())
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
-	r.Use(chimw.Recoverer)
 	r.Use(middleware.ZapLogger(log))
-	r.Use(middleware.CORS())
+	r.Use(middleware.Recoverer(log))
+
+	// кастомные 404/405
+	r.NotFound(middleware.NotFoundHandler())
+	r.MethodNotAllowed(middleware.MethodNotAllowedHandler())
 
 	// swagger
 	docs.SwaggerInfo.Title = "Travel API"
@@ -43,23 +47,26 @@ func NewRouter(
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Post("/auth/register", authHandler.Register)
 		api.Post("/auth/login", authHandler.Login)
+
 		api.Get("/currency", currencyHandler.GetRates)
+
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+
 		api.Get("/news", newsHandler.PublicList)
 		api.Get("/news/{slug_or_id}", newsHandler.PublicGet)
 		api.Get("/news/recent", newsHandler.Recent)
-		r.Get("/news/popular", newsHandler.Popular)
+		api.Get("/news/popular", newsHandler.Popular)
 
+		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))
-			pr.Get("/auth/me", authHandler.Me)
-			r.Get("/api/v1/profile", profileHandler.Get)
-			r.Put("/api/v1/profile", profileHandler.Update)
+			pr.Get("/profile", profileHandler.Get)
+			pr.Put("/profile", profileHandler.Update)
 		})
 
-		// admin
+		// admin (JWT + роль 2)
 		api.Group(func(admin chi.Router) {
 			admin.Use(middleware.JWTAuth(jwtSecret))
 			admin.Use(middleware.RoleAuth(2))

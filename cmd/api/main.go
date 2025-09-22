@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Ramcache/travel-backend/internal/cli"
+	"github.com/Ramcache/travel-backend/internal/validators"
 	"os"
 )
 
@@ -21,4 +22,6 @@ func main() {
 		fmt.Println(" error:", err)
 		os.Exit(1)
 	}
+	validators.Init()
+
 }

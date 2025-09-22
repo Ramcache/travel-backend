@@ -2,10 +2,13 @@ package middleware
 
 import (
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
+
+	"github.com/Ramcache/travel-backend/internal/helpers"
 )
 
 type statusWriter struct {
@@ -28,12 +31,12 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// ZapLogger — логирует все запросы через zap
 func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			sww := &statusWriter{ResponseWriter: w}
-
 			reqID := chimw.GetReqID(r.Context())
 
 			next.ServeHTTP(sww, r)
@@ -49,5 +52,34 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 				"request_id", reqID,
 			)
 		})
+	}
+}
+
+// Recoverer — перехватывает панику и отдаёт JSON-ошибку
+func Recoverer(log *zap.SugaredLogger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					log.Errorf("panic: %v\n%s", rec, debug.Stack())
+					helpers.Error(w, http.StatusInternalServerError, "Внутренняя ошибка сервера")
+				}
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// NotFoundHandler — отдаёт JSON с ошибкой "Ресурс не найден"
+func NotFoundHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		helpers.Error(w, http.StatusNotFound, "Ресурс не найден")
+	}
+}
+
+// MethodNotAllowedHandler — отдаёт JSON с ошибкой "Метод не поддерживается"
+func MethodNotAllowedHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		helpers.Error(w, http.StatusMethodNotAllowed, "Метод не поддерживается")
 	}
 }

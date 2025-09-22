@@ -1,10 +1,19 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
+)
+
+var (
+	ErrFetchFailed  = errors.New("не удалось получить курсы валют")
+	ErrDecodeFailed = errors.New("ошибка обработки ответа ЦБ РФ")
 )
 
 type CurrencyRate struct {
@@ -17,13 +26,20 @@ type CurrencyService struct {
 	rates CurrencyRate
 	last  time.Time
 	ttl   time.Duration
+	log   *zap.SugaredLogger
+	http  *http.Client
 }
 
-func NewCurrencyService(ttl time.Duration) *CurrencyService {
-	return &CurrencyService{ttl: ttl}
+func NewCurrencyService(ttl time.Duration, log *zap.SugaredLogger) *CurrencyService {
+	return &CurrencyService{
+		ttl:  ttl,
+		log:  log,
+		http: &http.Client{Timeout: 5 * time.Second}, // безопасный таймаут
+	}
 }
 
-func (s *CurrencyService) GetRates() (CurrencyRate, error) {
+func (s *CurrencyService) GetRates(ctx context.Context) (CurrencyRate, error) {
+	// читаем кеш
 	s.mu.RLock()
 	if time.Since(s.last) < s.ttl {
 		defer s.mu.RUnlock()
@@ -31,9 +47,17 @@ func (s *CurrencyService) GetRates() (CurrencyRate, error) {
 	}
 	s.mu.RUnlock()
 
-	resp, err := http.Get("https://www.cbr-xml-daily.ru/daily_json.js")
+	// новый запрос
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://www.cbr-xml-daily.ru/daily_json.js", nil)
 	if err != nil {
-		return CurrencyRate{}, err
+		s.log.Errorw("currency_request_build_failed", "err", err)
+		return CurrencyRate{}, ErrFetchFailed
+	}
+
+	resp, err := s.http.Do(req)
+	if err != nil {
+		s.log.Errorw("currency_fetch_failed", "err", err)
+		return CurrencyRate{}, ErrFetchFailed
 	}
 	defer resp.Body.Close()
 
@@ -43,7 +67,8 @@ func (s *CurrencyService) GetRates() (CurrencyRate, error) {
 		} `json:"Valute"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return CurrencyRate{}, err
+		s.log.Errorw("currency_decode_failed", "err", err)
+		return CurrencyRate{}, ErrDecodeFailed
 	}
 
 	rates := CurrencyRate{
@@ -51,10 +76,13 @@ func (s *CurrencyService) GetRates() (CurrencyRate, error) {
 		SAR: data.Valute["SAR"].Value,
 	}
 
+	// обновляем кеш
 	s.mu.Lock()
 	s.rates = rates
 	s.last = time.Now()
 	s.mu.Unlock()
+
+	s.log.Infow("currency_rates_updated", "usd", rates.USD, "sar", rates.SAR)
 
 	return rates, nil
 }

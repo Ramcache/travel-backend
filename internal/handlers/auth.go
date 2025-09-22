@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -27,19 +28,33 @@ func NewAuthHandler(service *services.AuthService, log *zap.SugaredLogger) *Auth
 // @Produce json
 // @Param data body models.RegisterRequest true "register payload"
 // @Success 200 {object} models.User
-// @Failure 400 {object} helpers.ErrorResponse
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 409 {object} helpers.ErrorData "Email уже зарегистрирован"
+// @Failure 500 {object} helpers.ErrorData "Ошибка сервера"
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req models.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		helpers.Error(w, http.StatusBadRequest, "invalid request")
+		h.log.Errorw("Ошибка декодирования JSON при регистрации", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный запрос")
 		return
 	}
+
 	user, err := h.service.Register(r.Context(), req)
 	if err != nil {
-		helpers.Error(w, http.StatusBadRequest, err.Error())
+		switch {
+		case helpers.IsInvalidInput(err):
+			helpers.Error(w, http.StatusBadRequest, err.Error())
+		case errors.Is(err, services.ErrEmailTaken):
+			helpers.Error(w, http.StatusConflict, "Пользователь с таким email уже существует")
+		default:
+			h.log.Errorw("Ошибка регистрации", "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка регистрации")
+		}
 		return
 	}
+
+	h.log.Infow("Пользователь успешно зарегистрирован", "email", req.Email, "id", user.ID)
 	helpers.JSON(w, http.StatusOK, user)
 }
 
@@ -50,30 +65,31 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param data body models.LoginRequest true "login payload"
 // @Success 200 {object} models.AuthResponse
-// @Failure 401 {object} helpers.ErrorResponse
+// @Failure 400 {object} helpers.ErrorData "Некорректный запрос"
+// @Failure 401 {object} helpers.ErrorData "Неверный email или пароль"
+// @Failure 500 {object} helpers.ErrorData "Ошибка сервера"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		helpers.Error(w, http.StatusBadRequest, "invalid request")
+		h.log.Errorw("Ошибка декодирования JSON при логине", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный запрос")
 		return
 	}
+
 	token, err := h.service.Login(r.Context(), req)
 	if err != nil {
-		helpers.Error(w, http.StatusUnauthorized, "invalid email or password")
+		switch {
+		case errors.Is(err, services.ErrInvalidCredentials):
+			h.log.Warnw("Неудачная попытка входа", "email", req.Email)
+			helpers.Error(w, http.StatusUnauthorized, "Неверный email или пароль")
+		default:
+			h.log.Errorw("Ошибка логина", "email", req.Email, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка входа")
+		}
 		return
 	}
-	helpers.JSON(w, http.StatusOK, models.AuthResponse{Token: token})
-}
 
-// Me
-// @Summary Me
-// @Tags auth
-// @Security Bearer
-// @Produce json
-// @Success 200 {string} string "You are authorized"
-// @Failure 401 {object} helpers.ErrorResponse
-// @Router /auth/me [get]
-func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("You are authorized"))
+	h.log.Infow("Пользователь вошёл в систему", "email", req.Email)
+	helpers.JSON(w, http.StatusOK, models.AuthResponse{Token: token})
 }

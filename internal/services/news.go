@@ -2,14 +2,21 @@ package services
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/repository"
+)
+
+var (
+	ErrInvalidInput  = errors.New("invalid input")
+	ErrDuplicateSlug = errors.New("slug already exists")
 )
 
 type NewsService struct {
@@ -27,6 +34,7 @@ var (
 	allowedStatus = map[string]struct{}{"draft": {}, "published": {}, "archived": {}}
 )
 
+// ListPublic — список новостей для публичной выдачи
 func (s *NewsService) ListPublic(ctx context.Context, p models.ListNewsParams) ([]models.News, int, error) {
 	if p.Page <= 0 {
 		p.Page = 1
@@ -45,37 +53,36 @@ func (s *NewsService) ListPublic(ctx context.Context, p models.ListNewsParams) (
 	return s.repo.List(ctx, f)
 }
 
+// GetPublic — получить новость по slug или ID
 func (s *NewsService) GetPublic(ctx context.Context, slugOrID string) (*models.News, error) {
 	var n *models.News
+	var err error
+
 	if id, ok := tryAtoi(slugOrID); ok {
-		nn, err := s.repo.GetByID(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		n = nn
+		n, err = s.repo.GetByID(ctx, id)
 	} else {
-		nn, err := s.repo.GetBySlug(ctx, slugOrID)
-		if err != nil {
-			return nil, err
-		}
-		n = nn
+		n, err = s.repo.GetBySlug(ctx, slugOrID)
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	if n == nil || n.Status != "published" {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 
+	// Инкремент просмотров асинхронно
 	go func(newsID int) {
 		c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if err := s.repo.IncrementViews(c, newsID); err != nil {
-			s.log.Warn("increment_views_failed", "id", newsID, "err", err)
+			s.log.Warnw("increment_views_failed", "id", newsID, "err", err)
 		}
 	}(n.ID)
 
 	return n, nil
 }
 
+// AdminList — список новостей для админки
 func (s *NewsService) AdminList(ctx context.Context, p models.ListNewsParams) ([]models.News, int, error) {
 	if p.Page <= 0 {
 		p.Page = 1
@@ -94,23 +101,25 @@ func (s *NewsService) AdminList(ctx context.Context, p models.ListNewsParams) ([
 	return s.repo.List(ctx, f)
 }
 
+// Create — создать новость
 func (s *NewsService) Create(ctx context.Context, authorID *int, req models.CreateNewsRequest) (*models.News, error) {
 	if req.Title == "" {
-		return nil, errf("title is required")
+		return nil, helpers.ErrInvalidInput("Заголовок обязателен")
 	}
 	if _, ok := allowedCat[req.Category]; !ok {
-		return nil, errf("invalid category")
+		return nil, helpers.ErrInvalidInput("Некорректная категория")
 	}
 	if _, ok := allowedType[req.MediaType]; !ok {
-		return nil, errf("invalid media_type")
+		return nil, helpers.ErrInvalidInput("Некорректный тип медиа")
 	}
 	if req.Status == "" {
 		req.Status = "published"
 	}
 	if _, ok := allowedStatus[req.Status]; !ok {
-		return nil, errf("invalid status")
+		return nil, helpers.ErrInvalidInput("Некорректный статус")
 	}
 
+	// slug уникальный
 	baseSlug := slugify(req.Title)
 	slug := baseSlug
 	for i := 2; ; i++ {
@@ -122,15 +131,18 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 			break
 		}
 		slug = baseSlug + "-" + itoa(i)
+		if i > 100 {
+			return nil, ErrDuplicateSlug
+		}
 	}
 
 	var publishedAt time.Time
 	if req.PublishedAt != "" {
-		if t, err := time.Parse(time.RFC3339, req.PublishedAt); err == nil {
-			publishedAt = t
-		} else {
-			return nil, errf("invalid published_at")
+		t, err := time.Parse(time.RFC3339, req.PublishedAt)
+		if err != nil {
+			return nil, helpers.ErrInvalidInput("Некорректная дата публикации")
 		}
+		publishedAt = t
 	} else {
 		publishedAt = time.Now()
 	}
@@ -149,18 +161,22 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		PublishedAt: publishedAt,
 	}
 	if err := s.repo.Create(ctx, n); err != nil {
+		s.log.Errorw("news_create_failed", "title", req.Title, "err", err)
 		return nil, err
 	}
+
+	s.log.Infow("news_created", "id", n.ID, "title", n.Title)
 	return n, nil
 }
 
+// Update — обновить новость
 func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsRequest) (*models.News, error) {
 	n, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	if n == nil {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 
 	if v := req.Slug; v != nil && *v != "" {
@@ -177,13 +193,13 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 	}
 	if v := req.Category; v != nil {
 		if _, ok := allowedCat[*v]; !ok {
-			return nil, errf("invalid category")
+			return nil, helpers.ErrInvalidInput("Некорректная категория")
 		}
 		n.Category = *v
 	}
 	if v := req.MediaType; v != nil {
 		if _, ok := allowedType[*v]; !ok {
-			return nil, errf("invalid media_type")
+			return nil, helpers.ErrInvalidInput("Некорректный тип медиа")
 		}
 		n.MediaType = *v
 	}
@@ -195,35 +211,38 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 	}
 	if v := req.Status; v != nil {
 		if _, ok := allowedStatus[*v]; !ok {
-			return nil, errf("invalid status")
+			return nil, helpers.ErrInvalidInput("Некорректный статус")
 		}
 		n.Status = *v
 	}
 	if v := req.PublishedAt; v != nil && *v != "" {
 		t, err := time.Parse(time.RFC3339, *v)
 		if err != nil {
-			return nil, errf("invalid published_at")
+			return nil, helpers.ErrInvalidInput("Некорректная дата публикации")
 		}
 		n.PublishedAt = t
 	}
 
 	if err := s.repo.Update(ctx, n); err != nil {
+		s.log.Errorw("news_update_failed", "id", id, "err", err)
 		return nil, err
 	}
+
+	s.log.Infow("news_updated", "id", id)
 	return n, nil
 }
 
+// Delete — удалить новость
 func (s *NewsService) Delete(ctx context.Context, id int) error {
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		s.log.Errorw("news_delete_failed", "id", id, "err", err)
+		return err
+	}
+	s.log.Infow("news_deleted", "id", id)
+	return nil
 }
 
-// helpers
-func errf(msg string) error { return &simpleErr{msg: msg} }
-
-type simpleErr struct{ msg string }
-
-func (e *simpleErr) Error() string { return e.msg }
-
+// вспомогательные функции
 func tryAtoi(s string) (int, bool) {
 	var n int
 	for _, r := range s {
@@ -236,6 +255,7 @@ func tryAtoi(s string) (int, bool) {
 	}
 	return n, true
 }
+
 func itoa(n int) string {
 	if n == 0 {
 		return "0"
@@ -266,13 +286,15 @@ func slugify(s string) string {
 	}
 	out := strings.ToLower(b.String())
 	out = spacesRe.ReplaceAllString(out, "-")
-	// убрать все, кроме латиницы, цифр и '-'
+
+	// оставить только латиницу, цифры и '-'
 	cleaned := make([]rune, 0, len(out))
 	for _, r := range out {
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
 			cleaned = append(cleaned, r)
 		}
 	}
+
 	// схлопнуть повторяющиеся '-'
 	res := make([]rune, 0, len(cleaned))
 	var prevDash bool
@@ -287,7 +309,7 @@ func slugify(s string) string {
 		}
 		res = append(res, r)
 	}
-	return strings.Trim(resToString(res), "-")
+	return strings.Trim(string(res), "-")
 }
 
 func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
@@ -297,9 +319,3 @@ func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, 
 func (s *NewsService) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
 	return s.repo.GetPopular(ctx, limit)
 }
-
-func (s *NewsService) IncrementViews(ctx context.Context, id int) error {
-	return s.repo.IncrementViews(ctx, id)
-}
-
-func resToString(rs []rune) string { return string(rs) }
