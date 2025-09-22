@@ -79,6 +79,13 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 		StartDate:       start,
 		EndDate:         end,
 		BookingDeadline: deadline,
+		Main:            req.Main,
+	}
+
+	if req.Main {
+		if err := s.repo.ResetMain(ctx, nil); err != nil {
+			s.log.Errorw("reset_main_failed", "err", err)
+		}
 	}
 
 	if err := s.repo.Create(ctx, trip); err != nil {
@@ -148,6 +155,14 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 			trip.BookingDeadline = &parsed
 		}
 	}
+	if req.Main != nil {
+		trip.Main = *req.Main
+		if *req.Main {
+			if err := s.repo.ResetMain(ctx, &id); err != nil {
+				s.log.Errorw("reset_main_failed", "err", err)
+			}
+		}
+	}
 
 	if err := s.repo.Update(ctx, trip); err != nil {
 		s.log.Errorw("trip_update_failed", "id", id, "err", err)
@@ -167,4 +182,8 @@ func (s *TripService) Delete(ctx context.Context, id int) error {
 
 	s.log.Infow("trip_deleted", "id", id)
 	return nil
+}
+
+func (s *TripService) GetMain(ctx context.Context) (*models.Trip, error) {
+	return s.repo.GetMain(ctx)
 }

@@ -12,6 +12,7 @@ type Trip struct {
 	Season          string     `json:"season"`
 	Price           float64    `json:"price"`
 	Currency        string     `json:"currency"`
+	Main            bool       `json:"main"`
 	StartDate       time.Time  `json:"start_date"`
 	EndDate         time.Time  `json:"end_date"`
 	BookingDeadline *time.Time `json:"booking_deadline"`
@@ -28,6 +29,7 @@ type CreateTripRequest struct {
 	Season          string  `json:"season"`
 	Price           float64 `json:"price"`
 	Currency        string  `json:"currency"`
+	Main            bool    `json:"main"`
 	StartDate       string  `json:"start_date"`
 	EndDate         string  `json:"end_date"`
 	BookingDeadline string  `json:"booking_deadline"`
@@ -42,6 +44,7 @@ type UpdateTripRequest struct {
 	Season          *string  `json:"season,omitempty"`
 	Price           *float64 `json:"price,omitempty"`
 	Currency        *string  `json:"currency,omitempty"`
+	Main            *bool    `json:"main"`
 	StartDate       *string  `json:"start_date,omitempty"`
 	EndDate         *string  `json:"end_date,omitempty"`
 	BookingDeadline *string  `json:"booking_deadline,omitempty"`

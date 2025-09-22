@@ -1284,6 +1284,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/main": {
+            "get": {
+                "description": "Получить главный тур для главной страницы (только название и обратный отсчёт)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Get main trip with countdown",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Главный тур не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/{id}": {
             "get": {
                 "description": "Публичный просмотр тура",
@@ -1499,6 +1526,9 @@ const docTemplate = `{
                 },
                 "end_date": {
                     "type": "string"
+                },
+                "main": {
+                    "type": "boolean"
                 },
                 "photo_url": {
                     "type": "string"
@@ -1731,6 +1761,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "main": {
+                    "type": "boolean"
+                },
                 "photo_url": {
                     "type": "string"
                 },
@@ -1828,6 +1861,9 @@ const docTemplate = `{
                 },
                 "end_date": {
                     "type": "string"
+                },
+                "main": {
+                    "type": "boolean"
                 },
                 "photo_url": {
                     "type": "string"

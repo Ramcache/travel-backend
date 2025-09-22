@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Ramcache/travel-backend/internal/repository"
 	"net/http"
 	"strconv"
 	"time"
@@ -270,4 +271,50 @@ func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Покупка тура пока недоступна (заглушка)",
 	})
+}
+
+// GetMain
+// @Summary Get main trip with countdown
+// @Description Получить главный тур для главной страницы (только название и обратный отсчёт)
+// @Tags trips
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 404 {object} helpers.ErrorData "Главный тур не найден"
+// @Router /trips/main [get]
+func (h *TripHandler) GetMain(w http.ResponseWriter, r *http.Request) {
+	trip, err := h.service.GetMain(r.Context())
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			helpers.Error(w, http.StatusNotFound, "Главный тур не найден")
+			return
+		}
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка при получении главного тура")
+		return
+	}
+
+	// считаем countdown
+	var days, hours, minutes, seconds int
+	if trip.BookingDeadline != nil {
+		now := time.Now()
+		diff := trip.BookingDeadline.Sub(now)
+		if diff > 0 {
+			days = int(diff.Hours()) / 24
+			hours = int(diff.Hours()) % 24
+			minutes = int(diff.Minutes()) % 60
+			seconds = int(diff.Seconds()) % 60
+		}
+	}
+
+	response := map[string]interface{}{
+		"title": trip.Title,
+		"countdown": map[string]int{
+			"days":    days,
+			"hours":   hours,
+			"minutes": minutes,
+			"seconds": seconds,
+		},
+	}
+
+	h.log.Infow("Главный тур с countdown возвращён", "id", trip.ID, "title", trip.Title)
+	helpers.JSON(w, http.StatusOK, response)
 }

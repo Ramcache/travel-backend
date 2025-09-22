@@ -44,6 +44,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+		api.Get("/trips/main", tripHandler.GetMain)
 
 		api.Get("/news", newsHandler.PublicList)
 		api.Get("/news/{slug_or_id}", newsHandler.PublicGet)
