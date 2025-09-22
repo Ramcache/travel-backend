@@ -34,6 +34,17 @@ var (
 	allowedStatus = map[string]struct{}{"draft": {}, "published": {}, "archived": {}}
 )
 
+// mapNotFound переводит ошибку репозитория в сервисную
+func mapNotFound(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, repository.ErrNotFound) {
+		return ErrNotFound
+	}
+	return err
+}
+
 // ListPublic — список новостей для публичной выдачи
 func (s *NewsService) ListPublic(ctx context.Context, p models.ListNewsParams) ([]models.News, int, error) {
 	if p.Page <= 0 {
@@ -64,7 +75,7 @@ func (s *NewsService) GetPublic(ctx context.Context, slugOrID string) (*models.N
 		n, err = s.repo.GetBySlug(ctx, slugOrID)
 	}
 	if err != nil {
-		return nil, err
+		return nil, mapNotFound(err)
 	}
 	if n == nil || n.Status != "published" {
 		return nil, ErrNotFound
@@ -173,7 +184,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsRequest) (*models.News, error) {
 	n, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, mapNotFound(err)
 	}
 	if n == nil {
 		return nil, ErrNotFound
@@ -225,7 +236,7 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 
 	if err := s.repo.Update(ctx, n); err != nil {
 		s.log.Errorw("news_update_failed", "id", id, "err", err)
-		return nil, err
+		return nil, mapNotFound(err)
 	}
 
 	s.log.Infow("news_updated", "id", id)
@@ -236,7 +247,7 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 func (s *NewsService) Delete(ctx context.Context, id int) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		s.log.Errorw("news_delete_failed", "id", id, "err", err)
-		return err
+		return mapNotFound(err)
 	}
 	s.log.Infow("news_deleted", "id", id)
 	return nil
@@ -297,7 +308,7 @@ func slugify(s string) string {
 	out := strings.ToLower(b.String())
 	out = spacesRe.ReplaceAllString(out, "-")
 
-	// убрать все кроме латиницы, цифр и "-"
+	// оставить только латиницу, цифры и "-"
 	cleaned := make([]rune, 0, len(out))
 	for _, r := range out {
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
