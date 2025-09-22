@@ -1166,6 +1166,31 @@ paths:
       summary: Get trip by id
       tags:
       - trips
+  /trips/{id}/buy:
+    post:
+      description: Заглушка покупки тура (вернёт success)
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Тур не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Buy trip (stub)
+      tags:
+      - trips
   /trips/{id}/countdown:
     get:
       description: Получить обратный отсчёт до конца бронирования

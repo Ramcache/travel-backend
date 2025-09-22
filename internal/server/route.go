@@ -50,6 +50,8 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/news/recent", newsHandler.Recent)
 		api.Get("/news/popular", newsHandler.Popular)
 
+		api.Post("/trips/{id}/buy", tripHandler.Buy)
+
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))

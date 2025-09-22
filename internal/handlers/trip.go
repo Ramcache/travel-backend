@@ -241,8 +241,33 @@ func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// helper
-func parseDate(s string) time.Time {
-	t, _ := time.Parse("2006-01-02", s)
-	return t
+// Заглушка не забудь
+
+// Buy
+// @Summary Buy trip (stub)
+// @Description Заглушка покупки тура (вернёт success)
+// @Tags trips
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} helpers.ErrorData "Тур не найден"
+// @Router /trips/{id}/buy [post]
+func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	trip, err := h.service.Get(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, services.ErrTripNotFound) {
+			helpers.Error(w, http.StatusNotFound, "Тур не найден")
+			return
+		}
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка при получении тура")
+		return
+	}
+
+	// Заглушка — тут в будущем будет логика оплаты
+	h.log.Infow("buy_stub", "id", trip.ID, "title", trip.Title)
+	helpers.JSON(w, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "Покупка тура пока недоступна (заглушка)",
+	})
 }
