@@ -44,7 +44,6 @@ func (s *TripService) Get(ctx context.Context, id int) (*models.Trip, error) {
 	return trip, nil
 }
 
-// Create — создать новый тур
 func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error) {
 	if req.Title == "" || req.DepartureCity == "" || req.TripType == "" {
 		return nil, helpers.ErrInvalidInput("Название тура, город вылета и тип тура обязательны")
@@ -59,12 +58,13 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 		return nil, helpers.ErrInvalidInput("Некорректная дата окончания")
 	}
 
-	var deadline time.Time
+	var deadline *time.Time
 	if req.BookingDeadline != "" {
-		deadline, err = time.Parse(time.RFC3339, req.BookingDeadline)
+		parsed, err := time.Parse(time.RFC3339, req.BookingDeadline)
 		if err != nil {
 			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
 		}
+		deadline = &parsed
 	}
 
 	trip := &models.Trip{
@@ -90,7 +90,6 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 	return trip, nil
 }
 
-// Update — обновить тур
 func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -139,11 +138,15 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 		trip.EndDate = parsed
 	}
 	if req.BookingDeadline != nil {
-		parsed, err := time.Parse(time.RFC3339, *req.BookingDeadline)
-		if err != nil {
-			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
+		if *req.BookingDeadline == "" {
+			trip.BookingDeadline = nil
+		} else {
+			parsed, err := time.Parse(time.RFC3339, *req.BookingDeadline)
+			if err != nil {
+				return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
+			}
+			trip.BookingDeadline = &parsed
 		}
-		trip.BookingDeadline = parsed
 	}
 
 	if err := s.repo.Update(ctx, trip); err != nil {
@@ -151,7 +154,7 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 		return nil, err
 	}
 
-	s.log.Infow("trip_updated", "id", trip.ID)
+	s.log.Infow("trip_updated", "id", id)
 	return trip, nil
 }
 

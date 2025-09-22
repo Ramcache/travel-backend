@@ -3,20 +3,20 @@ package models
 import "time"
 
 type Trip struct {
-	ID              int       `json:"id"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	PhotoURL        string    `json:"photo_url"`
-	DepartureCity   string    `json:"departure_city"`
-	TripType        string    `json:"trip_type"`
-	Season          string    `json:"season"`
-	Price           float64   `json:"price"`
-	Currency        string    `json:"currency"`
-	StartDate       time.Time `json:"start_date"`
-	EndDate         time.Time `json:"end_date"`
-	BookingDeadline time.Time `json:"booking_deadline"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              int        `json:"id"`
+	Title           string     `json:"title"`
+	Description     string     `json:"description"`
+	PhotoURL        string     `json:"photo_url"`
+	DepartureCity   string     `json:"departure_city"`
+	TripType        string     `json:"trip_type"`
+	Season          string     `json:"season"`
+	Price           float64    `json:"price"`
+	Currency        string     `json:"currency"`
+	StartDate       time.Time  `json:"start_date"`
+	EndDate         time.Time  `json:"end_date"`
+	BookingDeadline *time.Time `json:"booking_deadline"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
 type CreateTripRequest struct {
