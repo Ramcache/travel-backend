@@ -62,3 +62,29 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 
 	return token, nil
 }
+
+func (s *AuthService) UpdateProfile(ctx context.Context, id int, req models.UpdateProfileRequest) (*models.User, error) {
+	u, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if u == nil {
+		return nil, nil
+	}
+
+	if req.FullName != nil {
+		u.FullName = *req.FullName
+	}
+	if req.Avatar != nil {
+		u.Avatar = req.Avatar
+	}
+
+	if err := s.repo.Update(ctx, u); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (s *AuthService) GetByID(ctx context.Context, id int) (*models.User, error) {
+	return s.repo.GetByID(ctx, id)
+}

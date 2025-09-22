@@ -2,11 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
+	"net/http"
+	"strconv"
 
 	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/middleware"
@@ -70,6 +69,7 @@ func (h *NewsHandler) PublicList(w http.ResponseWriter, r *http.Request) {
 // @Router /news/{slug_or_id} [get]
 func (h *NewsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "slug_or_id")
+
 	n, err := h.service.GetPublic(r.Context(), id)
 	if err != nil {
 		h.log.Errorw("news_get_failed", "id", id, "err", err)
@@ -80,6 +80,7 @@ func (h *NewsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusNotFound, "news not found")
 		return
 	}
+
 	helpers.JSON(w, http.StatusOK, n)
 }
 
@@ -182,6 +183,58 @@ func (h *NewsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// Recent
+// @Summary Get recent news
+// @Tags news
+// @Produce json
+// @Param limit query int false "Количество новостей (по умолчанию 3)"
+// @Success 200 {array} models.News
+// @Failure 500 {object} helpers.ErrorResponse
+// @Router /news/recent [get]
+func (h *NewsHandler) Recent(w http.ResponseWriter, r *http.Request) {
+	limitStr := r.URL.Query().Get("limit")
+	limit := 3
+	if limitStr != "" {
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 && v <= 50 {
+			limit = v
+		}
+	}
+
+	news, err := h.service.GetRecent(r.Context(), limit)
+	if err != nil {
+		helpers.Error(w, http.StatusInternalServerError, "failed to fetch recent news")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, news)
+}
+
+// Popular
+// @Summary Get popular news
+// @Tags news
+// @Produce json
+// @Param limit query int false "Количество новостей (по умолчанию 5)"
+// @Success 200 {array} models.News
+// @Failure 500 {object} helpers.ErrorResponse
+// @Router /news/popular [get]
+func (h *NewsHandler) Popular(w http.ResponseWriter, r *http.Request) {
+	limitStr := r.URL.Query().Get("limit")
+	limit := 5
+	if limitStr != "" {
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 && v <= 50 {
+			limit = v
+		}
+	}
+
+	news, err := h.service.GetPopular(r.Context(), limit)
+	if err != nil {
+		helpers.Error(w, http.StatusInternalServerError, "failed to fetch popular news")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, news)
 }
 
 func ifZero(v, d int) int {

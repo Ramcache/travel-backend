@@ -141,6 +141,69 @@ func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, err
 }
 
 func (r *NewsRepository) IncrementViews(ctx context.Context, id int) error {
-	_, err := r.db.Exec(ctx, `UPDATE news SET views_count = views_count + 1 WHERE id=$1`, id)
+	query := `UPDATE news SET views_count = views_count + 1 WHERE id = $1`
+	_, err := r.db.Exec(ctx, query, id)
 	return err
+}
+
+func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
+	query := `
+        SELECT id, slug, title, excerpt, preview_url, media_type, category, published_at,
+               comments_count, reposts_count, views_count, created_at, updated_at
+        FROM news
+        WHERE status = 'published'
+        ORDER BY published_at DESC, id DESC
+        LIMIT $1
+    `
+	rows, err := r.db.Query(ctx, query, limit) // ✅ исправлено
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.News
+	for rows.Next() {
+		var n models.News
+		if err := rows.Scan(
+			&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.PreviewURL, &n.MediaType, &n.Category,
+			&n.PublishedAt, &n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
+			&n.CreatedAt, &n.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		list = append(list, n)
+	}
+
+	return list, rows.Err()
+}
+
+func (r *NewsRepository) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
+	query := `
+        SELECT id, slug, title, excerpt, preview_url, media_type, category, published_at,
+               comments_count, reposts_count, views_count, created_at, updated_at
+        FROM news
+        WHERE status = 'published'
+        ORDER BY views_count DESC, published_at DESC
+        LIMIT $1
+    `
+	rows, err := r.db.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.News
+	for rows.Next() {
+		var n models.News
+		if err := rows.Scan(
+			&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.PreviewURL, &n.MediaType, &n.Category,
+			&n.PublishedAt, &n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
+			&n.CreatedAt, &n.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		list = append(list, n)
+	}
+
+	return list, nil
 }

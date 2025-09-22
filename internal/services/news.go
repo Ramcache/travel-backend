@@ -60,10 +60,19 @@ func (s *NewsService) GetPublic(ctx context.Context, slugOrID string) (*models.N
 		}
 		n = nn
 	}
+
 	if n == nil || n.Status != "published" {
 		return nil, nil
 	}
-	_ = s.repo.IncrementViews(ctx, n.ID)
+
+	go func(newsID int) {
+		c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := s.repo.IncrementViews(c, newsID); err != nil {
+			s.log.Warn("increment_views_failed", "id", newsID, "err", err)
+		}
+	}(n.ID)
+
 	return n, nil
 }
 
@@ -102,11 +111,8 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		return nil, errf("invalid status")
 	}
 
-	slug := req.Slug
-	if slug == "" {
-		slug = slugify(req.Title)
-	}
-	// ensure unique slug
+	baseSlug := slugify(req.Title)
+	slug := baseSlug
 	for i := 2; ; i++ {
 		exists, err := s.repo.ExistsSlug(ctx, slug)
 		if err != nil {
@@ -115,7 +121,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		if !exists {
 			break
 		}
-		slug = slug + "-" + itoa(i)
+		slug = baseSlug + "-" + itoa(i)
 	}
 
 	var publishedAt time.Time
@@ -283,4 +289,17 @@ func slugify(s string) string {
 	}
 	return strings.Trim(resToString(res), "-")
 }
+
+func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
+	return s.repo.GetRecent(ctx, limit)
+}
+
+func (s *NewsService) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
+	return s.repo.GetPopular(ctx, limit)
+}
+
+func (s *NewsService) IncrementViews(ctx context.Context, id int) error {
+	return s.repo.IncrementViews(ctx, id)
+}
+
 func resToString(rs []rune) string { return string(rs) }

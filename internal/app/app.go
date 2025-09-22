@@ -35,6 +35,7 @@ type App struct {
 	CurrencyHandler *handlers.CurrencyHandler
 	TripHandler     *handlers.TripHandler
 	NewsHandler     *handlers.NewsHandler
+	ProfileHandler  *handlers.ProfileHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -54,6 +55,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	currencyHandler := handlers.NewCurrencyHandler(currencyService, log)
 	tripHandler := handlers.NewTripHandler(tripService)
 	newsHandler := handlers.NewNewsHandler(newsService, log)
+	profileHandler := handlers.NewProfileHandler(authService)
 
 	return &App{
 		Config:          cfg,
@@ -66,5 +68,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		CurrencyHandler: currencyHandler,
 		TripHandler:     tripHandler,
 		NewsHandler:     newsHandler,
+		ProfileHandler:  profileHandler,
 	}
 }

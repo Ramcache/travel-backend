@@ -183,6 +183,13 @@ definitions:
       video_url:
         type: string
     type: object
+  models.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+    type: object
   models.UpdateTripRequest:
     properties:
       booking_deadline:
@@ -217,6 +224,8 @@ definitions:
     type: object
   models.User:
     properties:
+      avatar:
+        type: string
       created_at:
         type: string
       email:
@@ -692,6 +701,100 @@ paths:
       summary: Get news by slug or id (public)
       tags:
       - news
+  /news/popular:
+    get:
+      parameters:
+      - description: Количество новостей (по умолчанию 5)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.News'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      summary: Get popular news
+      tags:
+      - news
+  /news/recent:
+    get:
+      parameters:
+      - description: Количество новостей (по умолчанию 3)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.News'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      summary: Get recent news
+      tags:
+      - news
+  /profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get current user profile
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update current user profile
+      tags:
+      - profile
   /trips:
     get:
       description: Публичный поиск туров с фильтрацией
