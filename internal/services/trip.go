@@ -18,12 +18,24 @@ var (
 )
 
 type TripService struct {
-	repo *repository.TripRepository
+	repo repository.TripRepositoryI
 	log  *zap.SugaredLogger
 }
 
-func NewTripService(repo *repository.TripRepository, log *zap.SugaredLogger) *TripService {
+func NewTripService(repo repository.TripRepositoryI, log *zap.SugaredLogger) *TripService {
 	return &TripService{repo: repo, log: log}
+}
+
+type TripServiceI interface {
+	List(ctx context.Context, city, ttype, season string) ([]models.Trip, error)
+	Get(ctx context.Context, id int) (*models.Trip, error)
+	Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error)
+	Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error)
+	Delete(ctx context.Context, id int) error
+	GetMain(ctx context.Context) (*models.Trip, error)
+	Popular(ctx context.Context, limit int) ([]models.Trip, error)
+	IncrementViews(ctx context.Context, id int) error
+	IncrementBuys(ctx context.Context, id int) error
 }
 
 // List — список туров

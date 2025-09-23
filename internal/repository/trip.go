@@ -19,6 +19,19 @@ func NewTripRepository(db *pgxpool.Pool) *TripRepository {
 	return &TripRepository{Db: db}
 }
 
+type TripRepositoryI interface {
+	List(ctx context.Context, departureCity, tripType, season string) ([]models.Trip, error)
+	GetByID(ctx context.Context, id int) (*models.Trip, error)
+	Create(ctx context.Context, t *models.Trip) error
+	Update(ctx context.Context, t *models.Trip) error
+	Delete(ctx context.Context, id int) error
+	GetMain(ctx context.Context) (*models.Trip, error)
+	ResetMain(ctx context.Context, excludeID *int) error
+	Popular(ctx context.Context, limit int) ([]models.Trip, error)
+	IncrementViews(ctx context.Context, id int) error
+	IncrementBuys(ctx context.Context, id int) error
+}
+
 // List with filters
 func (r *TripRepository) List(ctx context.Context, departureCity, tripType, season string) ([]models.Trip, error) {
 	filters := []string{}

@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/Ramcache/travel-backend/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +30,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	r.Use(chimw.RealIP)
 	r.Use(middleware.ZapLogger(log))
 	r.Use(middleware.Recoverer(log))
-
+	r.Use(middleware.MetricsMiddleware)
 	// кастомные 404/405
 	r.NotFound(middleware.NotFoundHandler())
 	r.MethodNotAllowed(middleware.MethodNotAllowedHandler())
@@ -38,6 +39,9 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	docs.SwaggerInfo.Title = "Travel API"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/api/v1"
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		promhttp.Handler().ServeHTTP(w, r)
+	})
 	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })
 	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
