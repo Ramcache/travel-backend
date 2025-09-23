@@ -13,6 +13,8 @@ type Trip struct {
 	Price           float64    `json:"price"`
 	Currency        string     `json:"currency"`
 	Main            bool       `json:"main"`
+	ViewsCount      int        `json:"views_count"`
+	BuysCount       int        `json:"buys_count"`
 	StartDate       time.Time  `json:"start_date"`
 	EndDate         time.Time  `json:"end_date"`
 	BookingDeadline *time.Time `json:"booking_deadline"`

@@ -187,3 +187,15 @@ func (s *TripService) Delete(ctx context.Context, id int) error {
 func (s *TripService) GetMain(ctx context.Context) (*models.Trip, error) {
 	return s.repo.GetMain(ctx)
 }
+
+func (s *TripService) Popular(ctx context.Context, limit int) ([]models.Trip, error) {
+	return s.repo.Popular(ctx, limit)
+}
+
+func (s *TripService) IncrementViews(ctx context.Context, id int) error {
+	return s.repo.IncrementViews(ctx, id)
+}
+
+func (s *TripService) IncrementBuys(ctx context.Context, id int) error {
+	return s.repo.IncrementBuys(ctx, id)
+}

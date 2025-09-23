@@ -205,6 +205,8 @@ definitions:
     properties:
       booking_deadline:
         type: string
+      buys_count:
+        type: integer
       created_at:
         type: string
       currency:
@@ -233,6 +235,8 @@ definitions:
         type: string
       updated_at:
         type: string
+      views_count:
+        type: integer
     type: object
   models.UpdateNewsCategoryRequest:
     properties:
@@ -1243,6 +1247,29 @@ paths:
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get main trip with countdown
+      tags:
+      - trips
+  /trips/popular:
+    get:
+      parameters:
+      - description: Количество туров (по умолчанию 5)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Trip'
+            type: array
+        "500":
+          description: Не удалось получить популярные туры
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get popular trips
       tags:
       - trips
 securityDefinitions:

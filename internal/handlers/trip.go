@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/Ramcache/travel-backend/internal/repository"
@@ -75,6 +76,11 @@ func (h *TripHandler) Get(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить тур")
 		return
 	}
+	go func(id int) {
+		if err := h.service.IncrementViews(context.Background(), id); err != nil {
+			h.log.Errorw("increment_views_failed", "id", id, "err", err)
+		}
+	}(id)
 
 	h.log.Infow("Тур успешно получен", "id", id)
 	helpers.JSON(w, http.StatusOK, trip)
@@ -265,6 +271,12 @@ func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go func(id int) {
+		if err := h.service.IncrementBuys(context.Background(), id); err != nil {
+			h.log.Errorw("increment_views_failed", "id", id, "err", err)
+		}
+	}(id)
+
 	// Заглушка — тут в будущем будет логика оплаты
 	h.log.Infow("buy_stub", "id", trip.ID, "title", trip.Title)
 	helpers.JSON(w, http.StatusOK, map[string]string{
@@ -317,4 +329,28 @@ func (h *TripHandler) GetMain(w http.ResponseWriter, r *http.Request) {
 
 	h.log.Infow("Главный тур с countdown возвращён", "id", trip.ID, "title", trip.Title)
 	helpers.JSON(w, http.StatusOK, response)
+}
+
+// Popular
+// @Summary Get popular trips
+// @Tags trips
+// @Produce json
+// @Param limit query int false "Количество туров (по умолчанию 5)"
+// @Success 200 {array} models.Trip
+// @Failure 500 {object} helpers.ErrorData "Не удалось получить популярные туры"
+// @Router /trips/popular [get]
+func (h *TripHandler) Popular(w http.ResponseWriter, r *http.Request) {
+	limit := 5
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 50 {
+			limit = n
+		}
+	}
+	trips, err := h.service.Popular(r.Context(), limit)
+	if err != nil {
+		h.log.Errorw("Ошибка получения популярных туров", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить популярные туры")
+		return
+	}
+	helpers.JSON(w, http.StatusOK, trips)
 }

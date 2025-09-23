@@ -43,3 +43,7 @@ func NewPostgres(ctx context.Context, cfg PostgresConfig) (*pgxpool.Pool, error)
 
 	return pool, nil
 }
+
+func Ping(ctx context.Context, pool *pgxpool.Pool) error {
+	return pool.Ping(ctx)
+}
