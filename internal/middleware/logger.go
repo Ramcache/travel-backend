@@ -11,6 +11,7 @@ import (
 	"github.com/Ramcache/travel-backend/internal/helpers"
 )
 
+// statusWriter — обёртка для захвата статуса и размера ответа
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -41,6 +42,12 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(sww, r)
 
+			// достаём user_id из контекста, если он установлен в JWTAuth
+			var userID interface{} = nil
+			if v := r.Context().Value(UserIDKey); v != nil {
+				userID = v
+			}
+
 			log.Infow("http_request",
 				"method", r.Method,
 				"path", r.URL.Path,
@@ -50,6 +57,7 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 				"remote_ip", r.RemoteAddr,
 				"user_agent", r.UserAgent(),
 				"request_id", reqID,
+				"user_id", userID,
 			)
 		})
 	}

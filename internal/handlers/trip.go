@@ -18,11 +18,11 @@ import (
 )
 
 type TripHandler struct {
-	service *services.TripService
+	service services.TripServiceI
 	log     *zap.SugaredLogger
 }
 
-func NewTripHandler(service *services.TripService, log *zap.SugaredLogger) *TripHandler {
+func NewTripHandler(service services.TripServiceI, log *zap.SugaredLogger) *TripHandler {
 	return &TripHandler{service: service, log: log}
 }
 
