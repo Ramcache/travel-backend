@@ -1311,6 +1311,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/popular": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Get popular trips",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Количество туров (по умолчанию 5)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Trip"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить популярные туры",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/{id}": {
             "get": {
                 "description": "Публичный просмотр тура",
@@ -1743,6 +1779,9 @@ const docTemplate = `{
                 "booking_deadline": {
                     "type": "string"
                 },
+                "buys_count": {
+                    "type": "integer"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1784,6 +1823,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "views_count": {
+                    "type": "integer"
                 }
             }
         },

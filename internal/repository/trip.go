@@ -42,7 +42,8 @@ func (r *TripRepository) List(ctx context.Context, departureCity, tripType, seas
 	}
 
 	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                     start_date, end_date, booking_deadline, main, created_at, updated_at FROM trips`
+                     start_date, end_date, booking_deadline, main, views_count, buys_count, created_at, updated_at
+              FROM trips`
 	if len(filters) > 0 {
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
@@ -60,7 +61,9 @@ func (r *TripRepository) List(ctx context.Context, departureCity, tripType, seas
 		if err := rows.Scan(
 			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
 			&t.DepartureCity, &t.TripType, &t.Season, &t.Price, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.CreatedAt, &t.UpdatedAt,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main,
+			&t.ViewsCount, &t.BuysCount,
+			&t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -73,10 +76,12 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 	var t models.Trip
 	err := r.Db.QueryRow(ctx,
 		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                start_date, end_date, booking_deadline, main, created_at, updated_at
+                start_date, end_date, booking_deadline, main, views_count, buys_count, created_at, updated_at
          FROM trips WHERE id=$1`, id).
 		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.CreatedAt, &t.UpdatedAt)
+			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main,
+			&t.ViewsCount, &t.BuysCount,
+			&t.CreatedAt, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
@@ -91,10 +96,10 @@ func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season, price, currency,
                             start_date, end_date, booking_deadline, main)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-         RETURNING id, created_at, updated_at`,
+         RETURNING id, views_count, buys_count, created_at, updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
 		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.Main,
-	).Scan(&t.ID, &t.CreatedAt, &t.UpdatedAt)
+	).Scan(&t.ID, &t.ViewsCount, &t.BuysCount, &t.CreatedAt, &t.UpdatedAt)
 }
 
 func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
@@ -103,10 +108,10 @@ func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
          SET title=$1, description=$2, photo_url=$3, departure_city=$4, trip_type=$5, season=$6,
              price=$7, currency=$8, start_date=$9, end_date=$10, booking_deadline=$11, main=$12, updated_at=now()
          WHERE id=$13
-         RETURNING updated_at`,
+         RETURNING views_count, buys_count, updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
 		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.Main, t.ID,
-	).Scan(&t.UpdatedAt)
+	).Scan(&t.ViewsCount, &t.BuysCount, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return ErrNotFound
 	}
@@ -128,10 +133,12 @@ func (r *TripRepository) GetMain(ctx context.Context) (*models.Trip, error) {
 	var t models.Trip
 	err := r.Db.QueryRow(ctx,
 		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                start_date, end_date, booking_deadline, main, created_at, updated_at
+                start_date, end_date, booking_deadline, main, views_count, buys_count, created_at, updated_at
          FROM trips WHERE main = true LIMIT 1`).
 		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.CreatedAt, &t.UpdatedAt)
+			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main,
+			&t.ViewsCount, &t.BuysCount,
+			&t.CreatedAt, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
@@ -145,5 +152,51 @@ func (r *TripRepository) ResetMain(ctx context.Context, excludeID *int) error {
 		return err
 	}
 	_, err := r.Db.Exec(ctx, `UPDATE trips SET main=false`)
+	return err
+}
+
+// Popular — топ туров по количеству покупок
+func (r *TripRepository) Popular(ctx context.Context, limit int) ([]models.Trip, error) {
+	rows, err := r.Db.Query(ctx, `
+        SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
+               start_date, end_date, booking_deadline, main, views_count, buys_count, created_at, updated_at
+        FROM trips
+        ORDER BY buys_count DESC, views_count DESC
+        LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var trips []models.Trip
+	for rows.Next() {
+		var t models.Trip
+		if err := rows.Scan(
+			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
+			&t.DepartureCity, &t.TripType, &t.Season, &t.Price, &t.Currency,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main,
+			&t.ViewsCount, &t.BuysCount,
+			&t.CreatedAt, &t.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		trips = append(trips, t)
+	}
+	return trips, rows.Err()
+}
+
+func (r *TripRepository) IncrementViews(ctx context.Context, id int) error {
+	_, err := r.Db.Exec(ctx,
+		`UPDATE trips SET views_count = views_count + 1 WHERE id = $1`,
+		id,
+	)
+	return err
+}
+
+func (r *TripRepository) IncrementBuys(ctx context.Context, id int) error {
+	_, err := r.Db.Exec(ctx,
+		`UPDATE trips SET buys_count = buys_count + 1 WHERE id = $1`,
+		id,
+	)
 	return err
 }

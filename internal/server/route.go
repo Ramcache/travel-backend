@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/Ramcache/travel-backend/internal/storage"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,7 +16,11 @@ import (
 	"github.com/Ramcache/travel-backend/internal/middleware"
 )
 
-func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler, newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler, categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler, jwtSecret string, log *zap.SugaredLogger) http.Handler {
+func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler,
+	currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler,
+	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
+	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
+	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
 	// middlewares
@@ -33,6 +39,14 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })
+	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		if err := storage.Ping(r.Context(), db); err != nil {
+			http.Error(w, "db down", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent) // 204
+	})
 
 	// public
 	r.Route("/api/v1", func(api chi.Router) {
@@ -52,6 +66,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/news/popular", newsHandler.Popular)
 
 		api.Post("/trips/{id}/buy", tripHandler.Buy)
+		api.Get("/trips/popular", tripHandler.Popular)
 
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
