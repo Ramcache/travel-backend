@@ -15,11 +15,11 @@ import (
 )
 
 type UserHandler struct {
-	repo *repository.UserRepository
+	repo repository.UserRepoI
 	log  *zap.SugaredLogger
 }
 
-func NewUserHandler(repo *repository.UserRepository, log *zap.SugaredLogger) *UserHandler {
+func NewUserHandler(repo repository.UserRepoI, log *zap.SugaredLogger) *UserHandler {
 	return &UserHandler{repo: repo, log: log}
 }
 

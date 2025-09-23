@@ -19,13 +19,20 @@ var (
 )
 
 type AuthService struct {
-	repo      *repository.UserRepository
+	repo      repository.UserRepoI
 	jwtSecret string
 	log       *zap.SugaredLogger
 }
 
-func NewAuthService(repo *repository.UserRepository, jwtSecret string, log *zap.SugaredLogger) *AuthService {
+func NewAuthService(repo repository.UserRepoI, jwtSecret string, log *zap.SugaredLogger) *AuthService {
 	return &AuthService{repo: repo, jwtSecret: jwtSecret, log: log}
+}
+
+type AuthServiceI interface {
+	Register(ctx context.Context, req models.RegisterRequest) (*models.User, error)
+	Login(ctx context.Context, req models.LoginRequest) (string, error)
+	UpdateProfile(ctx context.Context, id int, req models.UpdateProfileRequest) (*models.User, error)
+	GetByID(ctx context.Context, id int) (*models.User, error)
 }
 
 // Register — создаёт нового пользователя

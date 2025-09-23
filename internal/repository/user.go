@@ -17,6 +17,16 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{db: db}
 }
 
+type UserRepoI interface {
+	GetAll(ctx context.Context) ([]models.User, error)
+	GetByID(ctx context.Context, id int) (*models.User, error)
+	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	Create(ctx context.Context, u *models.User) error
+	Update(ctx context.Context, u *models.User) error
+	UpdatePassword(ctx context.Context, id int, password string) error
+	Delete(ctx context.Context, id int) error
+}
+
 func (r *UserRepository) GetAll(ctx context.Context) ([]models.User, error) {
 	rows, err := r.db.Query(ctx, `
         SELECT id, email, full_name, role_id, created_at, updated_at
