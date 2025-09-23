@@ -10,7 +10,7 @@ import (
 
 	"github.com/Ramcache/travel-backend/internal/config"
 
-	_ "github.com/lib/pq" // postgres driver
+	_ "github.com/lib/pq"
 )
 
 func NewMigrateCmd() *cobra.Command {
@@ -23,7 +23,7 @@ func NewMigrateCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg := config.Load()
 
-			db, err := sql.Open("postgres", cfg.DB.URL) // ✅ фикс
+			db, err := sql.Open("postgres", cfg.DB.URL)
 			if err != nil {
 				log.Fatalf("db open: %v", err)
 			}
@@ -33,7 +33,6 @@ func NewMigrateCmd() *cobra.Command {
 				log.Fatalf("goose dialect: %v", err)
 			}
 
-			// путь к миграциям
 			if dir == "" {
 				dir = "migrations"
 			}

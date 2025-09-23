@@ -28,16 +28,13 @@ var (
 )
 
 func init() {
-	// Регистрируем метрики при старте
 	prometheus.MustRegister(httpRequestsTotal, httpRequestDuration)
 }
 
-// MetricsMiddleware собирает статистику по HTTP-запросам
 func MetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		// обёртка для захвата статуса
 		ww := &statusWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(ww, r)
 

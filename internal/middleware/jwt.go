@@ -31,7 +31,6 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// user_id
 			rawUID, ok := claims["user_id"]
 			if !ok {
 				http.Error(w, "invalid token", http.StatusUnauthorized)

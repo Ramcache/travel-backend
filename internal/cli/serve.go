@@ -28,7 +28,6 @@ func NewServeCmd() *cobra.Command {
 
 			ctx := context.Background()
 
-			// 🔌 DB
 			pool, err := storage.NewPostgres(ctx, storage.PostgresConfig{
 				DSN:         cfg.DB.URL,
 				MaxConns:    cfg.DB.MaxConns,

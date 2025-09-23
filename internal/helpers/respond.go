@@ -5,20 +5,17 @@ import (
 	"net/http"
 )
 
-// Envelope — общий формат ответа
 type Envelope struct {
 	Success bool `json:"success"`
 	Data    any  `json:"data,omitempty"`
 }
 
-// ErrorData — структура ошибки (уходит в Data)
 type ErrorData struct {
-	Code    string            `json:"code"`             // машинный код ошибки
-	Message string            `json:"message"`          // человеко-читаемый текст (на русском)
-	Fields  map[string]string `json:"fields,omitempty"` // ошибки по полям (для валидации)
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Fields  map[string]string `json:"fields,omitempty"`
 }
 
-// JSON — успешный ответ
 func JSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
@@ -28,20 +25,18 @@ func JSON(w http.ResponseWriter, status int, payload any) {
 	})
 }
 
-// Error — ошибка, всегда в Data
 func Error(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(Envelope{
 		Success: false,
 		Data: ErrorData{
-			Code:    http.StatusText(status), // можно заменить на кастомный код
+			Code:    http.StatusText(status),
 			Message: message,
 		},
 	})
 }
 
-// ValidationError — для удобства при StructValidation
 func ValidationError(w http.ResponseWriter, fields map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusUnprocessableEntity)
