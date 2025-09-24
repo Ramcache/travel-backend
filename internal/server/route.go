@@ -21,6 +21,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler,
 	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
 	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
+	orderHandler *handlers.OrderHandler,
 	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
@@ -108,6 +109,11 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Delete("/admin/news/categories/{id}", categoryHandler.Delete)
 
 			admin.Get("/admin/stats", statsHandler.Get)
+
+			admin.Get("/admin/orders", orderHandler.List)
+			admin.Post("/admin/orders/{id}/status", orderHandler.UpdateStatus)
+			admin.Post("/admin/orders/{id}/read", orderHandler.MarkAsRead)
+
 		})
 	})
 

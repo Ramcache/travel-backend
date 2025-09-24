@@ -8,15 +8,13 @@ import (
 )
 
 var ruDict = map[string]string{
-	// Общие
-	"internal_error":    "Внутренняя ошибка сервера",
-	"bad_request":       "Некорректный запрос",
-	"unauthorized":      "Требуется авторизация",
-	"forbidden":         "Доступ запрещён",
-	"not_found":         "Ресурс не найден",
-	"conflict":          "Конфликт данных",
-	"validation_failed": "Ошибка валидации данных",
-	// Доменные (пример)
+	"internal_error":      "Внутренняя ошибка сервера",
+	"bad_request":         "Некорректный запрос",
+	"unauthorized":        "Требуется авторизация",
+	"forbidden":           "Доступ запрещён",
+	"not_found":           "Ресурс не найден",
+	"conflict":            "Конфликт данных",
+	"validation_failed":   "Ошибка валидации данных",
 	"user_not_found":      "Пользователь не найден",
 	"invalid_credentials": "Неверный логин или пароль",
 	"news_not_found":      "Новость не найдена",

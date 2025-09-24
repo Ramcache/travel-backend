@@ -18,12 +18,13 @@ import (
 )
 
 type TripHandler struct {
-	service services.TripServiceI
-	log     *zap.SugaredLogger
+	service      services.TripServiceI
+	orderService *services.OrderService
+	log          *zap.SugaredLogger
 }
 
-func NewTripHandler(service services.TripServiceI, log *zap.SugaredLogger) *TripHandler {
-	return &TripHandler{service: service, log: log}
+func NewTripHandler(service services.TripServiceI, orderService *services.OrderService, log *zap.SugaredLogger) *TripHandler {
+	return &TripHandler{service: service, orderService: orderService, log: log}
 }
 
 // List
@@ -248,43 +249,6 @@ func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Заглушка не забудь
-
-// Buy
-// @Summary Buy trip (stub)
-// @Description Заглушка покупки тура (вернёт success)
-// @Tags trips
-// @Produce json
-// @Param id path int true "Trip ID"
-// @Success 200 {object} map[string]string
-// @Failure 404 {object} helpers.ErrorData "Тур не найден"
-// @Router /trips/{id}/buy [post]
-func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	trip, err := h.service.Get(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, services.ErrTripNotFound) {
-			helpers.Error(w, http.StatusNotFound, "Тур не найден")
-			return
-		}
-		helpers.Error(w, http.StatusInternalServerError, "Ошибка при получении тура")
-		return
-	}
-
-	go func(id int) {
-		if err := h.service.IncrementBuys(context.Background(), id); err != nil {
-			h.log.Errorw("increment_views_failed", "id", id, "err", err)
-		}
-	}(id)
-
-	// Заглушка — тут в будущем будет логика оплаты
-	h.log.Infow("buy_stub", "id", trip.ID, "title", trip.Title)
-	helpers.JSON(w, http.StatusOK, map[string]string{
-		"status":  "success",
-		"message": "Покупка тура пока недоступна (заглушка)",
-	})
-}
-
 // GetMain
 // @Summary Get main trip with countdown
 // @Description Получить главный тур для главной страницы (только название и обратный отсчёт)
@@ -353,4 +317,51 @@ func (h *TripHandler) Popular(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	helpers.JSON(w, http.StatusOK, trips)
+}
+
+// Buy
+// @Summary Buy trip
+// @Description Отправка заявки на покупку тура в Telegram
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Param data body models.BuyRequest true "Данные покупателя"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 404 {object} helpers.ErrorData "Тур не найден"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при покупке тура"
+// @Router /trips/{id}/buy [post]
+func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+
+	var req models.BuyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.Errorw("Некорректный JSON при покупке тура", "id", id, "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
+		return
+	}
+
+	if err := h.service.Buy(r.Context(), id, req); err != nil {
+		if errors.Is(err, services.ErrTripNotFound) {
+			h.log.Warnw("Тур не найден при покупке", "id", id)
+			helpers.Error(w, http.StatusNotFound, "Тур не найден")
+			return
+		}
+		h.log.Errorw("Ошибка при покупке тура", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
+		return
+	}
+
+	if _, err := h.orderService.Create(r.Context(), id, req.UserName, req.UserPhone); err != nil {
+		h.log.Errorw("Ошибка при создании заказа", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать заказ")
+		return
+	}
+
+	h.log.Infow("Заявка на тур успешно обработана", "id", id, "name", req.UserName, "phone", req.UserPhone)
+	helpers.JSON(w, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "Заявка успешно отправлена",
+	})
 }

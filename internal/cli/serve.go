@@ -28,7 +28,6 @@ func NewServeCmd() *cobra.Command {
 
 			ctx := context.Background()
 
-			// 🔌 DB
 			pool, err := storage.NewPostgres(ctx, storage.PostgresConfig{
 				DSN:         cfg.DB.URL,
 				MaxConns:    cfg.DB.MaxConns,
@@ -45,6 +44,7 @@ func NewServeCmd() *cobra.Command {
 			r := server.NewRouter(application.AuthHandler, application.UserHandler,
 				application.CurrencyHandler, application.TripHandler, application.NewsHandler,
 				application.ProfileHandler, application.NewsCategoryHandler, application.StatsHandler,
+				application.OrderHandler,
 				cfg.JWTSecret, log, pool)
 
 			addr := fmt.Sprintf(":%s", cfg.AppPort)

@@ -16,13 +16,12 @@ func New(env string) *zap.SugaredLogger {
 		level = zapcore.DebugLevel
 	}
 
-	// Настраиваем lumberjack для ротации файлов // потом в config
 	fileWriter := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/app.log", // можно вынести в конфиг
-		MaxSize:    50,             // мегабайты
-		MaxBackups: 7,              // количество файлов
-		MaxAge:     30,             // дни хранения
-		Compress:   true,           // сжатие старых логов
+		Filename:   "logs/app.log",
+		MaxSize:    50,
+		MaxBackups: 7,
+		MaxAge:     30,
+		Compress:   true,
 	})
 
 	consoleWriter := zapcore.Lock(os.Stdout)

@@ -10,10 +10,12 @@ import (
 )
 
 type Config struct {
-	AppEnv    string
-	AppPort   string
-	JWTSecret string
-	DB        DBConfig
+	AppEnv      string
+	AppPort     string
+	JWTSecret   string
+	DB          DBConfig
+	TG          TelegramConfig
+	FrontendURL string
 }
 
 type DBConfig struct {
@@ -24,21 +26,31 @@ type DBConfig struct {
 	IdleTimeout time.Duration
 }
 
+type TelegramConfig struct {
+	TelegramToken string
+	TelegramChat  string
+}
+
 func Load() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️ .env file not found, using system env")
 	}
 
 	return &Config{
-		AppEnv:    getEnv("APP_ENV", "dev"),
-		AppPort:   getEnv("APP_PORT", "8080"),
-		JWTSecret: getEnv("APP_JWT_SECRET", "changeme"),
+		AppEnv:      getEnv("APP_ENV", "dev"),
+		AppPort:     getEnv("APP_PORT", "8080"),
+		JWTSecret:   getEnv("APP_JWT_SECRET", "changeme"),
+		FrontendURL: getEnv("FRONTEND_URL", ""),
 		DB: DBConfig{
 			URL:         getEnv("DB_URL", ""),
 			MaxConns:    getEnvInt("DB_MAX_CONNS", 10),
 			MinConns:    getEnvInt("DB_MIN_CONNS", 2),
 			ConnTimeout: getEnvDuration("DB_CONN_TIMEOUT", 5*time.Second),
 			IdleTimeout: getEnvDuration("DB_IDLE_TIMEOUT", 5*time.Minute),
+		},
+		TG: TelegramConfig{
+			TelegramToken: getEnv("TG_TOKEN", ""),
+			TelegramChat:  getEnv("TG_CHAT", ""),
 		},
 	}
 }

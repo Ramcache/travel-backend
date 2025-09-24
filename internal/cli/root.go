@@ -8,7 +8,6 @@ func NewRootCmd() *cobra.Command {
 		Short: "Travel Backend API",
 	}
 
-	// добавляем команды
 	rootCmd.AddCommand(NewServeCmd())
 	rootCmd.AddCommand(NewMigrateCmd())
 

@@ -3,21 +3,30 @@ definitions:
   helpers.ErrorData:
     properties:
       code:
-        description: машинный код ошибки
         type: string
       fields:
         additionalProperties:
           type: string
-        description: ошибки по полям (для валидации)
         type: object
       message:
-        description: человеко-читаемый текст (на русском)
         type: string
     type: object
   models.AuthResponse:
     properties:
       token:
         type: string
+    type: object
+  models.BuyRequest:
+    properties:
+      name:
+        example: Иван
+        type: string
+      phone:
+        example: "+79998887766"
+        type: string
+      trip_id:
+        example: 1
+        type: integer
     type: object
   models.CreateNewsCategoryRequest:
     properties:
@@ -154,6 +163,23 @@ definitions:
       title:
         type: string
       updated_at:
+        type: string
+    type: object
+  models.Order:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_read:
+        type: boolean
+      status:
+        type: string
+      trip_id:
+        type: integer
+      user_name:
+        type: string
+      user_phone:
         type: string
     type: object
   models.RegisterRequest:
@@ -609,6 +635,94 @@ paths:
       summary: Обновить категорию новостей
       tags:
       - news-categories
+  /admin/orders:
+    get:
+      description: Получить список всех заказов (для админки)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Order'
+            type: array
+        "500":
+          description: Не удалось получить список заказов
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Get orders list (admin)
+      tags:
+      - admin
+  /admin/orders/{id}/read:
+    post:
+      description: Пометить заказ как прочитанный
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось обновить заказ
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Mark order as read
+      tags:
+      - admin
+  /admin/orders/{id}/status:
+    post:
+      description: Обновить статус заказа (admin)
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новый статус (new/in_progress/done/canceled)
+        in: query
+        name: status
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Заказ не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось обновить статус
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Update order status
+      tags:
+      - admin
   /admin/stats:
     get:
       produces:
@@ -1178,13 +1292,21 @@ paths:
       - trips
   /trips/{id}/buy:
     post:
-      description: Заглушка покупки тура (вернёт success)
+      consumes:
+      - application/json
+      description: Отправка заявки на покупку тура в Telegram
       parameters:
       - description: Trip ID
         in: path
         name: id
         required: true
         type: integer
+      - description: Данные покупателя
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.BuyRequest'
       produces:
       - application/json
       responses:
@@ -1194,11 +1316,19 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
         "404":
           description: Тур не найден
           schema:
             $ref: '#/definitions/helpers.ErrorData'
-      summary: Buy trip (stub)
+        "500":
+          description: Ошибка при покупке тура
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Buy trip
       tags:
       - trips
   /trips/{id}/countdown:

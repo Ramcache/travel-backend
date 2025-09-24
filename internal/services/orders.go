@@ -1,0 +1,42 @@
+package services
+
+import (
+	"context"
+	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/Ramcache/travel-backend/internal/repository"
+)
+
+type OrderService struct {
+	repo *repository.OrderRepo
+}
+
+func NewOrderService(repo *repository.OrderRepo) *OrderService {
+	return &OrderService{repo: repo}
+}
+
+func (s *OrderService) Create(ctx context.Context, tripID int, userName, userPhone string) (*models.Order, error) {
+	order := &models.Order{
+		TripID:    tripID,
+		UserName:  userName,
+		UserPhone: userPhone,
+		Status:    "new",
+	}
+
+	if err := s.repo.Create(ctx, order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
+func (s *OrderService) List(ctx context.Context) ([]models.Order, error) {
+	return s.repo.List(ctx)
+}
+
+func (s *OrderService) UpdateStatus(ctx context.Context, id int, status string) error {
+	return s.repo.UpdateStatus(ctx, id, status)
+}
+
+func (s *OrderService) MarkAsRead(ctx context.Context, id int) error {
+	return s.repo.MarkAsRead(ctx, id)
+}

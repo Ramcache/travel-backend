@@ -13,11 +13,11 @@ import (
 )
 
 type ProfileHandler struct {
-	service *services.AuthService
+	service services.AuthServiceI
 	log     *zap.SugaredLogger
 }
 
-func NewProfileHandler(s *services.AuthService, log *zap.SugaredLogger) *ProfileHandler {
+func NewProfileHandler(s services.AuthServiceI, log *zap.SugaredLogger) *ProfileHandler {
 	return &ProfileHandler{service: s, log: log}
 }
 

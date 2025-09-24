@@ -16,7 +16,6 @@ type PostgresConfig struct {
 	IdleTimeout time.Duration
 }
 
-// NewPostgres создаёт и настраивает пул соединений
 func NewPostgres(ctx context.Context, cfg PostgresConfig) (*pgxpool.Pool, error) {
 	pgxCfg, err := pgxpool.ParseConfig(cfg.DSN)
 	if err != nil {

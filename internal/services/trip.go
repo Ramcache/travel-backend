@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -18,12 +20,19 @@ var (
 )
 
 type TripService struct {
-	repo repository.TripRepositoryI
-	log  *zap.SugaredLogger
+	repo        repository.TripRepositoryI
+	telegram    *helpers.TelegramClient
+	frontendURL string
+	log         *zap.SugaredLogger
 }
 
-func NewTripService(repo repository.TripRepositoryI, log *zap.SugaredLogger) *TripService {
-	return &TripService{repo: repo, log: log}
+func NewTripService(repo repository.TripRepositoryI, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
+	return &TripService{
+		repo:        repo,
+		telegram:    telegram,
+		frontendURL: frontendURL,
+		log:         log,
+	}
 }
 
 type TripServiceI interface {
@@ -36,6 +45,7 @@ type TripServiceI interface {
 	Popular(ctx context.Context, limit int) ([]models.Trip, error)
 	IncrementViews(ctx context.Context, id int) error
 	IncrementBuys(ctx context.Context, id int) error
+	Buy(ctx context.Context, id int, req models.BuyRequest) error
 }
 
 // List — список туров
@@ -210,4 +220,46 @@ func (s *TripService) IncrementViews(ctx context.Context, id int) error {
 
 func (s *TripService) IncrementBuys(ctx context.Context, id int) error {
 	return s.repo.IncrementBuys(ctx, id)
+}
+
+func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) error {
+	trip, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	msg := fmt.Sprintf(
+		"🛒 <b>Новый заказ!</b>\n\n"+
+			"📅 Дата: %s\n"+
+			"👤 Имя: %s\n"+
+			"📞 Телефон: %s\n\n"+
+			"🌍 Тур: %s\n"+
+			"💰 Цена: %.0f руб.\n\n"+
+			"🔗 <a href=\"%s/trips/%d\">Открыть тур</a>\n"+
+			"🌐 %s/trips/%d",
+		time.Now().Format("02.01.2006 15:04"),
+		req.UserName,
+		req.UserPhone,
+		trip.Title,
+		trip.Price,
+		strings.TrimRight(s.frontendURL, "/"),
+		trip.ID,
+		strings.TrimRight(s.frontendURL, "/"),
+		trip.ID,
+	)
+
+	if s.telegram != nil {
+		if err := s.telegram.SendMessage(msg); err != nil {
+			s.log.Errorw("Ошибка отправки в Telegram", "err", err)
+			return err
+		}
+	}
+
+	go func() {
+		if err := s.repo.IncrementBuys(context.Background(), id); err != nil {
+			s.log.Errorw("increment_buys_failed", "id", id, "err", err)
+		}
+	}()
+
+	return nil
 }

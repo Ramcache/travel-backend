@@ -11,7 +11,6 @@ import (
 	"github.com/Ramcache/travel-backend/internal/helpers"
 )
 
-// statusWriter — обёртка для захвата статуса и размера ответа
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -32,7 +31,6 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-// ZapLogger — логирует все запросы через zap
 func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +40,6 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(sww, r)
 
-			// достаём user_id из контекста, если он установлен в JWTAuth
 			var userID interface{} = nil
 			if v := r.Context().Value(UserIDKey); v != nil {
 				userID = v
@@ -63,7 +60,6 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 	}
 }
 
-// Recoverer — перехватывает панику и отдаёт JSON-ошибку
 func Recoverer(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -78,14 +74,12 @@ func Recoverer(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 	}
 }
 
-// NotFoundHandler — отдаёт JSON с ошибкой "Ресурс не найден"
 func NotFoundHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusNotFound, "Ресурс не найден")
 	}
 }
 
-// MethodNotAllowedHandler — отдаёт JSON с ошибкой "Метод не поддерживается"
 func MethodNotAllowedHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusMethodNotAllowed, "Метод не поддерживается")
