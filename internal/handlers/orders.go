@@ -132,3 +132,37 @@ func (h *OrderHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	h.log.Infow("Заказ помечен как прочитанный", "id", id)
 	helpers.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
+
+// Delete order
+// @Summary Delete order
+// @Tags admin
+// @Security Bearer
+// @Param id path int true "Order ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 404 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/orders/{id} [delete]
+func (h *OrderHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		h.log.Warnw("Некорректный ID заказа", "id", idStr, "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID")
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), id); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			h.log.Warnw("Заказ не найден при удалении", "id", id)
+			helpers.Error(w, http.StatusNotFound, "Заказ не найден")
+			return
+		}
+		h.log.Errorw("Ошибка при удалении заказа", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить заказ")
+		return
+	}
+
+	h.log.Infow("Заказ удалён", "id", id)
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}

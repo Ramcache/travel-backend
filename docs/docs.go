@@ -22,7 +22,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Получить список заявок (админка)",
+                "description": "Получить список заявок (админка) с пагинацией и фильтрацией",
                 "produces": [
                     "application/json"
                 ],
@@ -42,16 +42,76 @@ const docTemplate = `{
                         "description": "Смещение (0)",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по телефону",
+                        "name": "phone",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Фильтр по прочитанности",
+                        "name": "is_read",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Feedback"
+                            "$ref": "#/definitions/services.FeedbacksWithTotal"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/feedbacks/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Delete feedback",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Feedback ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
@@ -583,6 +643,57 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Не удалось получить список заказов",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Delete order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -2429,6 +2540,20 @@ const docTemplate = `{
                 },
                 "usd": {
                     "type": "number"
+                }
+            }
+        },
+        "services.FeedbacksWithTotal": {
+            "type": "object",
+            "properties": {
+                "feedbacks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Feedback"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },

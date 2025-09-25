@@ -88,3 +88,14 @@ func (r *FeedbackRepo) MarkAsRead(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, `UPDATE feedbacks SET is_read = true WHERE id = $1`, id)
 	return err
 }
+
+func (r *FeedbackRepo) Delete(ctx context.Context, id int) error {
+	cmd, err := r.db.Exec(ctx, `DELETE FROM feedbacks WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("feedback not found: %d", id)
+	}
+	return nil
+}
