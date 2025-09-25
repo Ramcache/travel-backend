@@ -343,19 +343,14 @@ func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Buy(r.Context(), id, req); err != nil {
-		if errors.Is(err, services.ErrTripNotFound) {
+		switch {
+		case errors.Is(err, services.ErrTripNotFound):
 			h.log.Warnw("Тур не найден при покупке", "id", id)
 			helpers.Error(w, http.StatusNotFound, "Тур не найден")
-			return
+		default:
+			h.log.Errorw("Ошибка при покупке тура", "id", id, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
 		}
-		h.log.Errorw("Ошибка при покупке тура", "id", id, "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
-		return
-	}
-
-	if _, err := h.orderService.Create(r.Context(), id, req.UserName, req.UserPhone); err != nil {
-		h.log.Errorw("Ошибка при создании заказа", "id", id, "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать заказ")
 		return
 	}
 

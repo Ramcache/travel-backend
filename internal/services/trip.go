@@ -21,14 +21,16 @@ var (
 
 type TripService struct {
 	repo        repository.TripRepositoryI
+	orderRepo   *repository.OrderRepo
 	telegram    *helpers.TelegramClient
 	frontendURL string
 	log         *zap.SugaredLogger
 }
 
-func NewTripService(repo repository.TripRepositoryI, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
+func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.OrderRepo, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
 	return &TripService{
 		repo:        repo,
+		orderRepo:   orderRepo,
 		telegram:    telegram,
 		frontendURL: frontendURL,
 		log:         log,
@@ -228,6 +230,17 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 		return err
 	}
 
+	// создаём заказ в базе
+	order := models.Order{
+		TripID:    trip.ID,
+		UserName:  req.UserName,
+		UserPhone: req.UserPhone,
+		Status:    "pending",
+	}
+	if err := s.orderRepo.Create(ctx, &order); err != nil {
+		return err
+	}
+
 	msg := fmt.Sprintf(
 		"🛒 <b>Новый заказ!</b>\n\n"+
 			"📅 Дата: %s\n"+
@@ -238,8 +251,8 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 			"🔗 <a href=\"%s/trips/%d\">Открыть тур</a>\n"+
 			"🌐 %s/trips/%d",
 		time.Now().Format("02.01.2006 15:04"),
-		req.UserName,
-		req.UserPhone,
+		order.UserName,
+		order.UserPhone,
 		trip.Title,
 		trip.Price,
 		strings.TrimRight(s.frontendURL, "/"),
@@ -248,9 +261,17 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 		trip.ID,
 	)
 
+	//if s.telegram != nil {
+	//	if err := s.telegram.SendMessage(msg); err != nil {
+	//		s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
+	//		return err
+	//	}
+	//}
 	if s.telegram != nil {
-		if err := s.telegram.SendMessage(msg); err != nil {
-			s.log.Errorw("Ошибка отправки в Telegram", "err", err)
+		link := fmt.Sprintf("%s/trips/%d", strings.TrimRight(s.frontendURL, "/"), trip.ID)
+
+		if err := s.telegram.SendMessageWithButton(msg, "Открыть тур", link); err != nil {
+			s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
 			return err
 		}
 	}
