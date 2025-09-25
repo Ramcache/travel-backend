@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type FeedbackHandler struct {
@@ -110,4 +111,33 @@ func (h *FeedbackHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// Delete feedback
+// @Summary Delete feedback
+// @Tags admin
+// @Security Bearer
+// @Param id path int true "Feedback ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 404 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/feedbacks/{id} [delete]
+func (h *FeedbackHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID")
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), id); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			helpers.Error(w, http.StatusNotFound, "Заявка не найдена")
+			return
+		}
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить заявку")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }

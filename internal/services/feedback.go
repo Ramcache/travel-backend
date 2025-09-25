@@ -76,3 +76,7 @@ func (s *FeedbackService) List(ctx context.Context, limit, offset int, phone str
 func (s *FeedbackService) MarkAsRead(ctx context.Context, id int) error {
 	return s.repo.MarkAsRead(ctx, id)
 }
+
+func (s *FeedbackService) Delete(ctx context.Context, id int) error {
+	return s.repo.Delete(ctx, id)
+}

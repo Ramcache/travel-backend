@@ -119,6 +119,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 
 			admin.Get("/feedbacks", feedbackHandler.List)
 			admin.Post("/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
+			admin.Delete("/feedbacks/{id}", feedbackHandler.Delete)
 		})
 	})
 
