@@ -49,6 +49,7 @@ type TripServiceI interface {
 	IncrementViews(ctx context.Context, id int) error
 	IncrementBuys(ctx context.Context, id int) error
 	Buy(ctx context.Context, id int, req models.BuyRequest) error
+	BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error
 }
 
 // List — список туров
@@ -278,6 +279,39 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 			s.log.Errorw("increment_buys_failed", "id", id, "err", err)
 		}
 	}()
+
+	return nil
+}
+
+// BuyWithoutTrip — заявка без привязки к туру
+func (s *TripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error {
+	order := models.Order{
+		// TripID:    0, // закомментировано
+		UserName:  req.UserName,
+		UserPhone: req.UserPhone,
+		Status:    "pending",
+	}
+
+	if err := s.orderRepo.Create(ctx, &order); err != nil {
+		return err
+	}
+
+	msg := fmt.Sprintf(
+		"🛒 <b>Новый заказ (без тура)!</b>\n\n"+
+			"📅 <b>Дата:</b> %s\n"+
+			"👤 <b>Имя:</b> %s\n"+
+			"📞 <b>Телефон:</b> <a href=\"tel:%s\">%s</a>",
+		time.Now().Format("02.01.2006 15:04"),
+		order.UserName,
+		order.UserPhone, order.UserPhone,
+	)
+
+	if s.telegram != nil {
+		if err := s.telegram.SendMessage(msg); err != nil {
+			s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
+			return err
+		}
+	}
 
 	return nil
 }

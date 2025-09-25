@@ -1360,6 +1360,38 @@ paths:
       summary: Get booking countdown
       tags:
       - trips
+  /trips/buy:
+    post:
+      consumes:
+      - application/json
+      description: Отправка заявки без указания тура
+      parameters:
+      - description: Данные покупателя
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.BuyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка при покупке
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Buy without trip
+      tags:
+      - trips
   /trips/main:
     get:
       description: Получить главный тур для главной страницы (только название и обратный
