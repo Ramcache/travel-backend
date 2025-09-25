@@ -57,7 +57,13 @@ func (m *MockTripRepo) IncrementBuys(ctx context.Context, id int) error {
 
 func TestTripService_Create_InvalidInput(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	req := models.CreateTripRequest{
 		Title: "", DepartureCity: "", TripType: "",
@@ -69,7 +75,13 @@ func TestTripService_Create_InvalidInput(t *testing.T) {
 
 func TestTripService_Create_InvalidDate(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	req := models.CreateTripRequest{
 		Title: "Trip", DepartureCity: "Moscow", TripType: "пляжный",
@@ -82,7 +94,13 @@ func TestTripService_Create_InvalidDate(t *testing.T) {
 
 func TestTripService_Create_Success(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	req := models.CreateTripRequest{
 		Title: "Trip", DepartureCity: "Moscow", TripType: "пляжный",
@@ -99,7 +117,13 @@ func TestTripService_Create_Success(t *testing.T) {
 
 func TestTripService_Get_NotFound(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	mockRepo.On("GetByID", mock.Anything, 99).Return((*models.Trip)(nil), errors.New("not found"))
 
@@ -110,7 +134,13 @@ func TestTripService_Get_NotFound(t *testing.T) {
 
 func TestTripService_Update_InvalidDate(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	old := &models.Trip{ID: 1, Title: "Old"}
 	mockRepo.On("GetByID", mock.Anything, 1).Return(old, nil)
@@ -123,7 +153,13 @@ func TestTripService_Update_InvalidDate(t *testing.T) {
 
 func TestTripService_Delete_Success(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	mockRepo.On("Delete", mock.Anything, 1).Return(nil)
 	assert.NoError(t, svc.Delete(context.Background(), 1))
@@ -132,7 +168,13 @@ func TestTripService_Delete_Success(t *testing.T) {
 
 func TestTripService_IncrementViews_Buys(t *testing.T) {
 	mockRepo := new(MockTripRepo)
-	svc := services.NewTripService(mockRepo, nil, "test-secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewTripService(
+		mockRepo,
+		nil, // orderRepo
+		nil, // telegram
+		"test-frontend",
+		zaptest.NewLogger(t).Sugar(),
+	)
 
 	mockRepo.On("IncrementViews", mock.Anything, 1).Return(nil)
 	mockRepo.On("IncrementBuys", mock.Anything, 1).Return(nil)

@@ -62,11 +62,12 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	// services
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret, log)
 	currencyService := services.NewCurrencyService(5*time.Minute, log)
-	tripService := services.NewTripService(tripRepo, telegramClient, cfg.FrontendURL, log)
+	tripService := services.NewTripService(tripRepo, orderRepo, telegramClient, cfg.FrontendURL, log)
 	newsService := services.NewNewsService(newsRepo, newsCategoryRepo, log)
 	newsCategoryService := services.NewNewsCategoryService(newsCategoryRepo, log)
 	statsService := services.NewStatsService(statsRepo)
 	orderService := services.NewOrderService(orderRepo)
+
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
 	userHandler := handlers.NewUserHandler(userRepo, log)
