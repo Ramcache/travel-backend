@@ -441,7 +441,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Получить список всех заказов (для админки)",
+                "description": "Получить список заказов с пагинацией и фильтрацией",
                 "produces": [
                     "application/json"
                 ],
@@ -449,14 +449,43 @@ const docTemplate = `{
                     "admin"
                 ],
                 "summary": "Get orders list (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Количество записей (по умолчанию 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение (по умолчанию 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по статусу (new/in_progress/done/canceled)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по телефону",
+                        "name": "phone",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Фильтр по прочитанности",
+                        "name": "is_read",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Order"
-                            }
+                            "$ref": "#/definitions/services.OrdersWithTotal"
                         }
                     },
                     "500": {
@@ -2227,6 +2256,20 @@ const docTemplate = `{
                 },
                 "usd": {
                     "type": "number"
+                }
+            }
+        },
+        "services.OrdersWithTotal": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Order"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         }

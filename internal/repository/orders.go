@@ -39,12 +39,65 @@ func (r *OrderRepo) Create(ctx context.Context, o *models.Order) error {
 	).Scan(&o.ID, &o.CreatedAt)
 }
 
-// Список заказов (для админки)
-func (r *OrderRepo) List(ctx context.Context) ([]models.Order, error) {
-	rows, err := r.db.Query(ctx, `
+// Count возвращает количество заказов по тем же фильтрам
+func (r *OrderRepo) Count(ctx context.Context, status, phone string, isRead *bool) (int, error) {
+	query := `SELECT COUNT(*) FROM orders WHERE 1=1`
+	args := []interface{}{}
+	argID := 1
+
+	if status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argID)
+		args = append(args, status)
+		argID++
+	}
+	if phone != "" {
+		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
+		args = append(args, "%"+phone+"%")
+		argID++
+	}
+	if isRead != nil {
+		query += fmt.Sprintf(" AND is_read = $%d", argID)
+		args = append(args, *isRead)
+		argID++
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, query, args...).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+// List с пагинацией и фильтрацией
+func (r *OrderRepo) List(ctx context.Context, limit, offset int, status, phone string, isRead *bool) ([]models.Order, error) {
+	query := `
         SELECT id, trip_id, user_name, user_phone, status, is_read, created_at
         FROM orders
-        ORDER BY created_at DESC`)
+        WHERE 1=1
+    `
+	args := []interface{}{}
+	argID := 1
+
+	if status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argID)
+		args = append(args, status)
+		argID++
+	}
+	if phone != "" {
+		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
+		args = append(args, "%"+phone+"%")
+		argID++
+	}
+	if isRead != nil {
+		query += fmt.Sprintf(" AND is_read = $%d", argID)
+		args = append(args, *isRead)
+		argID++
+	}
+
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argID, argID+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
