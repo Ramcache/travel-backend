@@ -9,3 +9,8 @@ type Feedback struct {
 	IsRead    bool      `json:"is_read"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type FeedbackRequest struct {
+	UserName  string `json:"user_name"`
+	UserPhone string `json:"user_phone"`
+}
