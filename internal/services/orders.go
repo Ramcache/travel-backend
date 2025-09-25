@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/repository"
 )
@@ -16,7 +17,12 @@ func NewOrderService(repo *repository.OrderRepo) *OrderService {
 
 func (s *OrderService) Create(ctx context.Context, tripID int, userName, userPhone string) (*models.Order, error) {
 	order := &models.Order{
-		TripID:    tripID,
+		TripID: models.NullInt32{
+			NullInt32: sql.NullInt32{
+				Int32: int32(tripID),
+				Valid: tripID > 0, // если 0 → будет NULL
+			},
+		},
 		UserName:  userName,
 		UserPhone: userPhone,
 		Status:    "new",

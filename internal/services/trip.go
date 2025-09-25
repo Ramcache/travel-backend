@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -232,13 +233,20 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 		return err
 	}
 
-	// создаём заказ в базе
+	var tripID models.NullInt32
+	if trip != nil {
+		tripID = models.NullInt32{NullInt32: sql.NullInt32{Int32: int32(trip.ID), Valid: true}}
+	} else {
+		tripID = models.NullInt32{NullInt32: sql.NullInt32{Valid: false}}
+	}
+
 	order := models.Order{
-		TripID:    trip.ID,
+		TripID:    tripID,
 		UserName:  req.UserName,
 		UserPhone: req.UserPhone,
 		Status:    "pending",
 	}
+
 	if err := s.orderRepo.Create(ctx, &order); err != nil {
 		return err
 	}

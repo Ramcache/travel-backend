@@ -18,17 +18,25 @@ func NewOrderRepo(db *pgxpool.Pool) *OrderRepo {
 
 func (r *OrderRepo) Create(ctx context.Context, o *models.Order) error {
 	var tripID sql.NullInt32
-	if o.TripID > 0 {
-		tripID = sql.NullInt32{Int32: int32(o.TripID), Valid: true}
+
+	if o.TripID.Valid {
+		tripID = sql.NullInt32{
+			Int32: o.TripID.Int32,
+			Valid: true,
+		}
 	} else {
 		tripID = sql.NullInt32{Valid: false}
 	}
 
 	query := `INSERT INTO orders (trip_id, user_name, user_phone, status)
-	          VALUES ($1, $2, $3, $4) RETURNING id, created_at`
+              VALUES ($1, $2, $3, $4) RETURNING id, created_at`
 
-	return r.db.QueryRow(ctx, query, tripID, o.UserName, o.UserPhone, o.Status).
-		Scan(&o.ID, &o.CreatedAt)
+	return r.db.QueryRow(ctx, query,
+		tripID,
+		o.UserName,
+		o.UserPhone,
+		o.Status,
+	).Scan(&o.ID, &o.CreatedAt)
 }
 
 // Список заказов (для админки)
