@@ -176,6 +176,10 @@ definitions:
       status:
         type: string
       trip_id:
+        description: |-
+          TripID может быть числом или null
+          swagger:strfmt int32
+        example: 123
         type: integer
       user_name:
         type: string
@@ -363,7 +367,7 @@ definitions:
 info:
   contact: {}
   description: API for Travel project
-  title: Travel API
+  title: Travel API manasik
   version: "1.0"
 paths:
   /admin/news:

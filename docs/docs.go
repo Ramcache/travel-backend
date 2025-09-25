@@ -1949,7 +1949,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "trip_id": {
-                    "type": "integer"
+                    "description": "TripID может быть числом или null\nswagger:strfmt int32",
+                    "type": "integer",
+                    "example": 123
                 },
                 "user_name": {
                     "type": "string"
@@ -2244,7 +2246,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "https://api.web95.tech/api/v1",
 	Schemes:          []string{},
-	Title:            "Travel API",
+	Title:            "Travel API manasik",
 	Description:      "API for Travel project",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
