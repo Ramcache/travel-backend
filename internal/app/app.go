@@ -26,7 +26,7 @@ type App struct {
 	newsCategoryRepo *repository.NewsCategoryRepository
 	statsRepo        *repository.StatsRepository
 	orderRepo        *repository.OrderRepo
-
+	feedbackRepo     *repository.FeedbackRepo
 	// services
 	AuthService         *services.AuthService
 	CurrencyService     *services.CurrencyService
@@ -35,6 +35,7 @@ type App struct {
 	newsCategoryService *services.NewsCategoryService
 	statsService        *services.StatsService
 	orderService        *services.OrderService
+	feedbackService     *services.FeedbackService
 
 	// handlers
 	AuthHandler         *handlers.AuthHandler
@@ -46,6 +47,7 @@ type App struct {
 	NewsCategoryHandler *handlers.NewsCategoryHandler
 	StatsHandler        *handlers.StatsHandler
 	OrderHandler        *handlers.OrderHandler
+	FeedbackHandler     *handlers.FeedbackHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -56,6 +58,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	newsCategoryRepo := repository.NewNewsCategoryRepository(pool)
 	statsRepo := repository.NewStatsRepository(pool)
 	orderRepo := repository.NewOrderRepo(pool)
+	feedbackRepo := repository.NewFeedbackRepo(pool)
 	// helpers
 	telegramClient := helpers.NewTelegramClient(cfg.TG.TelegramToken, cfg.TG.TelegramChat)
 
@@ -67,6 +70,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	newsCategoryService := services.NewNewsCategoryService(newsCategoryRepo, log)
 	statsService := services.NewStatsService(statsRepo)
 	orderService := services.NewOrderService(orderRepo)
+	feedbackService := services.NewFeedbackService(feedbackRepo, telegramClient, log)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
@@ -78,6 +82,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	newsCategoryHandler := handlers.NewNewsCategoryHandler(newsCategoryService, log)
 	statsHandler := handlers.NewStatsHandler(statsService, log)
 	orderHandler := handlers.NewOrderHandler(orderService, log)
+	feedbackHandler := handlers.NewFeedbackHandler(feedbackService, log)
 
 	return &App{
 		Config:              cfg,
@@ -103,5 +108,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		NewsCategoryHandler: newsCategoryHandler,
 		StatsHandler:        statsHandler,
 		OrderHandler:        orderHandler,
+		FeedbackHandler:     feedbackHandler,
 	}
 }

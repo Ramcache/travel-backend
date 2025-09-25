@@ -51,8 +51,26 @@ func (s *FeedbackService) Create(ctx context.Context, req models.FeedbackRequest
 	return nil
 }
 
-func (s *FeedbackService) List(ctx context.Context, limit, offset int) ([]models.Feedback, error) {
-	return s.repo.List(ctx, limit, offset)
+type FeedbacksWithTotal struct {
+	Total     int               `json:"total"`
+	Feedbacks []models.Feedback `json:"feedbacks"`
+}
+
+func (s *FeedbackService) List(ctx context.Context, limit, offset int, phone string, isRead *bool) (*FeedbacksWithTotal, error) {
+	total, err := s.repo.Count(ctx, phone, isRead)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := s.repo.List(ctx, limit, offset, phone, isRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FeedbacksWithTotal{
+		Total:     total,
+		Feedbacks: items,
+	}, nil
 }
 
 func (s *FeedbackService) MarkAsRead(ctx context.Context, id int) error {

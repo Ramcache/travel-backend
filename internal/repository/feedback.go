@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -20,12 +21,53 @@ func (r *FeedbackRepo) Create(ctx context.Context, f *models.Feedback) error {
 	return r.db.QueryRow(ctx, query, f.UserName, f.UserPhone).Scan(&f.ID, &f.CreatedAt)
 }
 
-func (r *FeedbackRepo) List(ctx context.Context, limit, offset int) ([]models.Feedback, error) {
-	rows, err := r.db.Query(ctx, `
+func (r *FeedbackRepo) Count(ctx context.Context, phone string, isRead *bool) (int, error) {
+	query := `SELECT COUNT(*) FROM feedbacks WHERE 1=1`
+	args := []interface{}{}
+	argID := 1
+
+	if phone != "" {
+		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
+		args = append(args, "%"+phone+"%")
+		argID++
+	}
+	if isRead != nil {
+		query += fmt.Sprintf(" AND is_read = $%d", argID)
+		args = append(args, *isRead)
+		argID++
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, query, args...).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r *FeedbackRepo) List(ctx context.Context, limit, offset int, phone string, isRead *bool) ([]models.Feedback, error) {
+	query := `
         SELECT id, user_name, user_phone, is_read, created_at
         FROM feedbacks
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2`, limit, offset)
+        WHERE 1=1
+    `
+	args := []interface{}{}
+	argID := 1
+
+	if phone != "" {
+		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
+		args = append(args, "%"+phone+"%")
+		argID++
+	}
+	if isRead != nil {
+		query += fmt.Sprintf(" AND is_read = $%d", argID)
+		args = append(args, *isRead)
+		argID++
+	}
+
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argID, argID+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -51,29 +51,41 @@ func (h *FeedbackHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List feedbacks
 // @Summary Get feedbacks
-// @Description Получить список заявок (админка)
+// @Description Получить список заявок (админка) с пагинацией и фильтрацией
 // @Tags admin
 // @Security Bearer
 // @Produce json
 // @Param limit query int false "Количество (20)"
 // @Param offset query int false "Смещение (0)"
-// @Success 200 {array} models.Feedback
+// @Param phone query string false "Фильтр по телефону"
+// @Param is_read query bool false "Фильтр по прочитанности"
+// @Success 200 {object} services.FeedbacksWithTotal
 // @Failure 500 {object} helpers.ErrorData
 // @Router /admin/feedbacks [get]
 func (h *FeedbackHandler) List(w http.ResponseWriter, r *http.Request) {
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	q := r.URL.Query()
+
+	limit, _ := strconv.Atoi(q.Get("limit"))
 	if limit <= 0 {
 		limit = 20
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	offset, _ := strconv.Atoi(q.Get("offset"))
 
-	list, err := h.service.List(r.Context(), limit, offset)
+	phone := q.Get("phone")
+
+	var isRead *bool
+	if v := q.Get("is_read"); v != "" {
+		b := v == "true" || v == "1"
+		isRead = &b
+	}
+
+	result, err := h.service.List(r.Context(), limit, offset, phone, isRead)
 	if err != nil {
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список заявок")
 		return
 	}
 
-	helpers.JSON(w, http.StatusOK, list)
+	helpers.JSON(w, http.StatusOK, result)
 }
 
 // MarkAsRead

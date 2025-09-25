@@ -21,7 +21,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler,
 	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
 	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
-	orderHandler *handlers.OrderHandler,
+	orderHandler *handlers.OrderHandler, feedbackHandler *handlers.FeedbackHandler,
 	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
@@ -74,6 +74,8 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Post("/trips/buy", tripHandler.BuyWithoutTrip)
 		api.Get("/trips/popular", tripHandler.Popular)
 
+		api.Post("/feedback", feedbackHandler.Create)
+
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
 			pr.Use(middleware.JWTAuth(jwtSecret))
@@ -115,6 +117,8 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Post("/admin/orders/{id}/status", orderHandler.UpdateStatus)
 			admin.Post("/admin/orders/{id}/read", orderHandler.MarkAsRead)
 
+			admin.Get("/feedbacks", feedbackHandler.List)
+			admin.Post("/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
 		})
 	})
 
