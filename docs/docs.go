@@ -2242,7 +2242,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "https://api.web95.tech/api/v1",
 	Schemes:          []string{},
 	Title:            "Travel API",
 	Description:      "API for Travel project",

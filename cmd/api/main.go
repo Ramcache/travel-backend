@@ -7,10 +7,10 @@ import (
 	"os"
 )
 
-// @title        Travel API
+// @title        Travel API manasik
 // @version      1.0
 // @description  API for Travel project
-// @BasePath     /api/v1
+// @BasePath     https://api.web95.tech/api/v1
 
 // @securityDefinitions.apikey Bearer
 // @in header
