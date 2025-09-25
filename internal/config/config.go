@@ -13,6 +13,7 @@ type Config struct {
 	AppEnv      string
 	AppPort     string
 	JWTSecret   string
+	JWTTTL      time.Duration
 	DB          DBConfig
 	TG          TelegramConfig
 	FrontendURL string
@@ -40,6 +41,7 @@ func Load() *Config {
 		AppEnv:      getEnv("APP_ENV", "dev"),
 		AppPort:     getEnv("APP_PORT", "8080"),
 		JWTSecret:   getEnv("APP_JWT_SECRET", "changeme"),
+		JWTTTL:      getEnvDuration("JWT_TTL", 24*time.Hour),
 		FrontendURL: getEnv("FRONTEND_URL", ""),
 		DB: DBConfig{
 			URL:         getEnv("DB_URL", ""),

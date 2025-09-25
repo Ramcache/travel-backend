@@ -3,9 +3,8 @@ package services
 import (
 	"context"
 	"errors"
-	"time"
-
 	"go.uber.org/zap"
+	"time"
 
 	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
@@ -21,11 +20,12 @@ var (
 type AuthService struct {
 	repo      repository.UserRepoI
 	jwtSecret string
+	jwtTTL    time.Duration
 	log       *zap.SugaredLogger
 }
 
-func NewAuthService(repo repository.UserRepoI, jwtSecret string, log *zap.SugaredLogger) *AuthService {
-	return &AuthService{repo: repo, jwtSecret: jwtSecret, log: log}
+func NewAuthService(repo repository.UserRepoI, jwtSecret string, jwtTTL time.Duration, log *zap.SugaredLogger) *AuthService {
+	return &AuthService{repo: repo, jwtSecret: jwtSecret, jwtTTL: jwtTTL, log: log}
 }
 
 type AuthServiceI interface {
@@ -81,7 +81,7 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 		return "", ErrInvalidCredentials
 	}
 
-	token, err := helpers.GenerateJWT(s.jwtSecret, user.ID, user.FullName, user.RoleID, 24*time.Hour)
+	token, err := helpers.GenerateJWT(s.jwtSecret, user.ID, user.FullName, user.RoleID, s.jwtTTL)
 	if err != nil {
 		s.log.Errorw("jwt_generate_failed", "user_id", user.ID, "err", err)
 		return "", err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Ramcache/travel-backend/internal/helpers"
 	"testing"
+	"time"
 
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/services"
@@ -51,7 +52,7 @@ func (m *MockUserRepo) Delete(ctx context.Context, id int) error {
 
 func TestAuthService_Register_InvalidInput(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	u, err := svc.Register(context.Background(), models.RegisterRequest{})
 	assert.Nil(t, u)
@@ -60,7 +61,7 @@ func TestAuthService_Register_InvalidInput(t *testing.T) {
 
 func TestAuthService_Register_EmailTaken(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByEmail", mock.Anything, "test@mail.com").
 		Return(&models.User{ID: 1}, nil)
@@ -74,7 +75,7 @@ func TestAuthService_Register_EmailTaken(t *testing.T) {
 
 func TestAuthService_Register_Success(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByEmail", mock.Anything, "new@mail.com").
 		Return((*models.User)(nil), errors.New("not found"))
@@ -91,7 +92,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 
 func TestAuthService_Login_UserNotFound(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByEmail", mock.Anything, "a@b.com").
 		Return((*models.User)(nil), errors.New("not found"))
@@ -105,7 +106,7 @@ func TestAuthService_Login_UserNotFound(t *testing.T) {
 
 func TestAuthService_Login_InvalidPassword(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	// bcrypt hash от "rightpass"
 	hash, _ := helpers.HashPassword("rightpass")
@@ -121,7 +122,7 @@ func TestAuthService_Login_InvalidPassword(t *testing.T) {
 
 func TestAuthService_Login_Success(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	hash, _ := helpers.HashPassword("123456")
 	repo.On("GetByEmail", mock.Anything, "ok@mail.com").
@@ -136,7 +137,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 
 func TestAuthService_UpdateProfile_Success(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	old := &models.User{ID: 1, FullName: "Old"}
 	repo.On("GetByID", mock.Anything, 1).Return(old, nil)
@@ -151,7 +152,7 @@ func TestAuthService_UpdateProfile_Success(t *testing.T) {
 
 func TestAuthService_GetByID_NotFound(t *testing.T) {
 	repo := new(MockUserRepo)
-	svc := services.NewAuthService(repo, "secret", zaptest.NewLogger(t).Sugar())
+	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByID", mock.Anything, 99).Return((*models.User)(nil), errors.New("not found"))
 
