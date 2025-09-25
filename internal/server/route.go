@@ -116,10 +116,11 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Get("/admin/orders", orderHandler.List)
 			admin.Post("/admin/orders/{id}/status", orderHandler.UpdateStatus)
 			admin.Post("/admin/orders/{id}/read", orderHandler.MarkAsRead)
+			admin.Delete("/admin/orders/{id}", orderHandler.Delete)
 
-			admin.Get("/feedbacks", feedbackHandler.List)
-			admin.Post("/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
-			admin.Delete("/feedbacks/{id}", feedbackHandler.Delete)
+			admin.Get("/admin/feedbacks", feedbackHandler.List)
+			admin.Post("/admin/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
+			admin.Delete("/admin/feedbacks/{id}", feedbackHandler.Delete)
 		})
 	})
 

@@ -139,3 +139,14 @@ func (r *OrderRepo) MarkAsRead(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, `UPDATE orders SET is_read = true WHERE id = $1`, id)
 	return err
 }
+
+func (r *OrderRepo) Delete(ctx context.Context, id int) error {
+	cmd, err := r.db.Exec(ctx, `DELETE FROM orders WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("order not found: %d", id)
+	}
+	return nil
+}

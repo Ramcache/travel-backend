@@ -64,3 +64,7 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id int, status string) 
 func (s *OrderService) MarkAsRead(ctx context.Context, id int) error {
 	return s.repo.MarkAsRead(ctx, id)
 }
+
+func (s *OrderService) Delete(ctx context.Context, id int) error {
+	return s.repo.Delete(ctx, id)
+}
