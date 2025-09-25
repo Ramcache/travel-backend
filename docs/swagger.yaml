@@ -96,6 +96,26 @@ definitions:
       role_id:
         type: integer
     type: object
+  models.Feedback:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_read:
+        type: boolean
+      user_name:
+        type: string
+      user_phone:
+        type: string
+    type: object
+  models.FeedbackRequest:
+    properties:
+      user_name:
+        type: string
+      user_phone:
+        type: string
+    type: object
   models.KV:
     properties:
       count:
@@ -379,6 +399,64 @@ info:
   title: Travel API manasik
   version: "1.0"
 paths:
+  /admin/feedbacks:
+    get:
+      description: Получить список заявок (админка)
+      parameters:
+      - description: Количество (20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение (0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Feedback'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Get feedbacks
+      tags:
+      - admin
+  /admin/feedbacks/{id}/read:
+    post:
+      parameters:
+      - description: Feedback ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Mark feedback as read
+      tags:
+      - admin
   /admin/news:
     get:
       parameters:
@@ -1088,6 +1166,38 @@ paths:
       summary: Получить курсы валют
       tags:
       - currency
+  /feedback:
+    post:
+      consumes:
+      - application/json
+      description: Оставить заявку "Перезвоните мне"
+      parameters:
+      - description: Имя и телефон
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.FeedbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Feedback form
+      tags:
+      - public
   /news:
     get:
       description: Публичный список новостей с фильтрами и пагинацией
