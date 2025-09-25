@@ -23,6 +23,11 @@ type apiResponse struct {
 
 type MockTripService struct{ mock.Mock }
 
+func (m *MockTripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error {
+	args := m.Called(ctx, req)
+	return args.Error(0)
+}
+
 func (m *MockTripService) Buy(ctx context.Context, id int, req models.BuyRequest) error {
 	args := m.Called(ctx, id, req)
 	return args.Error(0)

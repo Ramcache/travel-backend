@@ -360,3 +360,35 @@ func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 		"message": "Заявка успешно отправлена",
 	})
 }
+
+// BuyWithoutTrip
+// @Summary Buy without trip
+// @Description Отправка заявки без указания тура
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Param data body models.BuyRequest true "Данные покупателя"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при покупке"
+// @Router /trips/buy [post]
+func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
+	var req models.BuyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.Errorw("Некорректный JSON при покупке без тура", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
+		return
+	}
+
+	if err := h.service.BuyWithoutTrip(r.Context(), req); err != nil {
+		h.log.Errorw("Ошибка при покупке без тура", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
+		return
+	}
+
+	h.log.Infow("Заявка без тура успешно обработана", "name", req.UserName, "phone", req.UserPhone)
+	helpers.JSON(w, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "Заявка успешно отправлена",
+	})
+}

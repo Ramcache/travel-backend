@@ -71,6 +71,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/news/popular", newsHandler.Popular)
 
 		api.Post("/trips/{id}/buy", tripHandler.Buy)
+		api.Post("/trips/buy", tripHandler.BuyWithoutTrip)
 		api.Get("/trips/popular", tripHandler.Popular)
 
 		// profile (требует JWT)

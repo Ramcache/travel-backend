@@ -1416,6 +1416,55 @@
                 }
             }
         },
+        "/trips/buy": {
+            "post": {
+                "description": "Отправка заявки без указания тура",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Buy without trip",
+                "parameters": [
+                    {
+                        "description": "Данные покупателя",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BuyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при покупке",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/main": {
             "get": {
                 "description": "Получить главный тур для главной страницы (только название и обратный отсчёт)",
