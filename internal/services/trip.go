@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -241,18 +242,20 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 		return err
 	}
 
+	price := formatPrice(trip.Price)
+
 	msg := fmt.Sprintf(
 		"🛒 <b>Новый заказ!</b>\n\n"+
-			"📅 Дата: %s\n"+
-			"👤 Имя: %s\n"+
-			"📞 Телефон: %s\n\n"+
-			"🌍 Тур: %s\n"+
-			"💰 Цена: %.0f руб.",
+			"📅 <b>Дата:</b> %s\n"+
+			"👤 <b>Имя:</b> %s\n"+
+			"📞 <b>Телефон:</b> <a href=\"tel:%s\">%s</a>\n\n"+
+			"🌍 <b>Тур:</b> %s\n"+
+			"💰 <b>Цена:</b> %s руб.",
 		time.Now().Format("02.01.2006 15:04"),
 		order.UserName,
-		order.UserPhone,
+		order.UserPhone, order.UserPhone,
 		trip.Title,
-		trip.Price,
+		price,
 	)
 
 	//if s.telegram != nil {
@@ -277,4 +280,29 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 	}()
 
 	return nil
+}
+
+func formatPrice(price float64) string {
+	s := strconv.FormatInt(int64(price), 10)
+	n := len(s)
+	if n <= 3 {
+		return s
+	}
+
+	var out strings.Builder
+	mod := n % 3
+	if mod > 0 {
+		out.WriteString(s[:mod])
+		if n > mod {
+			out.WriteString(" ")
+		}
+	}
+
+	for i := mod; i < n; i += 3 {
+		out.WriteString(s[i : i+3])
+		if i+3 < n {
+			out.WriteString(" ")
+		}
+	}
+	return out.String()
 }
