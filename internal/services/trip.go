@@ -265,7 +265,7 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 	//	}
 	//}
 	if s.telegram != nil {
-		link := fmt.Sprintf("%s/trips/%d", strings.TrimRight(s.frontendURL, "/"), trip.ID)
+		link := fmt.Sprintf("%s/api/v1/trips/%d", strings.TrimRight(s.frontendURL, "/"), trip.ID)
 
 		if err := s.telegram.SendMessageWithButton(msg, "Открыть тур", link); err != nil {
 			s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
