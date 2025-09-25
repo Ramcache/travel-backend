@@ -247,18 +247,12 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 			"👤 Имя: %s\n"+
 			"📞 Телефон: %s\n\n"+
 			"🌍 Тур: %s\n"+
-			"💰 Цена: %.0f руб.\n\n"+
-			"🔗 <a href=\"%s/trips/%d\">Открыть тур</a>\n"+
-			"🌐 %s/trips/%d",
+			"💰 Цена: %.0f руб.",
 		time.Now().Format("02.01.2006 15:04"),
 		order.UserName,
 		order.UserPhone,
 		trip.Title,
 		trip.Price,
-		strings.TrimRight(s.frontendURL, "/"),
-		trip.ID,
-		strings.TrimRight(s.frontendURL, "/"),
-		trip.ID,
 	)
 
 	//if s.telegram != nil {
