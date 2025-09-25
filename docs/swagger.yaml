@@ -364,6 +364,15 @@ definitions:
       usd:
         type: number
     type: object
+  services.OrdersWithTotal:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/models.Order'
+        type: array
+      total:
+        type: integer
+    type: object
 info:
   contact: {}
   description: API for Travel project
@@ -641,16 +650,35 @@ paths:
       - news-categories
   /admin/orders:
     get:
-      description: Получить список всех заказов (для админки)
+      description: Получить список заказов с пагинацией и фильтрацией
+      parameters:
+      - description: Количество записей (по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение (по умолчанию 0)
+        in: query
+        name: offset
+        type: integer
+      - description: Фильтр по статусу (new/in_progress/done/canceled)
+        in: query
+        name: status
+        type: string
+      - description: Фильтр по телефону
+        in: query
+        name: phone
+        type: string
+      - description: Фильтр по прочитанности
+        in: query
+        name: is_read
+        type: boolean
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Order'
-            type: array
+            $ref: '#/definitions/services.OrdersWithTotal'
         "500":
           description: Не удалось получить список заказов
           schema:

@@ -11,6 +11,11 @@ type OrderService struct {
 	repo *repository.OrderRepo
 }
 
+type OrdersWithTotal struct {
+	Total  int            `json:"total"`
+	Orders []models.Order `json:"orders"`
+}
+
 func NewOrderService(repo *repository.OrderRepo) *OrderService {
 	return &OrderService{repo: repo}
 }
@@ -35,8 +40,21 @@ func (s *OrderService) Create(ctx context.Context, tripID int, userName, userPho
 	return order, nil
 }
 
-func (s *OrderService) List(ctx context.Context) ([]models.Order, error) {
-	return s.repo.List(ctx)
+func (s *OrderService) List(ctx context.Context, limit, offset int, status, phone string, isRead *bool) (*OrdersWithTotal, error) {
+	total, err := s.repo.Count(ctx, status, phone, isRead)
+	if err != nil {
+		return nil, err
+	}
+
+	orders, err := s.repo.List(ctx, limit, offset, status, phone, isRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OrdersWithTotal{
+		Total:  total,
+		Orders: orders,
+	}, nil
 }
 
 func (s *OrderService) UpdateStatus(ctx context.Context, id int, status string) error {

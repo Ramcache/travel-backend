@@ -21,23 +21,45 @@ func NewOrderHandler(service *services.OrderService, log *zap.SugaredLogger) *Or
 
 // List
 // @Summary Get orders list (admin)
-// @Description Получить список всех заказов (для админки)
+// @Description Получить список заказов с пагинацией и фильтрацией
 // @Tags admin
 // @Security Bearer
 // @Produce json
-// @Success 200 {array} models.Order
+// @Param limit query int false "Количество записей (по умолчанию 20)"
+// @Param offset query int false "Смещение (по умолчанию 0)"
+// @Param status query string false "Фильтр по статусу (new/in_progress/done/canceled)"
+// @Param phone query string false "Фильтр по телефону"
+// @Param is_read query bool false "Фильтр по прочитанности"
+// @Success 200 {object} services.OrdersWithTotal
 // @Failure 500 {object} helpers.ErrorData "Не удалось получить список заказов"
 // @Router /admin/orders [get]
 func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
-	list, err := h.service.List(r.Context())
+	q := r.URL.Query()
+
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	if limit <= 0 {
+		limit = 20
+	}
+	offset, _ := strconv.Atoi(q.Get("offset"))
+
+	status := q.Get("status")
+	phone := q.Get("phone")
+
+	var isRead *bool
+	if v := q.Get("is_read"); v != "" {
+		b := v == "true" || v == "1"
+		isRead = &b
+	}
+
+	result, err := h.service.List(r.Context(), limit, offset, status, phone, isRead)
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка заказов", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список заказов")
 		return
 	}
 
-	h.log.Infow("Список заказов успешно получен", "count", len(list))
-	helpers.JSON(w, http.StatusOK, list)
+	h.log.Infow("Список заказов успешно получен", "count", len(result.Orders), "total", result.Total)
+	helpers.JSON(w, http.StatusOK, result)
 }
 
 // UpdateStatus
