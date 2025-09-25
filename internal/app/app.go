@@ -60,7 +60,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	telegramClient := helpers.NewTelegramClient(cfg.TG.TelegramToken, cfg.TG.TelegramChat)
 
 	// services
-	authService := services.NewAuthService(userRepo, cfg.JWTSecret, log)
+	authService := services.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTTTL, log)
 	currencyService := services.NewCurrencyService(5*time.Minute, log)
 	tripService := services.NewTripService(tripRepo, orderRepo, telegramClient, cfg.FrontendURL, log)
 	newsService := services.NewNewsService(newsRepo, newsCategoryRepo, log)
