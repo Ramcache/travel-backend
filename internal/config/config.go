@@ -37,6 +37,9 @@ func Load() *Config {
 		log.Println("⚠️ .env file not found, using system env")
 	}
 
+	ttl := getEnvDuration("JWT_TTL", 24*time.Hour)
+	log.Println("👉 JWT_TTL loaded as:", ttl)
+
 	return &Config{
 		AppEnv:      getEnv("APP_ENV", "dev"),
 		AppPort:     getEnv("APP_PORT", "8080"),
