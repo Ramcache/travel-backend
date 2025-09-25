@@ -41,8 +41,9 @@ func (t *TelegramClient) SendMessageWithButton(text, buttonText, buttonURL strin
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.Token)
 
 	payload := map[string]any{
-		"chat_id": t.ChatID,
-		"text":    text,
+		"chat_id":    t.ChatID,
+		"text":       text,
+		"parse_mode": "HTML",
 		"reply_markup": map[string]any{
 			"inline_keyboard": [][]map[string]any{
 				{
