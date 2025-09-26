@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: travel-api
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"

@@ -66,3 +66,39 @@ tasks:
   ci:
     desc: Run full CI pipeline (lint, test:ci, swagger, build)
     deps: [lint, test:ci, swagger:gen, build]
+
+  git:status:
+    desc: "Показать статус git"
+    cmds:
+      - git status
+
+  git:add:
+    desc: "Добавить все изменения в staging"
+    cmds:
+      - git add .
+
+  git:commit:
+    desc: "Сделать коммит (передавать сообщение через msg)"
+    cmds:
+      - git commit -m "{{.msg}}"
+    vars:
+      MESSAGE: "update"
+
+  git:push:
+    desc: "Запушить в origin main"
+    cmds:
+      - git push origin main
+
+  git:pull:
+    desc: "Обновить локальную ветку"
+    cmds:
+      - git pull origin main
+
+  git:acp:
+    desc: "Добавить все изменения, закоммитить и запушить (msg по умолчанию: update)"
+    cmds:
+      - git add .
+      - git commit -m "{{.msg}}"
+      - git push origin main
+    vars:
+      MESSAGE: "update"

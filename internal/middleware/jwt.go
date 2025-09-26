@@ -8,13 +8,6 @@ import (
 	"github.com/Ramcache/travel-backend/internal/helpers"
 )
 
-type contextKey string
-
-const (
-	UserIDKey contextKey = "userID"
-	RoleIDKey contextKey = "roleID"
-)
-
 func JWTAuth(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +42,9 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UserIDKey, int(uidFloat))
-			ctx = context.WithValue(ctx, "role_id", int(roleFloat))
+			ctx := context.WithValue(r.Context(), helpers.UserIDKey, int(uidFloat))
+			ctx = context.WithValue(ctx, helpers.RoleIDKey, int(roleFloat))
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 
 		})

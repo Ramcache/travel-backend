@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/Ramcache/travel-backend/internal/helpers"
-	"github.com/Ramcache/travel-backend/internal/middleware"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/services"
 )
@@ -155,7 +154,7 @@ func (h *NewsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var authorID *int
-	if v := r.Context().Value(middleware.UserIDKey); v != nil {
+	if v := r.Context().Value(helpers.UserIDKey); v != nil {
 		if id, ok := v.(int); ok {
 			authorID = &id
 		}

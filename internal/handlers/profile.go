@@ -33,11 +33,6 @@ func NewProfileHandler(s services.AuthServiceI, log *zap.SugaredLogger) *Profile
 // @Router /profile [get]
 func (h *ProfileHandler) Get(w http.ResponseWriter, r *http.Request) {
 	uid := helpers.GetUserID(r.Context())
-	if uid == 0 {
-		h.log.Warn("Попытка доступа к профилю без авторизации")
-		helpers.Error(w, http.StatusUnauthorized, "Неавторизованный доступ")
-		return
-	}
 
 	u, err := h.service.GetByID(r.Context(), uid)
 	switch {
