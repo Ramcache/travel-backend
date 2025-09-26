@@ -23,7 +23,7 @@ func TestJWTAuth_SetsContext(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		gotUID = r.Context().Value(helpers.UserIDKey)
-		gotRole = r.Context().Value("role_id") // middleware stores role under string key
+		gotRole = r.Context().Value(helpers.RoleIDKey) // middleware stores role under string key
 		w.WriteHeader(http.StatusOK)
 	})
 

@@ -87,18 +87,18 @@ tasks:
   git:push:
     desc: "Запушить в origin main"
     cmds:
-      - git push origin main
+      - git push origin dev
 
   git:pull:
     desc: "Обновить локальную ветку"
     cmds:
-      - git pull origin main
+      - git pull origin dev
 
   git:acp:
     desc: "Добавить все изменения, закоммитить и запушить (msg по умолчанию: update)"
     cmds:
       - git add .
       - git commit -m "{{.msg}}"
-      - git push origin main
+      - git push origin dev
     vars:
       MESSAGE: "update"
