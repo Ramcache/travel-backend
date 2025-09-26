@@ -14,6 +14,10 @@ func NewStatsService(repo *repository.StatsRepository) *StatsService {
 	return &StatsService{repo: repo}
 }
 
+type StatsServiceI interface {
+	Get(ctx context.Context) (models.Stats, error)
+}
+
 func (s *StatsService) Get(ctx context.Context) (models.Stats, error) {
 	return s.repo.Get(ctx)
 }
