@@ -2,10 +2,10 @@ package services_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/Ramcache/travel-backend/internal/repository"
 	"github.com/Ramcache/travel-backend/internal/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -125,7 +125,7 @@ func TestTripService_Get_NotFound(t *testing.T) {
 		zaptest.NewLogger(t).Sugar(),
 	)
 
-	mockRepo.On("GetByID", mock.Anything, 99).Return((*models.Trip)(nil), errors.New("not found"))
+	mockRepo.On("GetByID", mock.Anything, 99).Return((*models.Trip)(nil), repository.ErrNotFound)
 
 	trip, err := svc.Get(context.Background(), 99)
 	assert.Nil(t, trip)

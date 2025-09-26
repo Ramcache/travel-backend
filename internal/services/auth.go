@@ -43,7 +43,14 @@ func (s *AuthService) Register(ctx context.Context, req models.RegisterRequest) 
 	}
 
 	// проверяем уникальность email
-	if existing, _ := s.repo.GetByEmail(ctx, req.Email); existing != nil {
+	existing, err := s.repo.GetByEmail(ctx, req.Email)
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		// ничего не делаем — такого email ещё нет
+	case err != nil:
+		s.log.Errorw("user_lookup_failed", "email", req.Email, "err", err)
+		return nil, err
+	case existing != nil:
 		return nil, ErrEmailTaken
 	}
 
