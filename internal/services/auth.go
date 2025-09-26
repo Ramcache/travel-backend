@@ -95,10 +95,10 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (strin
 func (s *AuthService) UpdateProfile(ctx context.Context, id int, req models.UpdateProfileRequest) (*models.User, error) {
 	u, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-	if u == nil {
-		return nil, ErrNotFound
 	}
 
 	if req.FullName != nil {
@@ -120,10 +120,11 @@ func (s *AuthService) UpdateProfile(ctx context.Context, id int, req models.Upda
 func (s *AuthService) GetByID(ctx context.Context, id int) (*models.User, error) {
 	u, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
-	if u == nil {
-		return nil, ErrNotFound
-	}
+
 	return u, nil
 }

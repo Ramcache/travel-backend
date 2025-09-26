@@ -405,7 +405,7 @@ definitions:
 info:
   contact: {}
   description: API for Travel project
-  title: Travel API manasik
+  title: Travel API
   version: "1.0"
 paths:
   /admin/feedbacks:

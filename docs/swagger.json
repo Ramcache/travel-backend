@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "API for Travel project",
-        "title": "Travel API manasik",
+        "title": "Travel API",
         "contact": {},
         "version": "1.0"
     },

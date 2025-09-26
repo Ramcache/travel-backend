@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// @title        Travel API manasik
+// @title        Travel API
 // @version      1.0
 // @description  API for Travel project
 // @BasePath     https://api.web95.tech/api/v1
