@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -33,21 +34,31 @@ type TelegramConfig struct {
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️ .env file not found, using system env")
+	// .env не обязателен, просто пробуем загрузить
+	if err := godotenv.Load(); err == nil {
+		log.Println("ℹ️ .env loaded")
+	} else {
+		log.Println("ℹ️ .env not found, using system env only")
 	}
 
 	ttl := getEnvDuration("JWT_TTL", 24*time.Hour)
 	log.Println("👉 JWT_TTL loaded as:", ttl)
 
+	dbURL := getEnv("DB_URL", "")
+	// Автоматическая подмена localhost → host.docker.internal внутри контейнера
+	if isRunningInDocker() && strings.Contains(dbURL, "localhost") {
+		dbURL = strings.ReplaceAll(dbURL, "localhost", "host.docker.internal")
+		log.Println("🔄 DB_URL adjusted for Docker:", dbURL)
+	}
+
 	return &Config{
 		AppEnv:      getEnv("APP_ENV", "dev"),
 		AppPort:     getEnv("APP_PORT", "8080"),
 		JWTSecret:   getEnv("APP_JWT_SECRET", "changeme"),
-		JWTTTL:      getEnvDuration("JWT_TTL", 24*time.Hour),
+		JWTTTL:      ttl,
 		FrontendURL: getEnv("FRONTEND_URL", ""),
 		DB: DBConfig{
-			URL:         getEnv("DB_URL", ""),
+			URL:         dbURL,
 			MaxConns:    getEnvInt("DB_MAX_CONNS", 10),
 			MinConns:    getEnvInt("DB_MIN_CONNS", 2),
 			ConnTimeout: getEnvDuration("DB_CONN_TIMEOUT", 5*time.Second),
@@ -83,4 +94,11 @@ func getEnvDuration(key string, def time.Duration) time.Duration {
 		}
 	}
 	return def
+}
+
+func isRunningInDocker() bool {
+	if f, err := os.ReadFile("/proc/1/cgroup"); err == nil {
+		return strings.Contains(string(f), "docker")
+	}
+	return false
 }

@@ -41,7 +41,7 @@ func ZapLogger(log *zap.SugaredLogger) func(http.Handler) http.Handler {
 			next.ServeHTTP(sww, r)
 
 			var userID interface{} = nil
-			if v := r.Context().Value(UserIDKey); v != nil {
+			if v := r.Context().Value(helpers.UserIDKey); v != nil {
 				userID = v
 			}
 
