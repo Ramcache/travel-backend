@@ -2,12 +2,12 @@ package services_test
 
 import (
 	"context"
-	"errors"
-	"github.com/Ramcache/travel-backend/internal/helpers"
 	"testing"
 	"time"
 
+	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/Ramcache/travel-backend/internal/repository"
 	"github.com/Ramcache/travel-backend/internal/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -78,7 +78,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByEmail", mock.Anything, "new@mail.com").
-		Return((*models.User)(nil), errors.New("not found"))
+		Return((*models.User)(nil), repository.ErrNotFound)
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*models.User")).
 		Return(nil)
 
@@ -95,7 +95,7 @@ func TestAuthService_Login_UserNotFound(t *testing.T) {
 	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
 	repo.On("GetByEmail", mock.Anything, "a@b.com").
-		Return((*models.User)(nil), errors.New("not found"))
+		Return((*models.User)(nil), repository.ErrNotFound)
 
 	token, err := svc.Login(context.Background(), models.LoginRequest{
 		Email: "a@b.com", Password: "123",
@@ -154,7 +154,7 @@ func TestAuthService_GetByID_NotFound(t *testing.T) {
 	repo := new(MockUserRepo)
 	svc := services.NewAuthService(repo, "secret", 24*time.Hour, zaptest.NewLogger(t).Sugar())
 
-	repo.On("GetByID", mock.Anything, 99).Return((*models.User)(nil), errors.New("not found"))
+	repo.On("GetByID", mock.Anything, 99).Return((*models.User)(nil), repository.ErrNotFound)
 
 	u, err := svc.GetByID(context.Background(), 99)
 	assert.Nil(t, u)
