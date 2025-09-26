@@ -2587,7 +2587,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "https://api.web95.tech/api/v1",
 	Schemes:          []string{},
-	Title:            "Travel API manasik",
+	Title:            "Travel API",
 	Description:      "API for Travel project",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -66,9 +67,9 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, id int, password st
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
 	var u models.User
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, full_name, role_id, created_at, updated_at FROM users WHERE id=$1`, id,
-	).Scan(&u.ID, &u.Email, &u.FullName, &u.RoleID, &u.CreatedAt, &u.UpdatedAt)
-	if err == pgx.ErrNoRows {
+		`SELECT id, email, full_name, avatar, role_id, created_at, updated_at FROM users WHERE id=$1`, id,
+	).Scan(&u.ID, &u.Email, &u.FullName, &u.Avatar, &u.RoleID, &u.CreatedAt, &u.UpdatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -87,11 +88,11 @@ func (r *UserRepository) Create(ctx context.Context, u *models.User) error {
 
 func (r *UserRepository) Update(ctx context.Context, u *models.User) error {
 	err := r.db.QueryRow(ctx,
-		`UPDATE users SET full_name=$1, role_id=$2, updated_at=now()
-         WHERE id=$3 RETURNING updated_at`,
-		u.FullName, u.RoleID, u.ID,
+		`UPDATE users SET full_name=$1, avatar=$2, role_id=$3, updated_at=now()
+ WHERE id=$4 RETURNING updated_at`,
+		u.FullName, u.Avatar, u.RoleID, u.ID,
 	).Scan(&u.UpdatedAt)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}
 	return err
@@ -111,10 +112,11 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var u models.User
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, password, full_name, role_id, created_at, updated_at
-         FROM users WHERE email=$1`, email,
-	).Scan(&u.ID, &u.Email, &u.Password, &u.FullName, &u.RoleID, &u.CreatedAt, &u.UpdatedAt)
-	if err == pgx.ErrNoRows {
+		`SELECT id, email, password, full_name, avatar, role_id, created_at, updated_at
+ FROM users 
+ WHERE email=$1`, email,
+	).Scan(&u.ID, &u.Email, &u.Password, &u.FullName, &u.Avatar, &u.RoleID, &u.CreatedAt, &u.UpdatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {

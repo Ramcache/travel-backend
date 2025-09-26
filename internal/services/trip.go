@@ -63,10 +63,10 @@ func (s *TripService) List(ctx context.Context, city, ttype, season string) ([]m
 func (s *TripService) Get(ctx context.Context, id int) (*models.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrTripNotFound
+		}
 		return nil, err
-	}
-	if trip == nil {
-		return nil, ErrTripNotFound
 	}
 	return trip, nil
 }
@@ -127,10 +127,10 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrTripNotFound
+		}
 		return nil, err
-	}
-	if trip == nil {
-		return nil, ErrTripNotFound
 	}
 
 	if req.Title != nil {
@@ -230,6 +230,9 @@ func (s *TripService) IncrementBuys(ctx context.Context, id int) error {
 func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) error {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrTripNotFound
+		}
 		return err
 	}
 
