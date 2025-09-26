@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 type Envelope struct {
@@ -31,7 +32,7 @@ func Error(w http.ResponseWriter, status int, message string) {
 	_ = json.NewEncoder(w).Encode(Envelope{
 		Success: false,
 		Data: ErrorData{
-			Code:    http.StatusText(status),
+			Code:    strings.ToLower(http.StatusText(status)),
 			Message: message,
 		},
 	})
