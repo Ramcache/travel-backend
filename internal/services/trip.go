@@ -308,7 +308,7 @@ func (s *TripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest)
 	}
 
 	msg := fmt.Sprintf(
-		"🛒 <b>Новый заказ (без тура)!</b>\n\n"+
+		"🛒 <b>Новый заказ!</b>\n\n"+
 			"📅 <b>Дата:</b> %s\n"+
 			"👤 <b>Имя:</b> %s\n"+
 			"📞 <b>Телефон:</b> <a href=\"tel:%s\">%s</a>",
