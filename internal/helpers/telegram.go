@@ -9,6 +9,13 @@ import (
 	"net/url"
 )
 
+var (
+	httpPostForm = http.PostForm
+	httpPostJSON = func(url, contentType string, body io.Reader) (*http.Response, error) {
+		return http.Post(url, contentType, body)
+	}
+)
+
 type TelegramClient struct {
 	Token  string
 	ChatID string
@@ -21,7 +28,7 @@ func NewTelegramClient(token, chatID string) *TelegramClient {
 func (t *TelegramClient) SendMessage(text string) error {
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.Token)
 
-	resp, err := http.PostForm(apiURL, url.Values{
+	resp, err := httpPostForm(apiURL, url.Values{
 		"chat_id":    {t.ChatID},
 		"text":       {text},
 		"parse_mode": {"HTML"},
@@ -57,7 +64,7 @@ func (t *TelegramClient) SendMessageWithButton(text, buttonText, buttonURL strin
 	}
 
 	body, _ := json.Marshal(payload)
-	resp, err := http.Post(apiURL, "application/json", bytes.NewReader(body))
+	resp, err := httpPostJSON(apiURL, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}

@@ -96,8 +96,10 @@ func getEnvDuration(key string, def time.Duration) time.Duration {
 	return def
 }
 
+var cgroupFilePath = "/proc/1/cgroup"
+
 func isRunningInDocker() bool {
-	if f, err := os.ReadFile("/proc/1/cgroup"); err == nil {
+	if f, err := os.ReadFile(cgroupFilePath); err == nil {
 		return strings.Contains(string(f), "docker")
 	}
 	return false
