@@ -6,16 +6,15 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/Ramcache/travel-backend/internal/models"
 )
 
 type TripRepository struct {
-	Db *pgxpool.Pool
+	Db DB
 }
 
-func NewTripRepository(db *pgxpool.Pool) *TripRepository {
+func NewTripRepository(db DB) *TripRepository {
 	return &TripRepository{Db: db}
 }
 
