@@ -4,15 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/Ramcache/travel-backend/internal/models"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrderRepo struct {
-	db *pgxpool.Pool
+	db DB
 }
 
-func NewOrderRepo(db *pgxpool.Pool) *OrderRepo {
+func NewOrderRepo(db DB) *OrderRepo {
 	return &OrderRepo{db: db}
 }
 
