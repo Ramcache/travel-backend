@@ -41,12 +41,25 @@ func NewServeCmd() *cobra.Command {
 			defer pool.Close()
 
 			application := app.New(ctx, cfg, pool, log)
-			r := server.NewRouter(application.AuthHandler, application.UserHandler,
-				application.CurrencyHandler, application.TripHandler, application.NewsHandler,
-				application.ProfileHandler, application.NewsCategoryHandler, application.StatsHandler,
-				application.OrderHandler, application.FeedbackHandler, application.HotelHandler, application.SearchHandler,
-				application.ReviewsHandler,
-				cfg.JWTSecret, log, pool)
+			r := server.NewRouter(server.RouterDeps{
+				Auth:     application.AuthHandler,
+				User:     application.UserHandler,
+				Currency: application.CurrencyHandler,
+				Trip:     application.TripHandler,
+				News:     application.NewsHandler,
+				Profile:  application.ProfileHandler,
+				Category: application.NewsCategoryHandler,
+				Stats:    application.StatsHandler,
+				Order:    application.OrderHandler,
+				Feedback: application.FeedbackHandler,
+				Hotel:    application.HotelHandler,
+				Search:   application.SearchHandler,
+				Review:   application.ReviewsHandler,
+
+				JWTSecret: cfg.JWTSecret,
+				Log:       log,
+				DB:        pool,
+			})
 
 			addr := fmt.Sprintf(":%s", cfg.AppPort)
 
