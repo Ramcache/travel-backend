@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Ramcache/travel-backend/internal/models"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,6 +21,46 @@ var (
 type TelegramClient struct {
 	Token  string
 	ChatID string
+}
+
+func (t *TelegramClient) Create(ctx context.Context, hotel *models.Hotel) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) Get(ctx context.Context, id int) (*models.Hotel, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) List(ctx context.Context) ([]models.Hotel, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) Update(ctx context.Context, hotel *models.Hotel) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) Delete(ctx context.Context, id int) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) Attach(ctx context.Context, th *models.TripHotel) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) ListByTrip(ctx context.Context, tripID int) ([]models.Hotel, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *TelegramClient) ClearByTrip(ctx context.Context, tripID int) (int64, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewTelegramClient(token, chatID string) *TelegramClient {
