@@ -58,7 +58,7 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param trip_id path int true "Trip ID"
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {object} services.PaginatedResponse[models.TripReview]
+// @Success 200 {object} models.PaginatedTripReviews
 // @Failure 500 {object} helpers.ErrorData
 // @Router /trips/{trip_id}/reviews [get]
 func (h *ReviewHandler) ListByTrip(w http.ResponseWriter, r *http.Request) {

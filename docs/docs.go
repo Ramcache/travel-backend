@@ -2254,6 +2254,97 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/trips/{trip_id}/reviews": {
+            "get": {
+                "description": "Получить список отзывов по туру",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "List reviews for trip",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.PaginatedTripReviews"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Добавить отзыв к туру",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Leave review",
+                "parameters": [
+                    {
+                        "description": "Review",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateReviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripReview"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2341,6 +2432,27 @@ const docTemplate = `{
                 },
                 "video_url": {
                     "type": "string"
+                }
+            }
+        },
+        "models.CreateReviewRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string",
+                    "example": "Отличный тур!"
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "trip_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_name": {
+                    "type": "string",
+                    "example": "Иван"
                 }
             }
         },
@@ -2611,6 +2723,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PaginatedTripReviews": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripReview"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.RegisterRequest": {
             "type": "object",
             "required": [
@@ -2799,6 +2925,29 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.TripReview": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "trip_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
                 }
             }
         },
