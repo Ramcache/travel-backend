@@ -45,6 +45,7 @@ func NewServeCmd() *cobra.Command {
 				application.CurrencyHandler, application.TripHandler, application.NewsHandler,
 				application.ProfileHandler, application.NewsCategoryHandler, application.StatsHandler,
 				application.OrderHandler, application.FeedbackHandler, application.HotelHandler, application.SearchHandler,
+				application.ReviewsHandler,
 				cfg.JWTSecret, log, pool)
 
 			addr := fmt.Sprintf(":%s", cfg.AppPort)

@@ -58,6 +58,21 @@ definitions:
       video_url:
         type: string
     type: object
+  models.CreateReviewRequest:
+    properties:
+      comment:
+        example: Отличный тур!
+        type: string
+      rating:
+        example: 5
+        type: integer
+      trip_id:
+        example: 1
+        type: integer
+      user_name:
+        example: Иван
+        type: string
+    type: object
   models.CreateTripRequest:
     properties:
       booking_deadline:
@@ -236,6 +251,15 @@ definitions:
       user_phone:
         type: string
     type: object
+  models.PaginatedTripReviews:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/models.TripReview'
+        type: array
+      total:
+        type: integer
+    type: object
   models.RegisterRequest:
     properties:
       email:
@@ -362,6 +386,21 @@ definitions:
         type: integer
       rating:
         type: integer
+    type: object
+  models.TripReview:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      trip_id:
+        type: integer
+      user_name:
+        type: string
     type: object
   models.UpdateNewsCategoryRequest:
     properties:
@@ -1850,6 +1889,66 @@ paths:
       summary: Get booking countdown
       tags:
       - trips
+  /trips/{trip_id}/reviews:
+    get:
+      description: Получить список отзывов по туру
+      parameters:
+      - description: Trip ID
+        in: path
+        name: trip_id
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedTripReviews'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: List reviews for trip
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Добавить отзыв к туру
+      parameters:
+      - description: Review
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TripReview'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Leave review
+      tags:
+      - reviews
   /trips/buy:
     post:
       consumes:
