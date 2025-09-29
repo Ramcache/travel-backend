@@ -39,7 +39,7 @@ func (s *SearchService) GlobalSearch(ctx context.Context, query string) ([]model
 		// поэтому вырезаем slug и собираем абсолютный путь
 		parts := strings.Split(news[i].Link, "/")
 		slug := parts[len(parts)-1]
-		news[i].Link = fmt.Sprintf("%s/api/v1/news/%s", s.frontendURL, slug)
+		news[i].Link = fmt.Sprintf("https://web95.tech/article.html?slug=%s", slug)
 	}
 
 	// объединяем
