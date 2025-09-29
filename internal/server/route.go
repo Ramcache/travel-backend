@@ -22,7 +22,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
 	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
 	orderHandler *handlers.OrderHandler, feedbackHandler *handlers.FeedbackHandler,
-	hotelHandler *handlers.HotelHandler,
+	hotelHandler *handlers.HotelHandler, searchHandler *handlers.SearchHandler,
 	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
@@ -76,6 +76,8 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/trips/popular", tripHandler.Popular)
 
 		api.Post("/feedback", feedbackHandler.Create)
+
+		api.Get("/search", searchHandler.GlobalSearch)
 
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
@@ -131,6 +133,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Put("/admin/hotels/{id}", hotelHandler.Update)
 			admin.Delete("/admin/hotels/{id}", hotelHandler.Delete)
 			admin.Post("/admin/trips/{id}/hotels", hotelHandler.AttachHotelToTrip)
+
 		})
 
 	})

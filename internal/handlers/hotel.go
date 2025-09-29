@@ -5,17 +5,20 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/Ramcache/travel-backend/internal/services"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 type HotelHandler struct {
 	service *services.HotelService
+	log     *zap.SugaredLogger
 }
 
-func NewHotelHandler(s *services.HotelService) *HotelHandler {
-	return &HotelHandler{service: s}
+func NewHotelHandler(s *services.HotelService, log *zap.SugaredLogger) *HotelHandler {
+	return &HotelHandler{service: s, log: log}
 }
 
 // Create
@@ -25,19 +28,23 @@ func NewHotelHandler(s *services.HotelService) *HotelHandler {
 // @Produce json
 // @Param hotel body models.Hotel true "Hotel"
 // @Success 200 {object} models.Hotel
-// @Failure 400 {object} helpers.ErrorData
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 500 {object} helpers.ErrorData "Не удалось создать отель"
 // @Router /admin/hotels [post]
 func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var hotel models.Hotel
 	if err := json.NewDecoder(r.Body).Decode(&hotel); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.log.Warnw("Некорректные данные при создании отеля", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
 	if err := h.service.Create(r.Context(), &hotel); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка создания отеля", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать отель")
 		return
 	}
-	json.NewEncoder(w).Encode(hotel)
+	h.log.Infow("Отель создан", "id", hotel.ID, "name", hotel.Name)
+	helpers.JSON(w, http.StatusOK, hotel)
 }
 
 // List
@@ -45,14 +52,17 @@ func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Tags hotels
 // @Produce json
 // @Success 200 {array} models.Hotel
+// @Failure 500 {object} helpers.ErrorData "Не удалось получить список отелей"
 // @Router /admin/hotels [get]
 func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
 	hotels, err := h.service.List(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка получения списка отелей", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список отелей")
 		return
 	}
-	json.NewEncoder(w).Encode(hotels)
+	h.log.Infow("Список отелей получен", "count", len(hotels))
+	helpers.JSON(w, http.StatusOK, hotels)
 }
 
 // Get
@@ -61,16 +71,25 @@ func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Hotel ID"
 // @Success 200 {object} models.Hotel
-// @Failure 404 {object} helpers.ErrorData
+// @Failure 404 {object} helpers.ErrorData "Отель не найден"
 // @Router /admin/hotels/{id} [get]
 func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	hotel, err := h.service.Get(r.Context(), id)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		h.log.Warnw("Некорректный ID отеля", "id", chi.URLParam(r, "id"), "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID")
 		return
 	}
-	json.NewEncoder(w).Encode(hotel)
+
+	hotel, err := h.service.Get(r.Context(), id)
+	if err != nil {
+		h.log.Warnw("Отель не найден", "id", id, "err", err)
+		helpers.Error(w, http.StatusNotFound, "Отель не найден")
+		return
+	}
+
+	h.log.Infow("Отель получен", "id", id)
+	helpers.JSON(w, http.StatusOK, hotel)
 }
 
 // Update
@@ -81,36 +100,59 @@ func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Hotel ID"
 // @Param hotel body models.Hotel true "Hotel"
 // @Success 200 {object} models.Hotel
-// @Failure 400 {object} helpers.ErrorData
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 500 {object} helpers.ErrorData "Не удалось обновить отель"
 // @Router /admin/hotels/{id} [put]
 func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		h.log.Warnw("Некорректный ID отеля", "id", chi.URLParam(r, "id"), "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID")
+		return
+	}
+
 	var hotel models.Hotel
 	if err := json.NewDecoder(r.Body).Decode(&hotel); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.log.Warnw("Некорректные данные при обновлении отеля", "id", id, "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
 	hotel.ID = id
+
 	if err := h.service.Update(r.Context(), &hotel); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка обновления отеля", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось обновить отель")
 		return
 	}
-	json.NewEncoder(w).Encode(hotel)
+
+	h.log.Infow("Отель обновлён", "id", id)
+	helpers.JSON(w, http.StatusOK, hotel)
 }
 
 // Delete
 // @Summary Delete hotel
 // @Tags hotels
 // @Param id path int true "Hotel ID"
-// @Success 204 {string} string "No Content"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData "Некорректный ID"
+// @Failure 500 {object} helpers.ErrorData "Не удалось удалить отель"
 // @Router /admin/hotels/{id} [delete]
 func (h *HotelHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	if err := h.service.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		h.log.Warnw("Некорректный ID отеля", "id", chi.URLParam(r, "id"), "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID")
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+
+	if err := h.service.Delete(r.Context(), id); err != nil {
+		h.log.Errorw("Ошибка удаления отеля", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить отель")
+		return
+	}
+
+	h.log.Infow("Отель удалён", "id", id)
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
 // AttachHotelToTrip
@@ -120,19 +162,36 @@ func (h *HotelHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Param body body models.TripHotel true "Hotel ID and Nights"
-// @Success 200 {string} string "attached"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 500 {object} helpers.ErrorData "Не удалось привязать отель"
 // @Router /admin/trips/{id}/hotels [post]
 func (h *HotelHandler) AttachHotelToTrip(w http.ResponseWriter, r *http.Request) {
-	tripID, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	tripID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		h.log.Warnw("Некорректный ID тура", "id", chi.URLParam(r, "id"), "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
+		return
+	}
+
 	var th models.TripHotel
 	if err := json.NewDecoder(r.Body).Decode(&th); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.log.Warnw("Некорректные данные при привязке отеля к туру", "trip_id", tripID, "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
 	th.TripID = tripID
-	if err := h.service.Attach(r.Context(), &th); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
+	if th.Nights <= 0 {
+		th.Nights = 1
+
+		if err := h.service.Attach(r.Context(), &th); err != nil {
+			h.log.Errorw("Ошибка привязки отеля к туру", "trip_id", tripID, "hotel_id", th.HotelID, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Не удалось привязать отель")
+			return
+		}
+
+		h.log.Infow("Отель привязан к туру", "trip_id", tripID, "hotel_id", th.HotelID, "nights", th.Nights)
+		helpers.JSON(w, http.StatusOK, map[string]string{"status": "attached"})
 	}
-	w.Write([]byte(`{"status":"attached"}`))
 }

@@ -28,6 +28,7 @@ type App struct {
 	orderRepo        *repository.OrderRepo
 	feedbackRepo     *repository.FeedbackRepo
 	hotelRepo        *repository.HotelRepositoryI
+	searchRepo       *repository.SearchRepository
 	// services
 	AuthService         *services.AuthService
 	CurrencyService     *services.CurrencyService
@@ -38,6 +39,7 @@ type App struct {
 	orderService        *services.OrderService
 	feedbackService     *services.FeedbackService
 	hotelService        *services.HotelService
+	searchService       *services.SearchService
 
 	// handlers
 	AuthHandler         *handlers.AuthHandler
@@ -51,6 +53,7 @@ type App struct {
 	OrderHandler        *handlers.OrderHandler
 	FeedbackHandler     *handlers.FeedbackHandler
 	HotelHandler        *handlers.HotelHandler
+	SearchHandler       *handlers.SearchHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -63,6 +66,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	orderRepo := repository.NewOrderRepo(pool)
 	feedbackRepo := repository.NewFeedbackRepo(pool)
 	hotelRepo := repository.NewHotelRepository(pool)
+	searchRepo := repository.NewSearchRepository(pool)
 
 	// helpers
 	telegramClient := helpers.NewTelegramClient(cfg.TG.TelegramToken, cfg.TG.TelegramChat)
@@ -77,6 +81,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	orderService := services.NewOrderService(orderRepo)
 	feedbackService := services.NewFeedbackService(feedbackRepo, telegramClient, log)
 	hotelService := services.NewHotelService(hotelRepo)
+	searchService := services.NewSearchService(searchRepo, cfg.FrontendURL)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
@@ -89,7 +94,8 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	statsHandler := handlers.NewStatsHandler(statsService, log)
 	orderHandler := handlers.NewOrderHandler(orderService, log)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService, log)
-	hotelHandler := handlers.NewHotelHandler(hotelService)
+	hotelHandler := handlers.NewHotelHandler(hotelService, log)
+	searchHandler := handlers.NewSearchHandler(searchService, log)
 
 	return &App{
 		Config:              cfg,
@@ -117,5 +123,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		OrderHandler:        orderHandler,
 		FeedbackHandler:     feedbackHandler,
 		HotelHandler:        hotelHandler,
+		SearchHandler:       searchHandler,
 	}
 }

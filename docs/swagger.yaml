@@ -249,6 +249,21 @@ definitions:
     - email
     - password
     type: object
+  models.SearchResult:
+    properties:
+      date:
+        type: string
+      highlighted:
+        type: boolean
+      id:
+        type: integer
+      link:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
   models.Stats:
     properties:
       news_by_category:
@@ -579,6 +594,10 @@ paths:
             items:
               $ref: '#/definitions/models.Hotel'
             type: array
+        "500":
+          description: Не удалось получить список отелей
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: List hotels
       tags:
       - hotels
@@ -600,7 +619,11 @@ paths:
           schema:
             $ref: '#/definitions/models.Hotel'
         "400":
-          description: Bad Request
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось создать отель
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Create hotel
@@ -615,10 +638,20 @@ paths:
         required: true
         type: integer
       responses:
-        "204":
-          description: No Content
+        "200":
+          description: OK
           schema:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось удалить отель
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Delete hotel
       tags:
       - hotels
@@ -637,7 +670,7 @@ paths:
           schema:
             $ref: '#/definitions/models.Hotel'
         "404":
-          description: Not Found
+          description: Отель не найден
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get hotel by ID
@@ -666,7 +699,11 @@ paths:
           schema:
             $ref: '#/definitions/models.Hotel'
         "400":
-          description: Bad Request
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось обновить отель
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Update hotel
@@ -1211,9 +1248,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: attached
+          description: OK
           schema:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Не удалось привязать отель
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
       summary: Attach hotel to trip
       tags:
       - trips
@@ -1646,6 +1693,34 @@ paths:
       summary: Обновить профиль текущего пользователя
       tags:
       - profile
+  /search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.SearchResult'
+            type: array
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка поиска
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Global search (trips + news)
+      tags:
+      - search
   /trips:
     get:
       description: Публичный поиск туров с фильтрацией
