@@ -1231,6 +1231,168 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/trips/{id}/routes": {
+            "post": {
+                "description": "Добавляет новый маршрут к туру",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "trips",
+                    "routes"
+                ],
+                "summary": "Создать маршрут тура",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Маршрут",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TripRouteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripRoute"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный JSON",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при добавлении маршрута",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/trips/{trip_id}/routes/{route_id}": {
+            "put": {
+                "description": "Обновляет существующий маршрут",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "trips",
+                    "routes"
+                ],
+                "summary": "Обновить маршрут тура",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Route ID",
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Маршрут",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TripRouteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripRoute"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный JSON",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении маршрута",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет маршрут тура по ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "trips",
+                    "routes"
+                ],
+                "summary": "Удалить маршрут тура",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Route ID",
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Маршрут удалён",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении маршрута",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -2255,6 +2417,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/{id}/page": {
+            "get": {
+                "description": "Полный набор данных для страницы тура (тур, отели, отзывы, популярные туры, новости, курсы, countdown)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Trip page data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripPageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Тур не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/trips/{id}/routes": {
+            "get": {
+                "description": "Возвращает список маршрутов для тура",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips",
+                    "routes"
+                ],
+                "summary": "Список маршрутов тура",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TripRoute"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении маршрутов",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/{trip_id}/reviews": {
             "get": {
                 "description": "Получить список отзывов по туру",
@@ -2390,6 +2632,23 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Countdown": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "seconds": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.CreateNewsCategoryRequest": {
             "type": "object",
             "properties": {
@@ -2517,6 +2776,17 @@ const docTemplate = `{
                 },
                 "role_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.CurrencyRatesPayload": {
+            "type": "object",
+            "properties": {
+                "sar": {
+                    "type": "number"
+                },
+                "usd": {
+                    "type": "number"
                 }
             }
         },
@@ -2928,6 +3198,64 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TripPageResponse": {
+            "type": "object",
+            "properties": {
+                "countdown": {
+                    "$ref": "#/definitions/models.Countdown"
+                },
+                "currency_rates": {
+                    "$ref": "#/definitions/models.CurrencyRatesPayload"
+                },
+                "duration_days": {
+                    "type": "integer"
+                },
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Hotel"
+                    }
+                },
+                "news": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.News"
+                    }
+                },
+                "popular_trips": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Trip"
+                    }
+                },
+                "reviews": {
+                    "$ref": "#/definitions/models.TripPageReviews"
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRoute"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.Trip"
+                }
+            }
+        },
+        "models.TripPageReviews": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripReview"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.TripReview": {
             "type": "object",
             "properties": {
@@ -2947,6 +3275,58 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRoute": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "transport": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRouteRequest": {
+            "type": "object",
+            "required": [
+                "city",
+                "position"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "duration": {
+                    "description": "\"6 часов\"",
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "transport": {
+                    "description": "plane, bus, transfer",
                     "type": "string"
                 }
             }
