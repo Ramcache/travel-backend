@@ -161,13 +161,19 @@ definitions:
         type: string
       distance:
         type: number
+      distance_text:
+        type: string
+      guests:
+        type: string
       id:
         type: integer
       meals:
         type: string
       name:
         type: string
-      rating:
+      photo_url:
+        type: string
+      stars:
         type: integer
       updated_at:
         type: string

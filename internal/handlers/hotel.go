@@ -184,14 +184,15 @@ func (h *HotelHandler) AttachHotelToTrip(w http.ResponseWriter, r *http.Request)
 
 	if th.Nights <= 0 {
 		th.Nights = 1
-
-		if err := h.service.Attach(r.Context(), &th); err != nil {
-			h.log.Errorw("Ошибка привязки отеля к туру", "trip_id", tripID, "hotel_id", th.HotelID, "err", err)
-			helpers.Error(w, http.StatusInternalServerError, "Не удалось привязать отель")
-			return
-		}
-
-		h.log.Infow("Отель привязан к туру", "trip_id", tripID, "hotel_id", th.HotelID, "nights", th.Nights)
-		helpers.JSON(w, http.StatusOK, map[string]string{"status": "attached"})
 	}
+
+	if err := h.service.Attach(r.Context(), &th); err != nil {
+		h.log.Errorw("Ошибка привязки отеля к туру", "trip_id", tripID, "hotel_id", th.HotelID, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось привязать отель")
+		return
+	}
+
+	h.log.Infow("Отель привязан к туру", "trip_id", tripID, "hotel_id", th.HotelID, "nights", th.Nights)
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "attached"})
+
 }

@@ -2833,6 +2833,12 @@ const docTemplate = `{
                 "distance": {
                     "type": "number"
                 },
+                "distance_text": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -2842,7 +2848,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "rating": {
+                "photo_url": {
+                    "type": "string"
+                },
+                "stars": {
                     "type": "integer"
                 },
                 "updated_at": {
