@@ -70,6 +70,10 @@ definitions:
         type: string
       end_date:
         type: string
+      hotels:
+        items:
+          $ref: '#/definitions/models.HotelAttach'
+        type: array
       main:
         type: boolean
       photo_url:
@@ -115,6 +119,32 @@ definitions:
         type: string
       user_phone:
         type: string
+    type: object
+  models.Hotel:
+    properties:
+      city:
+        type: string
+      created_at:
+        type: string
+      distance:
+        type: number
+      id:
+        type: integer
+      meals:
+        type: string
+      name:
+        type: string
+      rating:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.HotelAttach:
+    properties:
+      hotel_id:
+        type: integer
+      nights:
+        type: integer
     type: object
   models.KV:
     properties:
@@ -267,6 +297,10 @@ definitions:
         type: string
       end_date:
         type: string
+      hotels:
+        items:
+          $ref: '#/definitions/models.TripHotelWithInfo'
+        type: array
       id:
         type: integer
       main:
@@ -286,6 +320,32 @@ definitions:
       updated_at:
         type: string
       views_count:
+        type: integer
+    type: object
+  models.TripHotel:
+    properties:
+      hotel_id:
+        type: integer
+      nights:
+        type: integer
+      trip_id:
+        type: integer
+    type: object
+  models.TripHotelWithInfo:
+    properties:
+      city:
+        type: string
+      distance:
+        type: number
+      hotel_id:
+        type: integer
+      meals:
+        type: string
+      name:
+        type: string
+      nights:
+        type: integer
+      rating:
         type: integer
     type: object
   models.UpdateNewsCategoryRequest:
@@ -337,6 +397,10 @@ definitions:
         type: string
       end_date:
         type: string
+      hotels:
+        items:
+          $ref: '#/definitions/models.HotelAttach'
+        type: array
       main:
         type: boolean
       photo_url:
@@ -504,6 +568,110 @@ paths:
       summary: Mark feedback as read
       tags:
       - admin
+  /admin/hotels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Hotel'
+            type: array
+      summary: List hotels
+      tags:
+      - hotels
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Hotel
+        in: body
+        name: hotel
+        required: true
+        schema:
+          $ref: '#/definitions/models.Hotel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Hotel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Create hotel
+      tags:
+      - hotels
+  /admin/hotels/{id}:
+    delete:
+      parameters:
+      - description: Hotel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+      summary: Delete hotel
+      tags:
+      - hotels
+    get:
+      parameters:
+      - description: Hotel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Hotel'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get hotel by ID
+      tags:
+      - hotels
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Hotel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Hotel
+        in: body
+        name: hotel
+        required: true
+        schema:
+          $ref: '#/definitions/models.Hotel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Hotel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Update hotel
+      tags:
+      - hotels
   /admin/news:
     get:
       parameters:
@@ -1021,6 +1189,32 @@ paths:
       security:
       - Bearer: []
       summary: Update trip (admin)
+      tags:
+      - trips
+  /admin/trips/{id}/hotels:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Hotel ID and Nights
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.TripHotel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: attached
+          schema:
+            type: string
+      summary: Attach hotel to trip
       tags:
       - trips
   /admin/users:

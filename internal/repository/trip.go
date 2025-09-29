@@ -92,14 +92,34 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
          FROM trips WHERE id=$1`, id).
 		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
 			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main,
-			&t.ViewsCount, &t.BuysCount,
-			&t.CreatedAt, &t.UpdatedAt)
+			&t.ViewsCount, &t.BuysCount, &t.CreatedAt, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
+
+	// 🔹 тянем отели для тура
+	rows, err := r.Db.Query(ctx, `
+        SELECT h.id, h.name, h.city, h.distance, h.meals, h.rating, th.nights
+        FROM trip_hotels th
+        JOIN hotels h ON h.id = th.hotel_id
+        WHERE th.trip_id = $1
+        ORDER BY h.city`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var h models.TripHotelWithInfo
+		if err := rows.Scan(&h.HotelID, &h.Name, &h.City, &h.Distance, &h.Meals, &h.Rating, &h.Nights); err != nil {
+			return nil, err
+		}
+		t.Hotels = append(t.Hotels, h)
+	}
+
 	return &t, nil
 }
 

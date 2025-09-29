@@ -22,6 +22,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
 	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
 	orderHandler *handlers.OrderHandler, feedbackHandler *handlers.FeedbackHandler,
+	hotelHandler *handlers.HotelHandler,
 	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
@@ -84,6 +85,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		})
 
 		// admin (JWT + роль 2)
+		// admin (JWT + роль 2)
 		api.Group(func(admin chi.Router) {
 			admin.Use(middleware.JWTAuth(jwtSecret))
 			admin.Use(middleware.RoleAuth(2))
@@ -121,7 +123,16 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Get("/admin/feedbacks", feedbackHandler.List)
 			admin.Post("/admin/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
 			admin.Delete("/admin/feedbacks/{id}", feedbackHandler.Delete)
+
+			// hotels CRUD
+			admin.Get("/admin/hotels", hotelHandler.List)
+			admin.Get("/admin/hotels/{id}", hotelHandler.Get)
+			admin.Post("/admin/hotels", hotelHandler.Create)
+			admin.Put("/admin/hotels/{id}", hotelHandler.Update)
+			admin.Delete("/admin/hotels/{id}", hotelHandler.Delete)
+			admin.Post("/admin/trips/{id}/hotels", hotelHandler.AttachHotelToTrip)
 		})
+
 	})
 
 	return r

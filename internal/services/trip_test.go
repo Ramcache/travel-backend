@@ -59,8 +59,9 @@ func TestTripService_Create_InvalidInput(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -77,8 +78,9 @@ func TestTripService_Create_InvalidDate(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -96,8 +98,9 @@ func TestTripService_Create_Success(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -119,8 +122,9 @@ func TestTripService_Get_NotFound(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -136,8 +140,9 @@ func TestTripService_Update_InvalidDate(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -155,8 +160,9 @@ func TestTripService_Delete_Success(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)
@@ -170,8 +176,9 @@ func TestTripService_IncrementViews_Buys(t *testing.T) {
 	mockRepo := new(MockTripRepo)
 	svc := services.NewTripService(
 		mockRepo,
-		nil, // orderRepo
-		nil, // telegram
+		nil,
+		nil,
+		nil,
 		"test-frontend",
 		zaptest.NewLogger(t).Sugar(),
 	)

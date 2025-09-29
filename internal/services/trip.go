@@ -22,20 +22,22 @@ var (
 )
 
 type TripService struct {
-	repo        repository.TripRepositoryI
-	orderRepo   *repository.OrderRepo
-	telegram    *helpers.TelegramClient
-	frontendURL string
-	log         *zap.SugaredLogger
+	repo          repository.TripRepositoryI
+	orderRepo     *repository.OrderRepo
+	tripHotelRepo repository.HotelRepositoryI
+	telegram      *helpers.TelegramClient
+	frontendURL   string
+	log           *zap.SugaredLogger
 }
 
-func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.OrderRepo, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
+func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.OrderRepo, tripHotelRepo repository.HotelRepositoryI, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
 	return &TripService{
-		repo:        repo,
-		orderRepo:   orderRepo,
-		telegram:    telegram,
-		frontendURL: frontendURL,
-		log:         log,
+		repo:          repo,
+		orderRepo:     orderRepo,
+		tripHotelRepo: tripHotelRepo,
+		telegram:      telegram,
+		frontendURL:   frontendURL,
+		log:           log,
 	}
 }
 
@@ -72,67 +74,71 @@ func (s *TripService) Get(ctx context.Context, id int) (*models.Trip, error) {
 }
 
 func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error) {
-	if req.Title == "" || req.DepartureCity == "" || req.TripType == "" {
-		return nil, helpers.ErrInvalidInput("Название тура, город вылета и тип тура обязательны")
+	t := &models.Trip{
+		Title:         req.Title,
+		Description:   req.Description,
+		PhotoURL:      req.PhotoURL,
+		DepartureCity: req.DepartureCity,
+		TripType:      req.TripType,
+		Season:        req.Season,
+		Price:         req.Price,
+		Currency:      req.Currency,
+		Main:          req.Main,
 	}
 
-	start, err := time.Parse("2006-01-02", req.StartDate)
+	// parse dates
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
 	if err != nil {
-		return nil, helpers.ErrInvalidInput("Некорректная дата начала")
+		return nil, fmt.Errorf("invalid start_date: %w", err)
 	}
-	end, err := time.Parse("2006-01-02", req.EndDate)
+	endDate, err := time.Parse("2006-01-02", req.EndDate)
 	if err != nil {
-		return nil, helpers.ErrInvalidInput("Некорректная дата окончания")
+		return nil, fmt.Errorf("invalid end_date: %w", err)
 	}
-
-	var deadline *time.Time
+	var bookingDeadline *time.Time
 	if req.BookingDeadline != "" {
-		parsed, err := helpers.ParseFlexibleDate(req.BookingDeadline)
+		bd, err := time.Parse("2006-01-02", req.BookingDeadline)
 		if err != nil {
-			return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
+			return nil, fmt.Errorf("invalid booking_deadline: %w", err)
 		}
-		deadline = &parsed
+		bookingDeadline = &bd
 	}
 
-	trip := &models.Trip{
-		Title:           req.Title,
-		Description:     req.Description,
-		PhotoURL:        req.PhotoURL,
-		DepartureCity:   req.DepartureCity,
-		TripType:        req.TripType,
-		Season:          req.Season,
-		Price:           req.Price,
-		Currency:        req.Currency,
-		StartDate:       start,
-		EndDate:         end,
-		BookingDeadline: deadline,
-		Main:            req.Main,
-	}
+	t.StartDate = startDate
+	t.EndDate = endDate
+	t.BookingDeadline = bookingDeadline
 
-	if req.Main {
-		if err := s.repo.ResetMain(ctx, nil); err != nil {
-			s.log.Errorw("reset_main_failed", "err", err)
-		}
-	}
-
-	if err := s.repo.Create(ctx, trip); err != nil {
-		s.log.Errorw("trip_create_failed", "title", req.Title, "err", err)
+	// создаём тур
+	if err := s.repo.Create(ctx, t); err != nil {
 		return nil, err
 	}
 
-	s.log.Infow("trip_created", "id", trip.ID, "title", trip.Title)
-	return trip, nil
+	// если передали отели — привяжем
+	if len(req.Hotels) > 0 {
+		for _, h := range req.Hotels {
+			if h.HotelID > 0 {
+				th := &models.TripHotel{
+					TripID:  t.ID,
+					HotelID: h.HotelID,
+					Nights:  h.Nights,
+				}
+				if err := s.tripHotelRepo.Attach(ctx, th); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return t, nil
 }
 
 func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return nil, ErrTripNotFound
-		}
 		return nil, err
 	}
 
+	// обновляем только переданные поля
 	if req.Title != nil {
 		trip.Title = *req.Title
 	}
@@ -157,46 +163,51 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	if req.Currency != nil {
 		trip.Currency = *req.Currency
 	}
+	if req.Main != nil {
+		trip.Main = *req.Main
+	}
 	if req.StartDate != nil {
-		parsed, err := time.Parse("2006-01-02", *req.StartDate)
-		if err != nil {
-			return nil, helpers.ErrInvalidInput("Некорректная дата начала")
+		if d, err := time.Parse("2006-01-02", *req.StartDate); err == nil {
+			trip.StartDate = d
+		} else {
+			return nil, fmt.Errorf("invalid start_date: %w", err)
 		}
-		trip.StartDate = parsed
 	}
 	if req.EndDate != nil {
-		parsed, err := time.Parse("2006-01-02", *req.EndDate)
-		if err != nil {
-			return nil, helpers.ErrInvalidInput("Некорректная дата окончания")
+		if d, err := time.Parse("2006-01-02", *req.EndDate); err == nil {
+			trip.EndDate = d
+		} else {
+			return nil, fmt.Errorf("invalid end_date: %w", err)
 		}
-		trip.EndDate = parsed
 	}
 	if req.BookingDeadline != nil {
 		if *req.BookingDeadline == "" {
 			trip.BookingDeadline = nil
+		} else if d, err := time.Parse("2006-01-02", *req.BookingDeadline); err == nil {
+			trip.BookingDeadline = &d
 		} else {
-			parsed, err := helpers.ParseFlexibleDate(*req.BookingDeadline)
-			if err != nil {
-				return nil, helpers.ErrInvalidInput("Некорректная дата окончания бронирования")
-			}
-			trip.BookingDeadline = &parsed
-		}
-	}
-	if req.Main != nil {
-		trip.Main = *req.Main
-		if *req.Main {
-			if err := s.repo.ResetMain(ctx, &id); err != nil {
-				s.log.Errorw("reset_main_failed", "err", err)
-			}
+			return nil, fmt.Errorf("invalid booking_deadline: %w", err)
 		}
 	}
 
 	if err := s.repo.Update(ctx, trip); err != nil {
-		s.log.Errorw("trip_update_failed", "id", id, "err", err)
 		return nil, err
 	}
 
-	s.log.Infow("trip_updated", "id", id)
+	if req.Hotels != nil {
+		if _, err := s.tripHotelRepo.ClearByTrip(ctx, id); err != nil {
+			return nil, err
+		}
+		for _, h := range req.Hotels {
+			if h.HotelID > 0 {
+				th := &models.TripHotel{TripID: id, HotelID: h.HotelID, Nights: h.Nights}
+				if err := s.tripHotelRepo.Attach(ctx, th); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
 	return trip, nil
 }
 

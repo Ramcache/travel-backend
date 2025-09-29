@@ -27,6 +27,7 @@ type App struct {
 	statsRepo        *repository.StatsRepository
 	orderRepo        *repository.OrderRepo
 	feedbackRepo     *repository.FeedbackRepo
+	hotelRepo        *repository.HotelRepositoryI
 	// services
 	AuthService         *services.AuthService
 	CurrencyService     *services.CurrencyService
@@ -36,6 +37,7 @@ type App struct {
 	statsService        *services.StatsService
 	orderService        *services.OrderService
 	feedbackService     *services.FeedbackService
+	hotelService        *services.HotelService
 
 	// handlers
 	AuthHandler         *handlers.AuthHandler
@@ -48,6 +50,7 @@ type App struct {
 	StatsHandler        *handlers.StatsHandler
 	OrderHandler        *handlers.OrderHandler
 	FeedbackHandler     *handlers.FeedbackHandler
+	HotelHandler        *handlers.HotelHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -59,18 +62,21 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	statsRepo := repository.NewStatsRepository(pool)
 	orderRepo := repository.NewOrderRepo(pool)
 	feedbackRepo := repository.NewFeedbackRepo(pool)
+	hotelRepo := repository.NewHotelRepository(pool)
+
 	// helpers
 	telegramClient := helpers.NewTelegramClient(cfg.TG.TelegramToken, cfg.TG.TelegramChat)
 
 	// services
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTTTL, log)
 	currencyService := services.NewCurrencyService(5*time.Minute, log)
-	tripService := services.NewTripService(tripRepo, orderRepo, telegramClient, cfg.FrontendURL, log)
+	tripService := services.NewTripService(tripRepo, orderRepo, hotelRepo, telegramClient, cfg.FrontendURL, log)
 	newsService := services.NewNewsService(newsRepo, newsCategoryRepo, log)
 	newsCategoryService := services.NewNewsCategoryService(newsCategoryRepo, log)
 	statsService := services.NewStatsService(statsRepo)
 	orderService := services.NewOrderService(orderRepo)
 	feedbackService := services.NewFeedbackService(feedbackRepo, telegramClient, log)
+	hotelService := services.NewHotelService(hotelRepo)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
@@ -83,6 +89,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	statsHandler := handlers.NewStatsHandler(statsService, log)
 	orderHandler := handlers.NewOrderHandler(orderService, log)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService, log)
+	hotelHandler := handlers.NewHotelHandler(hotelService)
 
 	return &App{
 		Config:              cfg,
@@ -109,5 +116,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		StatsHandler:        statsHandler,
 		OrderHandler:        orderHandler,
 		FeedbackHandler:     feedbackHandler,
+		HotelHandler:        hotelHandler,
 	}
 }

@@ -44,7 +44,7 @@ func NewServeCmd() *cobra.Command {
 			r := server.NewRouter(application.AuthHandler, application.UserHandler,
 				application.CurrencyHandler, application.TripHandler, application.NewsHandler,
 				application.ProfileHandler, application.NewsCategoryHandler, application.StatsHandler,
-				application.OrderHandler, application.FeedbackHandler,
+				application.OrderHandler, application.FeedbackHandler, application.HotelHandler,
 				cfg.JWTSecret, log, pool)
 
 			addr := fmt.Sprintf(":%s", cfg.AppPort)
