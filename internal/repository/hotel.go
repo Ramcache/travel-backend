@@ -26,19 +26,22 @@ func NewHotelRepository(db DB) *HotelRepository {
 }
 
 func (r *HotelRepository) Create(ctx context.Context, hotel *models.Hotel) error {
-	query := `INSERT INTO hotels (name, city, distance, meals, rating) 
-              VALUES ($1,$2,$3,$4,$5) RETURNING id, created_at, updated_at`
+	query := `INSERT INTO hotels (name, city, stars, distance, distance_text, meals, guests, photo_url) 
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8) 
+              RETURNING id, created_at, updated_at`
 	return r.db.QueryRow(ctx, query,
-		hotel.Name, hotel.City, hotel.Distance, hotel.Meals, hotel.Rating).
+		hotel.Name, hotel.City, hotel.Stars, hotel.Distance, hotel.DistanceText,
+		hotel.Meals, hotel.Guests, hotel.PhotoURL).
 		Scan(&hotel.ID, &hotel.CreatedAt, &hotel.UpdatedAt)
 }
 
 func (r *HotelRepository) Get(ctx context.Context, id int) (*models.Hotel, error) {
 	var h models.Hotel
-	query := `SELECT id, name, city, distance, meals, rating, created_at, updated_at 
+	query := `SELECT id, name, city, stars, distance, distance_text, meals, guests, photo_url, created_at, updated_at 
               FROM hotels WHERE id=$1`
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&h.ID, &h.Name, &h.City, &h.Distance, &h.Meals, &h.Rating, &h.CreatedAt, &h.UpdatedAt)
+		&h.ID, &h.Name, &h.City, &h.Stars, &h.Distance, &h.DistanceText,
+		&h.Meals, &h.Guests, &h.PhotoURL, &h.CreatedAt, &h.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +49,7 @@ func (r *HotelRepository) Get(ctx context.Context, id int) (*models.Hotel, error
 }
 
 func (r *HotelRepository) List(ctx context.Context) ([]models.Hotel, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, name, city, distance, meals, rating, created_at, updated_at FROM hotels ORDER BY id DESC`)
+	rows, err := r.db.Query(ctx, `SELECT id, name, city, stars, distance, distance_text, meals, guests, photo_url, created_at, updated_at FROM hotels ORDER BY id DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +58,8 @@ func (r *HotelRepository) List(ctx context.Context) ([]models.Hotel, error) {
 	var hotels []models.Hotel
 	for rows.Next() {
 		var h models.Hotel
-		if err := rows.Scan(&h.ID, &h.Name, &h.City, &h.Distance, &h.Meals, &h.Rating, &h.CreatedAt, &h.UpdatedAt); err != nil {
+		if err := rows.Scan(&h.ID, &h.Name, &h.City, &h.Stars, &h.Distance, &h.DistanceText,
+			&h.Meals, &h.Guests, &h.PhotoURL, &h.CreatedAt, &h.UpdatedAt); err != nil {
 			return nil, err
 		}
 		hotels = append(hotels, h)
@@ -64,8 +68,12 @@ func (r *HotelRepository) List(ctx context.Context) ([]models.Hotel, error) {
 }
 
 func (r *HotelRepository) Update(ctx context.Context, hotel *models.Hotel) error {
-	query := `UPDATE hotels SET name=$1, city=$2, distance=$3, meals=$4, rating=$5, updated_at=now() WHERE id=$6`
-	_, err := r.db.Exec(ctx, query, hotel.Name, hotel.City, hotel.Distance, hotel.Meals, hotel.Rating, hotel.ID)
+	query := `UPDATE hotels 
+              SET name=$1, city=$2, stars=$3, distance=$4, distance_text=$5, meals=$6, guests=$7, photo_url=$8, updated_at=now() 
+              WHERE id=$9`
+	_, err := r.db.Exec(ctx, query,
+		hotel.Name, hotel.City, hotel.Stars, hotel.Distance, hotel.DistanceText,
+		hotel.Meals, hotel.Guests, hotel.PhotoURL, hotel.ID)
 	return err
 }
 
@@ -83,7 +91,7 @@ func (r *HotelRepository) Attach(ctx context.Context, th *models.TripHotel) erro
 
 func (r *HotelRepository) ListByTrip(ctx context.Context, tripID int) ([]models.Hotel, error) {
 	rows, err := r.db.Query(ctx, `
-        SELECT h.id, h.name, h.city, h.distance, h.meals, h.rating, h.created_at, h.updated_at, th.nights
+        SELECT h.id, h.name, h.city, h.stars, h.distance, h.distance_text, h.meals, h.guests, h.photo_url, h.created_at, h.updated_at, th.nights
         FROM trip_hotels th
         JOIN hotels h ON h.id = th.hotel_id
         WHERE th.trip_id = $1
@@ -97,10 +105,11 @@ func (r *HotelRepository) ListByTrip(ctx context.Context, tripID int) ([]models.
 	for rows.Next() {
 		var h models.Hotel
 		var nights int
-		if err := rows.Scan(&h.ID, &h.Name, &h.City, &h.Distance, &h.Meals, &h.Rating, &h.CreatedAt, &h.UpdatedAt, &nights); err != nil {
+		if err := rows.Scan(&h.ID, &h.Name, &h.City, &h.Stars, &h.Distance, &h.DistanceText,
+			&h.Meals, &h.Guests, &h.PhotoURL, &h.CreatedAt, &h.UpdatedAt, &nights); err != nil {
 			return nil, err
 		}
-		// можно расширить Hotel структурой с Nights
+		// пока ночи просто добавляем к структуре (можно расширить Hotel, добавив Nights)
 		h.Meals = h.Meals + " (" + strconv.Itoa(nights) + " ночей)"
 		hotels = append(hotels, h)
 	}
