@@ -1,11 +1,10 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/Ramcache/travel-backend/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -18,176 +17,131 @@ import (
 	"github.com/Ramcache/travel-backend/internal/middleware"
 )
 
-// RouterDeps содержит все зависимости для построения роутера.
-// Так мы избегаем длинной сигнатуры NewRouter.
-type RouterDeps struct {
-	Auth     *handlers.AuthHandler
-	User     *handlers.UserHandler
-	Currency *handlers.CurrencyHandler
-	Trip     *handlers.TripHandler
-	News     *handlers.NewsHandler
-	Profile  *handlers.ProfileHandler
-	Category *handlers.NewsCategoryHandler
-	Stats    *handlers.StatsHandler
-	Order    *handlers.OrderHandler
-	Feedback *handlers.FeedbackHandler
-	Hotel    *handlers.HotelHandler
-	Search   *handlers.SearchHandler
-	Review   *handlers.ReviewHandler
-
-	JWTSecret string
-	Log       *zap.SugaredLogger
-	DB        *pgxpool.Pool
-}
-
-func NewRouter(deps RouterDeps) http.Handler {
+func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler,
+	currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler,
+	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
+	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
+	orderHandler *handlers.OrderHandler, feedbackHandler *handlers.FeedbackHandler,
+	hotelHandler *handlers.HotelHandler, searchHandler *handlers.SearchHandler,
+	reviewHandler *handlers.ReviewHandler,
+	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
 	r := chi.NewRouter()
 
-	// --- Middlewares ---
+	// middlewares
 	r.Use(middleware.CORS())
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
-	r.Use(middleware.ZapLogger(deps.Log))
-	r.Use(middleware.Recoverer(deps.Log))
+	r.Use(middleware.ZapLogger(log))
+	r.Use(middleware.Recoverer(log))
 	r.Use(middleware.MetricsMiddleware)
-
 	// кастомные 404/405
 	r.NotFound(middleware.NotFoundHandler())
 	r.MethodNotAllowed(middleware.MethodNotAllowedHandler())
 
-	// --- Routes ---
-	registerSystemRoutes(r, deps)
-	registerPublicRoutes(r, deps)
-	registerProfileRoutes(r, deps)
-	registerAdminRoutes(r, deps)
-
-	return r
-}
-
-// --- System endpoints (metrics, swagger, health) ---
-func registerSystemRoutes(r chi.Router, deps RouterDeps) {
+	// swagger
 	docs.SwaggerInfo.Title = "Travel API"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/api/v1"
-
-	r.Get("/metrics", promhttp.Handler().ServeHTTP)
-	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
-
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		promhttp.Handler().ServeHTTP(w, r)
 	})
-	r.Get("/readyz", func(w http.ResponseWriter, req *http.Request) {
-		if err := storage.Ping(req.Context(), deps.DB); err != nil {
+	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })
+	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		if err := storage.Ping(r.Context(), db); err != nil {
 			http.Error(w, "db down", http.StatusServiceUnavailable)
 			return
 		}
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusNoContent) // 204
 	})
-}
 
-// --- Public API (/api/v1/...) ---
-func registerPublicRoutes(r chi.Router, deps RouterDeps) {
+	// public
 	r.Route("/api/v1", func(api chi.Router) {
-		// Auth
-		api.Post("/auth/register", deps.Auth.Register)
-		api.Post("/auth/login", deps.Auth.Login)
+		api.Post("/auth/register", authHandler.Register)
+		api.Post("/auth/login", authHandler.Login)
 
-		// Currency
-		api.Get("/currency", deps.Currency.GetRates)
+		api.Get("/currency", currencyHandler.GetRates)
 
-		// Trips
-		api.Get("/trips", deps.Trip.List)
-		api.Get("/trips/{id}", deps.Trip.Get)
-		api.Get("/trips/{id}/countdown", deps.Trip.Countdown)
-		api.Get("/trips/main", deps.Trip.GetMain)
-		api.Get("/trips/popular", deps.Trip.Popular)
-		api.Post("/trips/{id}/buy", deps.Trip.Buy)
-		api.Post("/trips/buy", deps.Trip.BuyWithoutTrip)
+		api.Get("/trips", tripHandler.List)
+		api.Get("/trips/{id}", tripHandler.Get)
+		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+		api.Get("/trips/main", tripHandler.GetMain)
 
-		// News
-		api.Get("/news", deps.News.PublicList)
-		api.Get("/news/{slug_or_id}", deps.News.PublicGet)
-		api.Get("/news/recent", deps.News.Recent)
-		api.Get("/news/popular", deps.News.Popular)
+		api.Get("/news", newsHandler.PublicList)
+		api.Get("/news/{slug_or_id}", newsHandler.PublicGet)
+		api.Get("/news/recent", newsHandler.Recent)
+		api.Get("/news/popular", newsHandler.Popular)
 
-		// Feedback
-		api.Post("/feedback", deps.Feedback.Create)
+		api.Post("/trips/{id}/buy", tripHandler.Buy)
+		api.Post("/trips/buy", tripHandler.BuyWithoutTrip)
+		api.Get("/trips/popular", tripHandler.Popular)
 
-		// Search
-		api.Get("/search", deps.Search.GlobalSearch)
+		api.Post("/feedback", feedbackHandler.Create)
 
-		// Reviews (исправлено: теперь внутри /api/v1)
+		api.Get("/search", searchHandler.GlobalSearch)
 		api.Route("/trips/{trip_id}/reviews", func(r chi.Router) {
-			r.Get("/", deps.Review.ListByTrip)
-			r.Post("/", deps.Review.Create)
+			r.Get("/", reviewHandler.ListByTrip)
+			r.Post("/", reviewHandler.Create)
 		})
-	})
-}
 
-// --- Profile routes (requires JWT) ---
-func registerProfileRoutes(r chi.Router, deps RouterDeps) {
-	r.Route("/api/v1", func(api chi.Router) {
+		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
-			pr.Use(middleware.JWTAuth(deps.JWTSecret))
-			pr.Get("/profile", deps.Profile.Get)
-			pr.Put("/profile", deps.Profile.Update)
+			pr.Use(middleware.JWTAuth(jwtSecret))
+			pr.Get("/profile", profileHandler.Get)
+			pr.Put("/profile", profileHandler.Update)
 		})
+
+		// admin (JWT + роль 2)
+		// admin (JWT + роль 2)
+		api.Group(func(admin chi.Router) {
+			admin.Use(middleware.JWTAuth(jwtSecret))
+			admin.Use(middleware.RoleAuth(2))
+
+			admin.Get("/admin/users", userHandler.List)
+			admin.Get("/admin/users/{id}", userHandler.Get)
+			admin.Post("/admin/users", userHandler.Create)
+			admin.Put("/admin/users/{id}", userHandler.Update)
+			admin.Delete("/admin/users/{id}", userHandler.Delete)
+
+			admin.Get("/admin/trips", tripHandler.List)
+			admin.Get("/admin/trips/{id}", tripHandler.Get)
+			admin.Post("/admin/trips", tripHandler.Create)
+			admin.Put("/admin/trips/{id}", tripHandler.Update)
+			admin.Delete("/admin/trips/{id}", tripHandler.Delete)
+
+			admin.Get("/admin/news", newsHandler.AdminList)
+			admin.Post("/admin/news", newsHandler.Create)
+			admin.Put("/admin/news/{id}", newsHandler.Update)
+			admin.Delete("/admin/news/{id}", newsHandler.Delete)
+
+			admin.Get("/admin/news/categories", categoryHandler.List)
+			admin.Get("/admin/news/categories/{id}", categoryHandler.Get)
+			admin.Post("/admin/news/categories", categoryHandler.Create)
+			admin.Put("/admin/news/categories/{id}", categoryHandler.Update)
+			admin.Delete("/admin/news/categories/{id}", categoryHandler.Delete)
+
+			admin.Get("/admin/stats", statsHandler.Get)
+
+			admin.Get("/admin/orders", orderHandler.List)
+			admin.Post("/admin/orders/{id}/status", orderHandler.UpdateStatus)
+			admin.Post("/admin/orders/{id}/read", orderHandler.MarkAsRead)
+			admin.Delete("/admin/orders/{id}", orderHandler.Delete)
+
+			admin.Get("/admin/feedbacks", feedbackHandler.List)
+			admin.Post("/admin/feedbacks/{id}/read", feedbackHandler.MarkAsRead)
+			admin.Delete("/admin/feedbacks/{id}", feedbackHandler.Delete)
+
+			// hotels CRUD
+			admin.Get("/admin/hotels", hotelHandler.List)
+			admin.Get("/admin/hotels/{id}", hotelHandler.Get)
+			admin.Post("/admin/hotels", hotelHandler.Create)
+			admin.Put("/admin/hotels/{id}", hotelHandler.Update)
+			admin.Delete("/admin/hotels/{id}", hotelHandler.Delete)
+			admin.Post("/admin/trips/{id}/hotels", hotelHandler.AttachHotelToTrip)
+
+		})
+
 	})
-}
 
-// --- Admin routes (/api/v1/admin/...) ---
-func registerAdminRoutes(r chi.Router, deps RouterDeps) {
-	r.Route("/api/v1/admin", func(admin chi.Router) {
-		admin.Use(middleware.JWTAuth(deps.JWTSecret))
-		admin.Use(middleware.RoleAuth(2))
-
-		// Users
-		admin.Get("/users", deps.User.List)
-		admin.Get("/users/{id}", deps.User.Get)
-		admin.Post("/users", deps.User.Create)
-		admin.Put("/users/{id}", deps.User.Update)
-		admin.Delete("/users/{id}", deps.User.Delete)
-
-		// Trips
-		admin.Get("/trips", deps.Trip.List)
-		admin.Get("/trips/{id}", deps.Trip.Get)
-		admin.Post("/trips", deps.Trip.Create)
-		admin.Put("/trips/{id}", deps.Trip.Update)
-		admin.Delete("/trips/{id}", deps.Trip.Delete)
-		admin.Post("/trips/{id}/hotels", deps.Hotel.AttachHotelToTrip)
-
-		// News
-		admin.Get("/news", deps.News.AdminList)
-		admin.Post("/news", deps.News.Create)
-		admin.Put("/news/{id}", deps.News.Update)
-		admin.Delete("/news/{id}", deps.News.Delete)
-
-		// News categories
-		admin.Get("/news/categories", deps.Category.List)
-		admin.Get("/news/categories/{id}", deps.Category.Get)
-		admin.Post("/news/categories", deps.Category.Create)
-		admin.Put("/news/categories/{id}", deps.Category.Update)
-		admin.Delete("/news/categories/{id}", deps.Category.Delete)
-
-		// Stats
-		admin.Get("/stats", deps.Stats.Get)
-
-		// Orders
-		admin.Get("/orders", deps.Order.List)
-		admin.Post("/orders/{id}/status", deps.Order.UpdateStatus)
-		admin.Post("/orders/{id}/read", deps.Order.MarkAsRead)
-		admin.Delete("/orders/{id}", deps.Order.Delete)
-
-		// Feedbacks
-		admin.Get("/feedbacks", deps.Feedback.List)
-		admin.Post("/feedbacks/{id}/read", deps.Feedback.MarkAsRead)
-		admin.Delete("/feedbacks/{id}", deps.Feedback.Delete)
-
-		// Hotels
-		admin.Get("/hotels", deps.Hotel.List)
-		admin.Get("/hotels/{id}", deps.Hotel.Get)
-		admin.Post("/hotels", deps.Hotel.Create)
-		admin.Put("/hotels/{id}", deps.Hotel.Update)
-		admin.Delete("/hotels/{id}", deps.Hotel.Delete)
-	})
+	return r
 }
