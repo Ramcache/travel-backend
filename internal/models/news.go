@@ -8,7 +8,7 @@ type News struct {
 	Title         string    `json:"title"`
 	Excerpt       string    `json:"excerpt"`
 	Content       string    `json:"content"`
-	CategoryID    int       `json:"category_id"`
+	CategoryID    *int      `json:"category_id,omitempty"`
 	MediaType     string    `json:"media_type"`
 	PreviewURL    string    `json:"preview_url"`
 	VideoURL      *string   `json:"video_url,omitempty"`

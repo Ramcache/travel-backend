@@ -186,6 +186,12 @@ const docTemplate = `{
                                 "$ref": "#/definitions/models.Hotel"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Не удалось получить список отелей",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             },
@@ -219,7 +225,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось создать отель",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -253,7 +265,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Отель не найден",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -297,7 +309,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось обновить отель",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -319,10 +337,25 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось удалить отель",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -1175,9 +1208,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "attached",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось привязать отель",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -1849,6 +1897,49 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ошибка при обновлении профиля",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Global search (trips + news)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.SearchResult"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка поиска",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -2536,6 +2627,29 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 6
+                }
+            }
+        },
+        "models.SearchResult": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "highlighted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

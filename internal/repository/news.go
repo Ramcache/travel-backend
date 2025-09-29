@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -99,15 +100,25 @@ LIMIT $` + fmt.Sprint(idx) + ` OFFSET $` + fmt.Sprint(idx+1)
 	var items []models.News
 	for rows.Next() {
 		var n models.News
+		var categoryID sql.NullInt32
+
 		if err := rows.Scan(
 			&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
-			&n.CategoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+			&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
 			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
 			&n.AuthorID, &n.Status, &n.PublishedAt,
 			&n.CreatedAt, &n.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
+
+		if categoryID.Valid {
+			val := int(categoryID.Int32)
+			n.CategoryID = &val
+		} else {
+			n.CategoryID = nil
+		}
+
 		items = append(items, n)
 	}
 	return items, total, rows.Err()
@@ -134,13 +145,23 @@ FROM news n
 WHERE ` + by + ` = $1`
 
 	var n models.News
+	var categoryID sql.NullInt32
+
 	err := r.db.QueryRow(ctx, q, val).Scan(
 		&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
-		&n.CategoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+		&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
 		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
 		&n.AuthorID, &n.Status, &n.PublishedAt,
 		&n.CreatedAt, &n.UpdatedAt,
 	)
+
+	if categoryID.Valid {
+		val := int(categoryID.Int32)
+		n.CategoryID = &val
+	} else {
+		n.CategoryID = nil
+	}
+
 	return &n, mapNotFound(err)
 }
 
@@ -219,15 +240,25 @@ LIMIT $1`
 	var list []models.News
 	for rows.Next() {
 		var n models.News
+		var categoryID sql.NullInt32
+
 		if err := rows.Scan(
 			&n.ID, &n.Slug, &n.Title, &n.Excerpt,
 			&n.PreviewURL, &n.MediaType,
-			&n.CategoryID, &n.PublishedAt,
+			&categoryID, &n.PublishedAt,
 			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
 			&n.CreatedAt, &n.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
+		if categoryID.Valid {
+			val := int(categoryID.Int32)
+			n.CategoryID = &val
+		} else {
+			n.CategoryID = nil
+		}
+
 		list = append(list, n)
 	}
 	return list, rows.Err()
@@ -255,15 +286,25 @@ LIMIT $1`
 	var list []models.News
 	for rows.Next() {
 		var n models.News
+		var categoryID sql.NullInt32
+
 		if err := rows.Scan(
 			&n.ID, &n.Slug, &n.Title, &n.Excerpt,
 			&n.PreviewURL, &n.MediaType,
-			&n.CategoryID, &n.PublishedAt,
+			&categoryID, &n.PublishedAt,
 			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
 			&n.CreatedAt, &n.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
+		if categoryID.Valid {
+			val := int(categoryID.Int32)
+			n.CategoryID = &val
+		} else {
+			n.CategoryID = nil
+		}
+
 		list = append(list, n)
 	}
 	return list, rows.Err()

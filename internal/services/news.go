@@ -163,7 +163,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		Title:       req.Title,
 		Excerpt:     req.Excerpt,
 		Content:     req.Content,
-		CategoryID:  req.CategoryID,
+		CategoryID:  &req.CategoryID,
 		MediaType:   req.MediaType,
 		PreviewURL:  req.PreviewURL,
 		VideoURL:    req.VideoURL,
@@ -206,8 +206,9 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 		if ok, _ := s.catRepo.Exists(ctx, *v); !ok {
 			return nil, helpers.ErrInvalidInput("Некорректная категория")
 		}
-		n.CategoryID = *v
+		n.CategoryID = v
 	}
+
 	if v := req.MediaType; v != nil {
 		if _, ok := allowedType[*v]; !ok {
 			return nil, helpers.ErrInvalidInput("Некорректный тип медиа")
