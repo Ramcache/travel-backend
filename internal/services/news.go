@@ -333,3 +333,17 @@ func slugify(s string) string {
 	}
 	return strings.Trim(string(res), "-")
 }
+
+// PublicList возвращает только опубликованные новости
+func (s *NewsService) PublicList(ctx context.Context, limit, offset int) ([]models.News, int, error) {
+	items, total, err := s.repo.List(ctx, repository.NewsFilter{
+		Status: "published",
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		s.log.Errorw("news_public_list_failed", "err", err)
+		return nil, 0, err
+	}
+	return items, total, nil
+}

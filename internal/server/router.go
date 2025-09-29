@@ -17,14 +17,26 @@ import (
 	"github.com/Ramcache/travel-backend/internal/middleware"
 )
 
-func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler,
-	currencyHandler *handlers.CurrencyHandler, tripHandler *handlers.TripHandler,
-	newsHandler *handlers.NewsHandler, profileHandler *handlers.ProfileHandler,
-	categoryHandler *handlers.NewsCategoryHandler, statsHandler *handlers.StatsHandler,
-	orderHandler *handlers.OrderHandler, feedbackHandler *handlers.FeedbackHandler,
-	hotelHandler *handlers.HotelHandler, searchHandler *handlers.SearchHandler,
+func NewRouter(
+	authHandler *handlers.AuthHandler,
+	userHandler *handlers.UserHandler,
+	currencyHandler *handlers.CurrencyHandler,
+	tripHandler *handlers.TripHandler,
+	newsHandler *handlers.NewsHandler,
+	profileHandler *handlers.ProfileHandler,
+	categoryHandler *handlers.NewsCategoryHandler,
+	statsHandler *handlers.StatsHandler,
+	orderHandler *handlers.OrderHandler,
+	feedbackHandler *handlers.FeedbackHandler,
+	hotelHandler *handlers.HotelHandler,
+	searchHandler *handlers.SearchHandler,
 	reviewHandler *handlers.ReviewHandler,
-	jwtSecret string, log *zap.SugaredLogger, db *pgxpool.Pool) http.Handler {
+	tripRouteHandler *handlers.TripRouteHandler,
+	tripPageHandler *handlers.TripPageHandler,
+	jwtSecret string,
+	log *zap.SugaredLogger,
+	db *pgxpool.Pool,
+) http.Handler {
 	r := chi.NewRouter()
 
 	// middlewares
@@ -34,6 +46,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 	r.Use(middleware.ZapLogger(log))
 	r.Use(middleware.Recoverer(log))
 	r.Use(middleware.MetricsMiddleware)
+
 	// кастомные 404/405
 	r.NotFound(middleware.NotFoundHandler())
 	r.MethodNotAllowed(middleware.MethodNotAllowedHandler())
@@ -65,6 +78,7 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
+		api.Get("/trips/{id}/page", tripPageHandler.Get) // ✅ TripPage публично
 		api.Get("/trips/main", tripHandler.GetMain)
 
 		api.Get("/news", newsHandler.PublicList)
@@ -79,10 +93,14 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 		api.Post("/feedback", feedbackHandler.Create)
 
 		api.Get("/search", searchHandler.GlobalSearch)
+
 		api.Route("/trips/{trip_id}/reviews", func(r chi.Router) {
 			r.Get("/", reviewHandler.ListByTrip)
 			r.Post("/", reviewHandler.Create)
 		})
+
+		// маршруты тура — публичный список
+		api.Get("/trips/{id}/routes", tripRouteHandler.List)
 
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
@@ -91,7 +109,6 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			pr.Put("/profile", profileHandler.Update)
 		})
 
-		// admin (JWT + роль 2)
 		// admin (JWT + роль 2)
 		api.Group(func(admin chi.Router) {
 			admin.Use(middleware.JWTAuth(jwtSecret))
@@ -139,6 +156,10 @@ func NewRouter(authHandler *handlers.AuthHandler, userHandler *handlers.UserHand
 			admin.Delete("/admin/hotels/{id}", hotelHandler.Delete)
 			admin.Post("/admin/trips/{id}/hotels", hotelHandler.AttachHotelToTrip)
 
+			// routes CRUD
+			admin.Post("/admin/trips/{id}/routes", tripRouteHandler.Create)
+			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
+			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
 		})
 
 	})
