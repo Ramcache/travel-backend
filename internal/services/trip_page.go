@@ -109,7 +109,7 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 		Countdown:    cd,
 		DurationDays: models.CalcDurationDays(trip.StartDate, trip.EndDate),
 		Routes:       routes,
-		Hotels:       hotels,
+		Hotels:       models.ToHotelResponses(hotels),
 		Reviews: models.TripPageReviews{
 			Total: total,
 			Items: reviewItems,

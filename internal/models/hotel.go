@@ -52,3 +52,34 @@ type TripHotel struct {
 	HotelID int `json:"hotel_id"`
 	Nights  int `json:"nights"`
 }
+
+func ToHotelResponses(hotels []Hotel) []HotelResponse {
+	resp := make([]HotelResponse, 0, len(hotels))
+	for _, h := range hotels {
+		var distanceText, guests, photoURL *string
+		if h.DistanceText.Valid {
+			distanceText = &h.DistanceText.String
+		}
+		if h.Guests.Valid {
+			guests = &h.Guests.String
+		}
+		if h.PhotoURL.Valid {
+			photoURL = &h.PhotoURL.String
+		}
+
+		resp = append(resp, HotelResponse{
+			ID:           h.ID,
+			Name:         h.Name,
+			City:         h.City,
+			Stars:        h.Stars,
+			Distance:     h.Distance,
+			DistanceText: distanceText,
+			Meals:        h.Meals,
+			Guests:       guests,
+			PhotoURL:     photoURL,
+			CreatedAt:    h.CreatedAt,
+			UpdatedAt:    h.UpdatedAt,
+		})
+	}
+	return resp
+}
