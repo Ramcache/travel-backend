@@ -176,7 +176,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Hotel"
+                                "$ref": "#/definitions/models.HotelResponse"
                             }
                         }
                     },
@@ -206,7 +206,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelRequest"
                         }
                     }
                 ],
@@ -214,7 +214,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "400": {
@@ -254,7 +254,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "404": {
@@ -290,7 +290,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelRequest"
                         }
                     }
                 ],
@@ -298,7 +298,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "400": {
@@ -2843,7 +2843,47 @@
                 }
             }
         },
-        "models.Hotel": {
+        "models.HotelAttach": {
+            "type": "object",
+            "properties": {
+                "hotel_id": {
+                    "type": "integer"
+                },
+                "nights": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HotelRequest": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "distance_text": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "string"
+                },
+                "meals": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "stars": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HotelResponse": {
             "type": "object",
             "properties": {
                 "city": {
@@ -2878,17 +2918,6 @@
                 },
                 "updated_at": {
                     "type": "string"
-                }
-            }
-        },
-        "models.HotelAttach": {
-            "type": "object",
-            "properties": {
-                "hotel_id": {
-                    "type": "integer"
-                },
-                "nights": {
-                    "type": "integer"
                 }
             }
         },
@@ -3244,7 +3273,7 @@
                 "hotels": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Hotel"
+                        "$ref": "#/definitions/models.HotelResponse"
                     }
                 },
                 "news": {

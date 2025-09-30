@@ -183,7 +183,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Hotel"
+                                "$ref": "#/definitions/models.HotelResponse"
                             }
                         }
                     },
@@ -213,7 +213,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelRequest"
                         }
                     }
                 ],
@@ -221,7 +221,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "400": {
@@ -261,7 +261,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "404": {
@@ -297,7 +297,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelRequest"
                         }
                     }
                 ],
@@ -305,7 +305,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Hotel"
+                            "$ref": "#/definitions/models.HotelResponse"
                         }
                     },
                     "400": {
@@ -2850,7 +2850,47 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Hotel": {
+        "models.HotelAttach": {
+            "type": "object",
+            "properties": {
+                "hotel_id": {
+                    "type": "integer"
+                },
+                "nights": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HotelRequest": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "distance_text": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "string"
+                },
+                "meals": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "stars": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HotelResponse": {
             "type": "object",
             "properties": {
                 "city": {
@@ -2885,17 +2925,6 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
-                }
-            }
-        },
-        "models.HotelAttach": {
-            "type": "object",
-            "properties": {
-                "hotel_id": {
-                    "type": "integer"
-                },
-                "nights": {
-                    "type": "integer"
                 }
             }
         },
@@ -3251,7 +3280,7 @@ const docTemplate = `{
                 "hotels": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Hotel"
+                        "$ref": "#/definitions/models.HotelResponse"
                     }
                 },
                 "news": {

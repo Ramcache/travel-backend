@@ -153,7 +153,33 @@ definitions:
       user_phone:
         type: string
     type: object
-  models.Hotel:
+  models.HotelAttach:
+    properties:
+      hotel_id:
+        type: integer
+      nights:
+        type: integer
+    type: object
+  models.HotelRequest:
+    properties:
+      city:
+        type: string
+      distance:
+        type: number
+      distance_text:
+        type: string
+      guests:
+        type: string
+      meals:
+        type: string
+      name:
+        type: string
+      photo_url:
+        type: string
+      stars:
+        type: integer
+    type: object
+  models.HotelResponse:
     properties:
       city:
         type: string
@@ -177,13 +203,6 @@ definitions:
         type: integer
       updated_at:
         type: string
-    type: object
-  models.HotelAttach:
-    properties:
-      hotel_id:
-        type: integer
-      nights:
-        type: integer
     type: object
   models.KV:
     properties:
@@ -421,7 +440,7 @@ definitions:
         type: integer
       hotels:
         items:
-          $ref: '#/definitions/models.Hotel'
+          $ref: '#/definitions/models.HotelResponse'
         type: array
       news:
         items:
@@ -728,7 +747,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Hotel'
+              $ref: '#/definitions/models.HotelResponse'
             type: array
         "500":
           description: Не удалось получить список отелей
@@ -746,14 +765,14 @@ paths:
         name: hotel
         required: true
         schema:
-          $ref: '#/definitions/models.Hotel'
+          $ref: '#/definitions/models.HotelRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Hotel'
+            $ref: '#/definitions/models.HotelResponse'
         "400":
           description: Некорректные данные
           schema:
@@ -804,7 +823,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Hotel'
+            $ref: '#/definitions/models.HotelResponse'
         "404":
           description: Отель не найден
           schema:
@@ -826,14 +845,14 @@ paths:
         name: hotel
         required: true
         schema:
-          $ref: '#/definitions/models.Hotel'
+          $ref: '#/definitions/models.HotelRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Hotel'
+            $ref: '#/definitions/models.HotelResponse'
         "400":
           description: Некорректные данные
           schema:

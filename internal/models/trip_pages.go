@@ -16,7 +16,7 @@ type TripPageResponse struct {
 	Countdown     *Countdown           `json:"countdown,omitempty"`
 	DurationDays  int                  `json:"duration_days"`
 	Routes        []TripRoute          `json:"routes"`
-	Hotels        []Hotel              `json:"hotels"`
+	Hotels        []HotelResponse      `json:"hotels"`
 	Reviews       TripPageReviews      `json:"reviews"`
 	PopularTrips  []Trip               `json:"popular_trips"`
 	News          []News               `json:"news"`
