@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -21,37 +22,85 @@ func NewHotelHandler(s *services.HotelService, log *zap.SugaredLogger) *HotelHan
 	return &HotelHandler{service: s, log: log}
 }
 
+// Преобразование DB модели -> API ответа
+func toHotelResponse(h models.Hotel) models.HotelResponse {
+	var distanceText, guests, photoURL *string
+	if h.DistanceText.Valid {
+		distanceText = &h.DistanceText.String
+	}
+	if h.Guests.Valid {
+		guests = &h.Guests.String
+	}
+	if h.PhotoURL.Valid {
+		photoURL = &h.PhotoURL.String
+	}
+
+	return models.HotelResponse{
+		ID:           h.ID,
+		Name:         h.Name,
+		City:         h.City,
+		Stars:        h.Stars,
+		Distance:     h.Distance,
+		DistanceText: distanceText,
+		Meals:        h.Meals,
+		Guests:       guests,
+		PhotoURL:     photoURL,
+		CreatedAt:    h.CreatedAt,
+		UpdatedAt:    h.UpdatedAt,
+	}
+}
+
 // Create
 // @Summary Create hotel
 // @Tags hotels
 // @Accept json
 // @Produce json
-// @Param hotel body models.Hotel true "Hotel"
-// @Success 200 {object} models.Hotel
+// @Param hotel body models.HotelRequest true "Hotel"
+// @Success 200 {object} models.HotelResponse
 // @Failure 400 {object} helpers.ErrorData "Некорректные данные"
 // @Failure 500 {object} helpers.ErrorData "Не удалось создать отель"
 // @Router /admin/hotels [post]
 func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var hotel models.Hotel
-	if err := json.NewDecoder(r.Body).Decode(&hotel); err != nil {
+	var req models.HotelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Warnw("Некорректные данные при создании отеля", "err", err)
 		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
+
+	hotel := models.Hotel{
+		Name:     req.Name,
+		City:     req.City,
+		Stars:    req.Stars,
+		Distance: req.Distance,
+		Meals:    req.Meals,
+	}
+
+	if req.DistanceText != nil {
+		hotel.DistanceText = sql.NullString{String: *req.DistanceText, Valid: true}
+	}
+	if req.Guests != nil {
+		hotel.Guests = sql.NullString{String: *req.Guests, Valid: true}
+	}
+	if req.PhotoURL != nil {
+		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
+	}
+
 	if err := h.service.Create(r.Context(), &hotel); err != nil {
 		h.log.Errorw("Ошибка создания отеля", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать отель")
 		return
 	}
+
 	h.log.Infow("Отель создан", "id", hotel.ID, "name", hotel.Name)
-	helpers.JSON(w, http.StatusOK, hotel)
+	helpers.JSON(w, http.StatusOK, toHotelResponse(hotel))
 }
 
 // List
 // @Summary List hotels
 // @Tags hotels
 // @Produce json
-// @Success 200 {array} models.Hotel
+// @Success 200 {array} models.HotelResponse
 // @Failure 500 {object} helpers.ErrorData "Не удалось получить список отелей"
 // @Router /admin/hotels [get]
 func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -61,8 +110,14 @@ func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список отелей")
 		return
 	}
+
+	resp := make([]models.HotelResponse, 0, len(hotels))
+	for _, hotel := range hotels {
+		resp = append(resp, toHotelResponse(hotel))
+	}
+
 	h.log.Infow("Список отелей получен", "count", len(hotels))
-	helpers.JSON(w, http.StatusOK, hotels)
+	helpers.JSON(w, http.StatusOK, resp)
 }
 
 // Get
@@ -70,7 +125,7 @@ func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags hotels
 // @Produce json
 // @Param id path int true "Hotel ID"
-// @Success 200 {object} models.Hotel
+// @Success 200 {object} models.HotelResponse
 // @Failure 404 {object} helpers.ErrorData "Отель не найден"
 // @Router /admin/hotels/{id} [get]
 func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +144,7 @@ func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.log.Infow("Отель получен", "id", id)
-	helpers.JSON(w, http.StatusOK, hotel)
+	helpers.JSON(w, http.StatusOK, toHotelResponse(*hotel))
 }
 
 // Update
@@ -98,8 +153,8 @@ func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Hotel ID"
-// @Param hotel body models.Hotel true "Hotel"
-// @Success 200 {object} models.Hotel
+// @Param hotel body models.HotelRequest true "Hotel"
+// @Success 200 {object} models.HotelResponse
 // @Failure 400 {object} helpers.ErrorData "Некорректные данные"
 // @Failure 500 {object} helpers.ErrorData "Не удалось обновить отель"
 // @Router /admin/hotels/{id} [put]
@@ -111,13 +166,31 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var hotel models.Hotel
-	if err := json.NewDecoder(r.Body).Decode(&hotel); err != nil {
+	var req models.HotelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Warnw("Некорректные данные при обновлении отеля", "id", id, "err", err)
 		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
-	hotel.ID = id
+
+	hotel := models.Hotel{
+		ID:       id,
+		Name:     req.Name,
+		City:     req.City,
+		Stars:    req.Stars,
+		Distance: req.Distance,
+		Meals:    req.Meals,
+	}
+
+	if req.DistanceText != nil {
+		hotel.DistanceText = sql.NullString{String: *req.DistanceText, Valid: true}
+	}
+	if req.Guests != nil {
+		hotel.Guests = sql.NullString{String: *req.Guests, Valid: true}
+	}
+	if req.PhotoURL != nil {
+		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
+	}
 
 	if err := h.service.Update(r.Context(), &hotel); err != nil {
 		h.log.Errorw("Ошибка обновления отеля", "id", id, "err", err)
@@ -126,7 +199,7 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.log.Infow("Отель обновлён", "id", id)
-	helpers.JSON(w, http.StatusOK, hotel)
+	helpers.JSON(w, http.StatusOK, toHotelResponse(hotel))
 }
 
 // Delete
@@ -194,5 +267,4 @@ func (h *HotelHandler) AttachHotelToTrip(w http.ResponseWriter, r *http.Request)
 
 	h.log.Infow("Отель привязан к туру", "trip_id", tripID, "hotel_id", th.HotelID, "nights", th.Nights)
 	helpers.JSON(w, http.StatusOK, map[string]string{"status": "attached"})
-
 }
