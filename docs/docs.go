@@ -1231,9 +1231,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/trips/{id}/routes": {
+        "/admin/trips/{id}/routes/batch": {
             "post": {
-                "description": "Добавляет новый маршрут к туру",
                 "consumes": [
                     "application/json"
                 ],
@@ -1245,7 +1244,7 @@ const docTemplate = `{
                     "trips",
                     "routes"
                 ],
-                "summary": "Создать маршрут тура",
+                "summary": "Создать несколько маршрутов тура",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1255,12 +1254,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Маршрут",
+                        "description": "Маршруты",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.TripRouteRequest"
+                            "$ref": "#/definitions/models.TripRouteBatchRequest"
                         }
                     }
                 ],
@@ -1268,17 +1267,20 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.TripRoute"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TripRoute"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Некорректный JSON",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при добавлении маршрута",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -1288,7 +1290,6 @@ const docTemplate = `{
         },
         "/admin/trips/{trip_id}/routes/{route_id}": {
             "put": {
-                "description": "Обновляет существующий маршрут",
                 "consumes": [
                     "application/json"
                 ],
@@ -1334,13 +1335,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный JSON",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при обновлении маршрута",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -1348,7 +1349,6 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Удаляет маршрут тура по ID",
                 "produces": [
                     "application/json"
                 ],
@@ -1376,7 +1376,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Маршрут удалён",
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1385,7 +1385,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Ошибка при удалении маршрута",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -2487,9 +2487,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/trips/{id}/routes": {
+        "/trips/{id}/routes/ui": {
             "get": {
-                "description": "Возвращает список маршрутов для тура",
                 "produces": [
                     "application/json"
                 ],
@@ -2497,7 +2496,7 @@ const docTemplate = `{
                     "trips",
                     "routes"
                 ],
-                "summary": "Список маршрутов тура",
+                "summary": "UI-маршрут тура (для плашки)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2511,14 +2510,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.TripRoute"
-                            }
+                            "$ref": "#/definitions/models.TripRouteUIResponse"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при получении маршрутов",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -2747,6 +2743,9 @@ const docTemplate = `{
         "models.CreateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3166,6 +3165,9 @@ const docTemplate = `{
         "models.Trip": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3299,10 +3301,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/models.TripPageReviews"
                 },
                 "routes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TripRoute"
-                    }
+                    "$ref": "#/definitions/models.TripRouteResponse"
                 },
                 "trip": {
                     "$ref": "#/definitions/models.Trip"
@@ -3364,6 +3363,9 @@ const docTemplate = `{
                 "position": {
                     "type": "integer"
                 },
+                "stop_time": {
+                    "type": "string"
+                },
                 "transport": {
                     "type": "string"
                 },
@@ -3372,6 +3374,20 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "models.TripRouteBatchRequest": {
+            "type": "object",
+            "required": [
+                "routes"
+            ],
+            "properties": {
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteRequest"
+                    }
                 }
             }
         },
@@ -3386,15 +3402,95 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "duration": {
-                    "description": "\"6 часов\"",
                     "type": "string"
                 },
                 "position": {
                     "type": "integer"
                 },
-                "transport": {
-                    "description": "plane, bus, transfer",
+                "stop_time": {
                     "type": "string"
+                },
+                "transport": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRouteResponse": {
+            "type": "object",
+            "properties": {
+                "route": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteSegment"
+                    }
+                },
+                "total_duration": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRouteSegment": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "stop_time": {
+                    "type": "string"
+                },
+                "transport": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRouteUIItem": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "description": "для kind=city",
+                    "type": "string"
+                },
+                "duration_text": {
+                    "description": "для kind=leg",
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "\"city\" или \"leg\"",
+                    "type": "string"
+                },
+                "stop_time_text": {
+                    "description": "для kind=city (время пересадки)",
+                    "type": "string"
+                },
+                "transport": {
+                    "description": "для kind=leg (airplane/bus/train/...)",
+                    "type": "string"
+                }
+            }
+        },
+        "models.TripRouteUIResponse": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteUIItem"
+                    }
+                },
+                "to": {
+                    "type": "string"
+                },
+                "total_duration": {
+                    "type": "string"
+                },
+                "total_duration_minutes": {
+                    "type": "integer"
                 }
             }
         },
@@ -3458,6 +3554,9 @@ const docTemplate = `{
         "models.UpdateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },

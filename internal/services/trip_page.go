@@ -48,7 +48,7 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 	}
 
 	// Routes
-	routes, err := s.routes.ListByTrip(ctx, id)
+	routes, err := s.routes.GetRouteResponse(ctx, id)
 	if err != nil {
 		s.log.Errorw("trip_page_routes_failed", "trip_id", id, "err", err)
 		routes = nil

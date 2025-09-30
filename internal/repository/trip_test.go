@@ -38,9 +38,10 @@ func TestTripRepository_List_WithFilters(t *testing.T) {
 			now,
 			now.Add(48 * time.Hour),
 			&deadline,
-			true,
-			10,
-			2,
+			true, // main
+			true, // active
+			10,   // views_count
+			2,    // buys_count
 			now,
 			now,
 		}})
@@ -53,6 +54,7 @@ func TestTripRepository_List_WithFilters(t *testing.T) {
 	require.Len(t, trips, 1)
 	require.Equal(t, "Trip", trips[0].Title)
 	require.True(t, trips[0].Main)
+	require.True(t, trips[0].Active)
 }
 
 func TestTripRepository_GetByID_NotFound(t *testing.T) {
@@ -110,6 +112,7 @@ func TestTripRepository_Popular(t *testing.T) {
 	pool.expectQuery(func(_ context.Context, sql string, args []any) (pgx.Rows, error) {
 		require.Contains(t, sql, "ORDER BY buys_count DESC")
 		require.Equal(t, []any{3}, args)
+
 		rows := newMockRows([][]any{{
 			1,
 			"Trip",
@@ -123,9 +126,10 @@ func TestTripRepository_Popular(t *testing.T) {
 			now,
 			now.Add(72 * time.Hour),
 			(*time.Time)(nil),
-			false,
-			100,
-			20,
+			false, // main
+			true,  // active
+			100,   // views_count
+			20,    // buys_count
 			now,
 			now,
 		}})
@@ -138,4 +142,5 @@ func TestTripRepository_Popular(t *testing.T) {
 	require.Len(t, trips, 1)
 	require.Equal(t, 100, trips[0].ViewsCount)
 	require.Equal(t, 20, trips[0].BuysCount)
+	require.True(t, trips[0].Active)
 }

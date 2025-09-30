@@ -104,6 +104,7 @@ func NewRouter(
 
 		// маршруты тура — публичный список
 		api.Get("/trips/{id}/routes", tripRouteHandler.List)
+		api.Get("/trips/{id}/routes/ui", tripRouteHandler.ListUI)
 
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
@@ -160,7 +161,7 @@ func NewRouter(
 			admin.Post("/admin/trips/{id}/hotels", hotelHandler.AttachHotelToTrip)
 
 			// routes CRUD
-			admin.Post("/admin/trips/{id}/routes", tripRouteHandler.Create)
+			admin.Post("/admin/trips/{id}/routes/batch", tripRouteHandler.CreateBatch)
 			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
 		})

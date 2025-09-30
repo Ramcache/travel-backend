@@ -86,6 +86,8 @@ definitions:
     type: object
   models.CreateTripRequest:
     properties:
+      active:
+        type: boolean
       booking_deadline:
         type: string
       currency:
@@ -365,6 +367,8 @@ definitions:
     type: object
   models.Trip:
     properties:
+      active:
+        type: boolean
       booking_deadline:
         type: string
       buys_count:
@@ -453,9 +457,7 @@ definitions:
       reviews:
         $ref: '#/definitions/models.TripPageReviews'
       routes:
-        items:
-          $ref: '#/definitions/models.TripRoute'
-        type: array
+        $ref: '#/definitions/models.TripRouteResponse'
       trip:
         $ref: '#/definitions/models.Trip'
     type: object
@@ -495,6 +497,8 @@ definitions:
         type: integer
       position:
         type: integer
+      stop_time:
+        type: string
       transport:
         type: string
       trip_id:
@@ -502,21 +506,83 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.TripRouteBatchRequest:
+    properties:
+      routes:
+        items:
+          $ref: '#/definitions/models.TripRouteRequest'
+        type: array
+    required:
+    - routes
+    type: object
   models.TripRouteRequest:
     properties:
       city:
         type: string
       duration:
-        description: '"6 часов"'
         type: string
       position:
         type: integer
+      stop_time:
+        type: string
       transport:
-        description: plane, bus, transfer
         type: string
     required:
     - city
     - position
+    type: object
+  models.TripRouteResponse:
+    properties:
+      route:
+        items:
+          $ref: '#/definitions/models.TripRouteSegment'
+        type: array
+      total_duration:
+        type: string
+    type: object
+  models.TripRouteSegment:
+    properties:
+      city:
+        type: string
+      duration:
+        type: string
+      stop_time:
+        type: string
+      transport:
+        type: string
+    type: object
+  models.TripRouteUIItem:
+    properties:
+      city:
+        description: для kind=city
+        type: string
+      duration_text:
+        description: для kind=leg
+        type: string
+      kind:
+        description: '"city" или "leg"'
+        type: string
+      stop_time_text:
+        description: для kind=city (время пересадки)
+        type: string
+      transport:
+        description: для kind=leg (airplane/bus/train/...)
+        type: string
+    type: object
+  models.TripRouteUIResponse:
+    properties:
+      from:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.TripRouteUIItem'
+        type: array
+      to:
+        type: string
+      total_duration:
+        type: string
+      total_duration_minutes:
+        type: integer
     type: object
   models.UpdateNewsCategoryRequest:
     properties:
@@ -557,6 +623,8 @@ definitions:
     type: object
   models.UpdateTripRequest:
     properties:
+      active:
+        type: boolean
       booking_deadline:
         type: string
       currency:
@@ -1419,46 +1487,46 @@ paths:
       summary: Attach hotel to trip
       tags:
       - trips
-  /admin/trips/{id}/routes:
+  /admin/trips/{id}/routes/batch:
     post:
       consumes:
       - application/json
-      description: Добавляет новый маршрут к туру
       parameters:
       - description: Trip ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Маршрут
+      - description: Маршруты
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/models.TripRouteRequest'
+          $ref: '#/definitions/models.TripRouteBatchRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.TripRoute'
+            items:
+              $ref: '#/definitions/models.TripRoute'
+            type: array
         "400":
-          description: Некорректный JSON
+          description: Bad Request
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Ошибка при добавлении маршрута
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
-      summary: Создать маршрут тура
+      summary: Создать несколько маршрутов тура
       tags:
       - admin
       - trips
       - routes
   /admin/trips/{trip_id}/routes/{route_id}:
     delete:
-      description: Удаляет маршрут тура по ID
       parameters:
       - description: Trip ID
         in: path
@@ -1474,13 +1542,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Маршрут удалён
+          description: OK
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Ошибка при удалении маршрута
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Удалить маршрут тура
@@ -1491,7 +1559,6 @@ paths:
     put:
       consumes:
       - application/json
-      description: Обновляет существующий маршрут
       parameters:
       - description: Trip ID
         in: path
@@ -1517,11 +1584,11 @@ paths:
           schema:
             $ref: '#/definitions/models.TripRoute'
         "400":
-          description: Некорректный JSON
+          description: Bad Request
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Ошибка при обновлении маршрута
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Обновить маршрут тура
@@ -2162,9 +2229,8 @@ paths:
       summary: Trip page data
       tags:
       - trips
-  /trips/{id}/routes:
+  /trips/{id}/routes/ui:
     get:
-      description: Возвращает список маршрутов для тура
       parameters:
       - description: Trip ID
         in: path
@@ -2177,14 +2243,12 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.TripRoute'
-            type: array
+            $ref: '#/definitions/models.TripRouteUIResponse'
         "500":
-          description: Ошибка при получении маршрутов
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
-      summary: Список маршрутов тура
+      summary: UI-маршрут тура (для плашки)
       tags:
       - trips
       - routes
