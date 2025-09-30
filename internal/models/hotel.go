@@ -8,10 +8,10 @@ type Hotel struct {
 	City         string    `json:"city"`
 	Stars        int       `json:"stars"`
 	Distance     float64   `json:"distance"`
-	DistanceText string    `json:"distance_text"`
+	DistanceText *string   `json:"distance_text"`
 	Meals        string    `json:"meals"`
-	Guests       string    `json:"guests"`
-	PhotoURL     string    `json:"photo_url"`
+	Guests       *string   `json:"guests"`
+	PhotoURL     *string   `json:"photo_url"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
