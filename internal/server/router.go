@@ -73,13 +73,15 @@ func NewRouter(
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Post("/auth/register", authHandler.Register)
 		api.Post("/auth/login", authHandler.Login)
+
 		api.Get("/date/today", dateHandler.Today)
+
 		api.Get("/currency", currencyHandler.GetRates)
 
 		api.Get("/trips", tripHandler.List)
 		api.Get("/trips/{id}", tripHandler.Get)
 		api.Get("/trips/{id}/countdown", tripHandler.Countdown)
-		api.Get("/trips/{id}/page", tripPageHandler.Get) // ✅ TripPage публично
+		api.Get("/trips/{id}/page", tripPageHandler.Get)
 		api.Get("/trips/main", tripHandler.GetMain)
 
 		api.Get("/news", newsHandler.PublicList)
