@@ -2736,6 +2736,9 @@
         "models.CreateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3155,6 +3158,9 @@
         "models.Trip": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3541,6 +3547,9 @@
         "models.UpdateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },

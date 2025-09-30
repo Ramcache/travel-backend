@@ -2743,6 +2743,9 @@ const docTemplate = `{
         "models.CreateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3162,6 +3165,9 @@ const docTemplate = `{
         "models.Trip": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },
@@ -3548,6 +3554,9 @@ const docTemplate = `{
         "models.UpdateTripRequest": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "booking_deadline": {
                     "type": "string"
                 },

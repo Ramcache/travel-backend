@@ -84,6 +84,7 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 		Price:         req.Price,
 		Currency:      req.Currency,
 		Main:          req.Main,
+		Active:        req.Active, // 🔹 вот этого не хватало
 	}
 
 	// parse dates
@@ -165,6 +166,9 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	}
 	if req.Main != nil {
 		trip.Main = *req.Main
+	}
+	if req.Active != nil { // 🔹 добавлено
+		trip.Active = *req.Active
 	}
 	if req.StartDate != nil {
 		if d, err := time.Parse("2006-01-02", *req.StartDate); err == nil {
