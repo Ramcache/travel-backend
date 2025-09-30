@@ -14,7 +14,7 @@ type TripRouteRepository interface {
 }
 
 type tripRouteRepo struct {
-	pool DB
+	pool DB // твой интерфейс абстракции над pgxpool (как в проекте)
 }
 
 func NewTripRouteRepository(pool DB) TripRouteRepository {
@@ -23,7 +23,7 @@ func NewTripRouteRepository(pool DB) TripRouteRepository {
 
 func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.TripRoute, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, trip_id, city, transport, duration, position, created_at, updated_at
+		SELECT id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
 		FROM trip_routes
 		WHERE trip_id = $1
 		ORDER BY position ASC
@@ -36,7 +36,10 @@ func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.Tr
 	var routes []models.TripRoute
 	for rows.Next() {
 		var rt models.TripRoute
-		if err := rows.Scan(&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
+			&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		routes = append(routes, rt)
@@ -46,13 +49,16 @@ func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.Tr
 
 func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
 	row := r.pool.QueryRow(ctx, `
-		INSERT INTO trip_routes (trip_id, city, transport, duration, position)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, trip_id, city, transport, duration, position, created_at, updated_at
-	`, tripID, req.City, req.Transport, req.Duration, req.Position)
+		INSERT INTO trip_routes (trip_id, city, transport, duration, stop_time, position)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
+	`, tripID, req.City, req.Transport, req.Duration, req.StopTime, req.Position)
 
 	var rt models.TripRoute
-	if err := row.Scan(&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt); err != nil {
+	if err := row.Scan(
+		&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
+		&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
+	); err != nil {
 		return nil, err
 	}
 	return &rt, nil
@@ -61,13 +67,16 @@ func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripR
 func (r *tripRouteRepo) Update(ctx context.Context, id int, req models.TripRouteRequest) (*models.TripRoute, error) {
 	row := r.pool.QueryRow(ctx, `
 		UPDATE trip_routes
-		SET city = $1, transport = $2, duration = $3, position = $4, updated_at = now()
-		WHERE id = $5
-		RETURNING id, trip_id, city, transport, duration, position, created_at, updated_at
-	`, req.City, req.Transport, req.Duration, req.Position, id)
+		SET city = $1, transport = $2, duration = $3, stop_time = $4, position = $5, updated_at = now()
+		WHERE id = $6
+		RETURNING id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
+	`, req.City, req.Transport, req.Duration, req.StopTime, req.Position, id)
 
 	var rt models.TripRoute
-	if err := row.Scan(&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt); err != nil {
+	if err := row.Scan(
+		&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
+		&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
+	); err != nil {
 		return nil, err
 	}
 	return &rt, nil
