@@ -33,6 +33,7 @@ func NewRouter(
 	reviewHandler *handlers.ReviewHandler,
 	tripRouteHandler *handlers.TripRouteHandler,
 	tripPageHandler *handlers.TripPageHandler,
+	dateHandler *handlers.DateHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 	db *pgxpool.Pool,
@@ -72,7 +73,7 @@ func NewRouter(
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Post("/auth/register", authHandler.Register)
 		api.Post("/auth/login", authHandler.Login)
-
+		api.Get("/date/today", dateHandler.Today)
 		api.Get("/currency", currencyHandler.GetRates)
 
 		api.Get("/trips", tripHandler.List)

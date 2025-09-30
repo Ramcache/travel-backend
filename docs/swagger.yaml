@@ -1732,6 +1732,25 @@ paths:
       summary: Получить курсы валют
       tags:
       - currency
+  /date/today:
+    get:
+      description: Получить сегодняшнюю дату в григорианском и исламском календарях
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get today's date
+      tags:
+      - public
   /feedback:
     post:
       consumes:

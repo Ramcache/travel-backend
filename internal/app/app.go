@@ -63,6 +63,7 @@ type App struct {
 	ReviewsHandler      *handlers.ReviewHandler
 	TripRouteHandler    *handlers.TripRouteHandler
 	TripPageHandler     *handlers.TripPageHandler
+	DateHandler         *handlers.DateHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -121,6 +122,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	reviewsHandler := handlers.NewReviewHandler(reviewsService, log)
 	tripPageHandler := handlers.NewTripPageHandler(tripPageService, log)
 	tripRouteHandler := handlers.NewTripRouteHandler(tripRouteService, log)
+	dateHandler := handlers.NewDateHandler(log)
 
 	return &App{
 		Config:              cfg,
@@ -152,5 +154,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		ReviewsHandler:      reviewsHandler,
 		TripRouteHandler:    tripRouteHandler,
 		TripPageHandler:     tripPageHandler,
+		DateHandler:         dateHandler,
 	}
 }
