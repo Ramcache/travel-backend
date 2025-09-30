@@ -29,6 +29,7 @@ type TripRepositoryI interface {
 	Popular(ctx context.Context, limit int) ([]models.Trip, error)
 	IncrementViews(ctx context.Context, id int) error
 	IncrementBuys(ctx context.Context, id int) error
+	GetOptions(ctx context.Context, tripID int) ([]models.TripOptionResponse, error)
 }
 
 // List with filters (показываем только активные туры)
@@ -232,4 +233,23 @@ func (r *TripRepository) IncrementBuys(ctx context.Context, id int) error {
 		id,
 	)
 	return err
+}
+
+func (r *TripRepository) GetOptions(ctx context.Context, tripID int) ([]models.TripOptionResponse, error) {
+	rows, err := r.Db.Query(ctx,
+		`SELECT id, name, price, unit FROM trip_options WHERE trip_id=$1 ORDER BY id`, tripID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var opts []models.TripOptionResponse
+	for rows.Next() {
+		var o models.TripOptionResponse
+		if err := rows.Scan(&o.ID, &o.Name, &o.Price, &o.Unit); err != nil {
+			return nil, err
+		}
+		opts = append(opts, o)
+	}
+	return opts, rows.Err()
 }

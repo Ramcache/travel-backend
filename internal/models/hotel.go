@@ -15,6 +15,7 @@ type HotelRequest struct {
 	Meals        string  `json:"meals"`
 	Guests       *string `json:"guests"`
 	PhotoURL     *string `json:"photo_url"`
+	Transfer     *string `json:"transfer"`
 }
 
 // DB модель
@@ -28,6 +29,8 @@ type Hotel struct {
 	Meals        string
 	Guests       sql.NullString
 	PhotoURL     sql.NullString
+	Transfer     sql.NullString
+	Nights       int
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -43,6 +46,8 @@ type HotelResponse struct {
 	Meals        string    `json:"meals"`
 	Guests       *string   `json:"guests"`
 	PhotoURL     *string   `json:"photo_url"`
+	Transfer     string    `json:"transfer"`
+	Nights       int       `json:"nights"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -53,10 +58,11 @@ type TripHotel struct {
 	Nights  int `json:"nights"`
 }
 
+// Конвертер
 func ToHotelResponses(hotels []Hotel) []HotelResponse {
 	resp := make([]HotelResponse, 0, len(hotels))
 	for _, h := range hotels {
-		var distanceText, guests, photoURL *string
+		var distanceText, guests, photoURL, transfer *string
 		if h.DistanceText.Valid {
 			distanceText = &h.DistanceText.String
 		}
@@ -65,6 +71,9 @@ func ToHotelResponses(hotels []Hotel) []HotelResponse {
 		}
 		if h.PhotoURL.Valid {
 			photoURL = &h.PhotoURL.String
+		}
+		if h.Transfer.Valid {
+			transfer = &h.Transfer.String
 		}
 
 		resp = append(resp, HotelResponse{
@@ -77,9 +86,18 @@ func ToHotelResponses(hotels []Hotel) []HotelResponse {
 			Meals:        h.Meals,
 			Guests:       guests,
 			PhotoURL:     photoURL,
+			Transfer:     getOrDefault(transfer, "не указано"),
+			Nights:       h.Nights,
 			CreatedAt:    h.CreatedAt,
 			UpdatedAt:    h.UpdatedAt,
 		})
 	}
 	return resp
+}
+
+func getOrDefault(s *string, def string) string {
+	if s != nil {
+		return *s
+	}
+	return def
 }

@@ -14,6 +14,11 @@ import (
 
 type MockTripRepo struct{ mock.Mock }
 
+func (m *MockTripRepo) GetOptions(ctx context.Context, tripID int) ([]models.TripOptionResponse, error) {
+	args := m.Called(ctx, tripID)
+	return args.Get(0).([]models.TripOptionResponse), args.Error(1)
+}
+
 func (m *MockTripRepo) List(ctx context.Context, c, t, s string) ([]models.Trip, error) {
 	args := m.Called(ctx, c, t, s)
 	return args.Get(0).([]models.Trip), args.Error(1)

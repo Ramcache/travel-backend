@@ -2886,6 +2886,9 @@ const docTemplate = `{
                 },
                 "stars": {
                     "type": "integer"
+                },
+                "transfer": {
+                    "type": "string"
                 }
             }
         },
@@ -2916,11 +2919,17 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "nights": {
+                    "type": "integer"
+                },
                 "photo_url": {
                     "type": "string"
                 },
                 "stars": {
                     "type": "integer"
+                },
+                "transfer": {
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"
@@ -3267,6 +3276,23 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TripOptionResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
         "models.TripPageResponse": {
             "type": "object",
             "properties": {
@@ -3289,6 +3315,13 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.News"
+                    }
+                },
+                "options": {
+                    "description": "🔹 новые доп.опции",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripOptionResponse"
                     }
                 },
                 "popular_trips": {
