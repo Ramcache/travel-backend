@@ -1744,6 +1744,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/date/today": {
+            "get": {
+                "description": "Получить сегодняшнюю дату в григорианском и исламском календарях",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "Get today's date",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/feedback": {
             "post": {
                 "description": "Оставить заявку \"Перезвоните мне\"",
