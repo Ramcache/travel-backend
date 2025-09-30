@@ -22,34 +22,6 @@ func NewHotelHandler(s *services.HotelService, log *zap.SugaredLogger) *HotelHan
 	return &HotelHandler{service: s, log: log}
 }
 
-// Преобразование DB модели -> API ответа
-func toHotelResponse(h models.Hotel) models.HotelResponse {
-	var distanceText, guests, photoURL *string
-	if h.DistanceText.Valid {
-		distanceText = &h.DistanceText.String
-	}
-	if h.Guests.Valid {
-		guests = &h.Guests.String
-	}
-	if h.PhotoURL.Valid {
-		photoURL = &h.PhotoURL.String
-	}
-
-	return models.HotelResponse{
-		ID:           h.ID,
-		Name:         h.Name,
-		City:         h.City,
-		Stars:        h.Stars,
-		Distance:     h.Distance,
-		DistanceText: distanceText,
-		Meals:        h.Meals,
-		Guests:       guests,
-		PhotoURL:     photoURL,
-		CreatedAt:    h.CreatedAt,
-		UpdatedAt:    h.UpdatedAt,
-	}
-}
-
 // Create
 // @Summary Create hotel
 // @Tags hotels
@@ -85,7 +57,9 @@ func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if req.PhotoURL != nil {
 		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
 	}
-
+	if req.Transfer != nil {
+		hotel.Transfer = sql.NullString{String: *req.Transfer, Valid: true}
+	}
 	if err := h.service.Create(r.Context(), &hotel); err != nil {
 		h.log.Errorw("Ошибка создания отеля", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать отель")
@@ -191,6 +165,9 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if req.PhotoURL != nil {
 		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
 	}
+	if req.Transfer != nil {
+		hotel.Transfer = sql.NullString{String: *req.Transfer, Valid: true}
+	}
 
 	if err := h.service.Update(r.Context(), &hotel); err != nil {
 		h.log.Errorw("Ошибка обновления отеля", "id", id, "err", err)
@@ -267,4 +244,43 @@ func (h *HotelHandler) AttachHotelToTrip(w http.ResponseWriter, r *http.Request)
 
 	h.log.Infow("Отель привязан к туру", "trip_id", tripID, "hotel_id", th.HotelID, "nights", th.Nights)
 	helpers.JSON(w, http.StatusOK, map[string]string{"status": "attached"})
+}
+
+func toHotelResponse(h models.Hotel) models.HotelResponse {
+	var distanceText, guests, photoURL, transfer *string
+	if h.DistanceText.Valid {
+		distanceText = &h.DistanceText.String
+	}
+	if h.Guests.Valid {
+		guests = &h.Guests.String
+	}
+	if h.PhotoURL.Valid {
+		photoURL = &h.PhotoURL.String
+	}
+	if h.Transfer.Valid {
+		transfer = &h.Transfer.String
+	}
+
+	return models.HotelResponse{
+		ID:           h.ID,
+		Name:         h.Name,
+		City:         h.City,
+		Stars:        h.Stars,
+		Distance:     h.Distance,
+		DistanceText: distanceText,
+		Meals:        h.Meals,
+		Guests:       guests,
+		PhotoURL:     photoURL,
+		Transfer:     getOrDefault(transfer, "не указано"),
+		Nights:       h.Nights,
+		CreatedAt:    h.CreatedAt,
+		UpdatedAt:    h.UpdatedAt,
+	}
+}
+
+func getOrDefault(s *string, def string) string {
+	if s != nil {
+		return *s
+	}
+	return def
 }
