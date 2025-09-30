@@ -60,6 +60,12 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 		s.log.Errorw("trip_page_hotels_failed", "trip_id", id, "err", err)
 		hotels = nil
 	}
+	// Options
+	options, err := s.trips.repo.GetOptions(ctx, id)
+	if err != nil {
+		s.log.Errorw("trip_page_options_failed", "trip_id", id, "err", err)
+		options = nil
+	}
 
 	// Reviews (берём последние 3 для первого экрана)
 	reviewItems, total, err := s.reviews.ListByTrip(ctx, id, 3, 0)
@@ -110,6 +116,7 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 		DurationDays: models.CalcDurationDays(trip.StartDate, trip.EndDate),
 		Routes:       routes,
 		Hotels:       models.ToHotelResponses(hotels),
+		Options:      options,
 		Reviews: models.TripPageReviews{
 			Total: total,
 			Items: reviewItems,

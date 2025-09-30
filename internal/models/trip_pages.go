@@ -17,13 +17,14 @@ type TripPageResponse struct {
 	DurationDays  int                  `json:"duration_days"`
 	Routes        *TripRouteResponse   `json:"routes"`
 	Hotels        []HotelResponse      `json:"hotels"`
+	Options       []TripOptionResponse `json:"options"` // 🔹 новые доп.опции
 	Reviews       TripPageReviews      `json:"reviews"`
 	PopularTrips  []Trip               `json:"popular_trips"`
 	News          []News               `json:"news"`
 	CurrencyRates CurrencyRatesPayload `json:"currency_rates"`
 }
 
-// TripPageReviews — компактный пагинированный блок (без обобщений для Swagger)
+// TripPageReviews — компактный пагинированный блок
 type TripPageReviews struct {
 	Total int          `json:"total"`
 	Items []TripReview `json:"items"`
@@ -33,6 +34,14 @@ type TripPageReviews struct {
 type CurrencyRatesPayload struct {
 	USD float64 `json:"usd"`
 	SAR float64 `json:"sar"`
+}
+
+// TripOptionResponse — для отображения опций тура
+type TripOptionResponse struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+	Unit  string  `json:"unit"`
 }
 
 // Helper для длительности в днях
