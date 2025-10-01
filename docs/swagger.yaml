@@ -573,6 +573,8 @@ definitions:
         type: string
       stop_time:
         type: string
+      transport:
+        type: string
     required:
     - city
     type: object

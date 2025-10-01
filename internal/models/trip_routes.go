@@ -62,26 +62,14 @@ type TripRouteCitiesRequest struct {
 }
 
 type TripRouteCity struct {
-	City     string `json:"city" validate:"required"`
-	Duration string `json:"duration,omitempty"`
-	StopTime string `json:"stop_time,omitempty"`
+	City      string `json:"city" validate:"required"`
+	Transport string `json:"transport,omitempty"`
+	Duration  string `json:"duration,omitempty"`
+	StopTime  string `json:"stop_time,omitempty"`
 }
 
 type TripRouteCitiesResponse struct {
 	Cities map[string]TripRouteCity `json:"route_cities"`
-}
-
-func ConvertRoutesToCities(routes []TripRoute) TripRouteCitiesResponse {
-	resp := TripRouteCitiesResponse{Cities: make(map[string]TripRouteCity)}
-	for i, rt := range routes {
-		key := fmt.Sprintf("city_%d", i+1)
-		resp.Cities[key] = TripRouteCity{
-			City:     rt.City,
-			Duration: rt.Duration,
-			StopTime: rt.StopTime,
-		}
-	}
-	return resp
 }
 
 func ConvertCitiesToRoutes(cities map[string]TripRouteCity) []TripRouteRequest {
@@ -93,11 +81,26 @@ func ConvertCitiesToRoutes(cities map[string]TripRouteCity) []TripRouteRequest {
 			break
 		}
 		routes = append(routes, TripRouteRequest{
-			City:     c.City,
-			Duration: c.Duration,
-			StopTime: c.StopTime,
-			Position: i,
+			City:      c.City,
+			Transport: c.Transport,
+			Duration:  c.Duration,
+			StopTime:  c.StopTime,
+			Position:  i,
 		})
 	}
 	return routes
+}
+
+func ConvertRoutesToCities(routes []TripRoute) TripRouteCitiesResponse {
+	resp := TripRouteCitiesResponse{Cities: make(map[string]TripRouteCity)}
+	for i, rt := range routes {
+		key := fmt.Sprintf("city_%d", i+1)
+		resp.Cities[key] = TripRouteCity{
+			City:      rt.City,
+			Transport: rt.Transport,
+			Duration:  rt.Duration,
+			StopTime:  rt.StopTime,
+		}
+	}
+	return resp
 }

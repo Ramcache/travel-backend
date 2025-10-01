@@ -3528,6 +3528,9 @@ const docTemplate = `{
                 },
                 "stop_time": {
                     "type": "string"
+                },
+                "transport": {
+                    "type": "string"
                 }
             }
         },
