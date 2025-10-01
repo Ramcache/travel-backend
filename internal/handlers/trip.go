@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"github.com/Ramcache/travel-backend/internal/repository"
@@ -390,5 +391,76 @@ func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
 	helpers.JSON(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Заявка успешно отправлена",
+	})
+}
+
+// CreateTour — создаёт тур, отель и маршрут за один запрос
+// @Summary Create Tour with Hotel and Route
+// @Description Админская ручка: создаёт тур, отель и маршрут одним запросом
+// @Tags admin, trips
+// @Accept json
+// @Produce json
+// @Param data body models.CreateTourRequest true "Tour + Hotel + Route"
+// @Success 201 {object} models.CreateTourResponse
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/tours [post]
+func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
+	var req models.CreateTourRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.Warnw("Некорректный JSON при создании тура", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
+		return
+	}
+
+	ctx := r.Context()
+
+	trip, err := h.service.Create(ctx, req.Trip)
+	if err != nil {
+		h.log.Errorw("Ошибка создания тура", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать тур")
+		return
+	}
+
+	hotel := models.Hotel{
+		Name:     req.Hotel.Name,
+		City:     req.Hotel.City,
+		Stars:    req.Hotel.Stars,
+		Distance: req.Hotel.Distance,
+		Meals:    req.Hotel.Meals,
+	}
+	if req.Hotel.DistanceText != nil {
+		hotel.DistanceText = sql.NullString{String: *req.Hotel.DistanceText, Valid: true}
+	}
+	if req.Hotel.Guests != nil {
+		hotel.Guests = sql.NullString{String: *req.Hotel.Guests, Valid: true}
+	}
+	if req.Hotel.PhotoURL != nil {
+		hotel.PhotoURL = sql.NullString{String: *req.Hotel.PhotoURL, Valid: true}
+	}
+	if req.Hotel.Transfer != nil {
+		hotel.Transfer = sql.NullString{String: *req.Hotel.Transfer, Valid: true}
+	}
+
+	if err := h.service.CreateHotel(ctx, &hotel); err != nil {
+		h.log.Errorw("Ошибка создания отеля", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать отель")
+		return
+	}
+
+	route, err := h.service.CreateRoute(ctx, trip.ID, req.Route)
+	if err != nil {
+		h.log.Errorw("Ошибка создания маршрута", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать маршрут")
+		return
+	}
+
+	h.log.Infow("Тур создан вместе с отелем и маршрутом", "trip_id", trip.ID, "hotel_id", hotel.ID, "route_id", route.ID)
+
+	helpers.JSON(w, http.StatusCreated, models.CreateTourResponse{
+		Success: true,
+		Trip:    trip,
+		Hotel:   toHotelResponse(hotel),
+		Route:   route,
 	})
 }

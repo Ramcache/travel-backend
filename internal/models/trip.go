@@ -73,3 +73,16 @@ type UpdateTripRequest struct {
 	BookingDeadline *string       `json:"booking_deadline,omitempty"`
 	Hotels          []HotelAttach `json:"hotels,omitempty"`
 }
+
+type CreateTourRequest struct {
+	Trip  CreateTripRequest `json:"trip"`
+	Hotel HotelRequest      `json:"hotel"`
+	Route TripRouteRequest  `json:"route"`
+}
+
+type CreateTourResponse struct {
+	Success bool          `json:"success"`
+	Trip    *Trip         `json:"trip"`
+	Hotel   HotelResponse `json:"hotel"`
+	Route   *TripRoute    `json:"route"`
+}

@@ -1016,6 +1016,53 @@
                 }
             }
         },
+        "/admin/tours": {
+            "post": {
+                "description": "Админская ручка: создаёт тур, отель и маршрут одним запросом",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "trips"
+                ],
+                "summary": "Create Tour with Hotel and Route",
+                "parameters": [
+                    {
+                        "description": "Tour + Hotel + Route",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTourRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTourResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/trips": {
             "post": {
                 "security": [
@@ -2730,6 +2777,37 @@
                 "user_name": {
                     "type": "string",
                     "example": "Иван"
+                }
+            }
+        },
+        "models.CreateTourRequest": {
+            "type": "object",
+            "properties": {
+                "hotel": {
+                    "$ref": "#/definitions/models.HotelRequest"
+                },
+                "route": {
+                    "$ref": "#/definitions/models.TripRouteRequest"
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.CreateTripRequest"
+                }
+            }
+        },
+        "models.CreateTourResponse": {
+            "type": "object",
+            "properties": {
+                "hotel": {
+                    "$ref": "#/definitions/models.HotelResponse"
+                },
+                "route": {
+                    "$ref": "#/definitions/models.TripRoute"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.Trip"
                 }
             }
         },

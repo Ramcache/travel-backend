@@ -84,6 +84,26 @@ definitions:
         example: Иван
         type: string
     type: object
+  models.CreateTourRequest:
+    properties:
+      hotel:
+        $ref: '#/definitions/models.HotelRequest'
+      route:
+        $ref: '#/definitions/models.TripRouteRequest'
+      trip:
+        $ref: '#/definitions/models.CreateTripRequest'
+    type: object
+  models.CreateTourResponse:
+    properties:
+      hotel:
+        $ref: '#/definitions/models.HotelResponse'
+      route:
+        $ref: '#/definitions/models.TripRoute'
+      success:
+        type: boolean
+      trip:
+        $ref: '#/definitions/models.Trip'
+    type: object
   models.CreateTripRequest:
     properties:
       active:
@@ -1376,6 +1396,37 @@ paths:
       summary: Admin statistics
       tags:
       - admin
+  /admin/tours:
+    post:
+      consumes:
+      - application/json
+      description: 'Админская ручка: создаёт тур, отель и маршрут одним запросом'
+      parameters:
+      - description: Tour + Hotel + Route
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTourRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreateTourResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Create Tour with Hotel and Route
+      tags:
+      - admin
+      - trips
   /admin/trips:
     post:
       consumes:
