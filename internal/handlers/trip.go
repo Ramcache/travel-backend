@@ -463,9 +463,12 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 		hotels = append(hotels, toHotelResponse(hotel))
 	}
 
-	// 3. Создаём маршруты
+	// 3. Конвертируем новый формат маршрутов → []TripRouteRequest
+	routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
+
+	// 4. Сохраняем маршруты
 	var routes []models.TripRoute
-	for _, rreq := range req.Routes {
+	for _, rreq := range routeReqs {
 		rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
 		if err != nil {
 			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания маршрута")
@@ -474,11 +477,14 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 		routes = append(routes, *rt)
 	}
 
-	// 4. Возвращаем ответ
-	helpers.JSON(w, http.StatusCreated, models.CreateTourResponse{
-		Success: true,
-		Trip:    trip,
-		Hotels:  hotels,
-		Routes:  routes,
+	// 5. Конвертируем обратно для ответа (map[city_n])
+	routeResp := models.ConvertRoutesToCities(routes)
+
+	// 6. Ответ
+	helpers.JSON(w, http.StatusCreated, map[string]interface{}{
+		"success": true,
+		"trip":    trip,
+		"hotels":  hotels,
+		"routes":  routeResp,
 	})
 }

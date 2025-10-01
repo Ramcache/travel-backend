@@ -90,10 +90,10 @@ definitions:
         items:
           $ref: '#/definitions/models.HotelRequest'
         type: array
-      routes:
-        items:
-          $ref: '#/definitions/models.TripRouteRequest'
-        type: array
+      route_cities:
+        additionalProperties:
+          $ref: '#/definitions/models.TripRouteCity'
+        type: object
       trip:
         $ref: '#/definitions/models.CreateTripRequest'
     type: object
@@ -565,6 +565,19 @@ definitions:
     required:
     - routes
     type: object
+  models.TripRouteCity:
+    properties:
+      city:
+        type: string
+      duration:
+        type: string
+      stop_time:
+        type: string
+      transport:
+        type: string
+    required:
+    - city
+    type: object
   models.TripRouteRequest:
     properties:
       city:
@@ -579,7 +592,6 @@ definitions:
         type: string
     required:
     - city
-    - position
     type: object
   models.TripRouteResponse:
     properties:
@@ -604,19 +616,14 @@ definitions:
   models.TripRouteUIItem:
     properties:
       city:
-        description: для kind=city
         type: string
       duration_text:
-        description: для kind=leg
         type: string
       kind:
-        description: '"city" или "leg"'
         type: string
       stop_time_text:
-        description: для kind=city (время пересадки)
         type: string
       transport:
-        description: для kind=leg (airplane/bus/train/...)
         type: string
     type: object
   models.TripRouteUIResponse:

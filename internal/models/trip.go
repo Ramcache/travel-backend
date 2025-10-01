@@ -75,9 +75,9 @@ type UpdateTripRequest struct {
 }
 
 type CreateTourRequest struct {
-	Trip   CreateTripRequest  `json:"trip"`
-	Hotels []HotelRequest     `json:"hotels"`
-	Routes []TripRouteRequest `json:"routes"`
+	Trip        CreateTripRequest        `json:"trip"`
+	Hotels      []HotelRequest           `json:"hotels"`
+	RouteCities map[string]TripRouteCity `json:"route_cities"`
 }
 
 type CreateTourResponse struct {

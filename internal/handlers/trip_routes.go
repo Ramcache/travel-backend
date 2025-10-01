@@ -24,7 +24,7 @@ func NewTripRouteHandler(svc *services.TripRouteService, log *zap.SugaredLogger)
 	return &TripRouteHandler{svc: svc, log: log, validate: validator.New()}
 }
 
-// --- Новый UI-эндпоинт ---
+// ListUI
 // @Summary UI-маршрут тура (для плашки)
 // @Tags trips, routes
 // @Produce json
