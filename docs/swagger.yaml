@@ -1824,6 +1824,36 @@ paths:
       summary: Обновить данные пользователя
       tags:
       - users
+  /api/v1/trips/{id}/routes:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список маршрутов в виде city_1, city_2, city_3...
+      parameters:
+      - description: ID тура
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success + routes в новом формате
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный trip_id
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка получения маршрута
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить маршруты тура (новый формат)
+      tags:
+      - trips
   /auth/login:
     post:
       consumes:

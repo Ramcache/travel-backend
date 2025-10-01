@@ -43,16 +43,35 @@ func (h *TripRouteHandler) ListUI(w http.ResponseWriter, r *http.Request) {
 	helpers.JSON(w, http.StatusOK, resp)
 }
 
-// --- Совместимый список ---
-func (h *TripRouteHandler) List(w http.ResponseWriter, r *http.Request) {
-	tripID, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	resp, err := h.svc.GetRouteResponse(r.Context(), tripID)
+// GetTripRoutesCities godoc
+// @Summary Получить маршруты тура (новый формат)
+// @Description Возвращает список маршрутов в виде city_1, city_2, city_3...
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Param id path int true "ID тура"
+// @Success 200 {object} map[string]interface{} "success + routes в новом формате"
+// @Failure 400 {object} helpers.ErrorData "Некорректный trip_id"
+// @Failure 500 {object} helpers.ErrorData "Ошибка получения маршрута"
+// @Router /api/v1/trips/{id}/routes [get]
+func (h *TripRouteHandler) GetTripRoutesCities(w http.ResponseWriter, r *http.Request) {
+	tripID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		h.log.Errorw("trip_routes_list_failed", "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить маршрут")
+		helpers.Error(w, http.StatusBadRequest, "Некорректный trip_id")
 		return
 	}
-	helpers.JSON(w, http.StatusOK, resp)
+
+	ctx := r.Context()
+	resp, err := h.svc.GetCitiesResponse(ctx, tripID)
+	if err != nil {
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка получения маршрута")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"routes":  resp,
+	})
 }
 
 // CreateBatch
