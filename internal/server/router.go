@@ -127,6 +127,7 @@ func NewRouter(
 			admin.Get("/admin/trips", tripHandler.List)
 			admin.Get("/admin/trips/{id}", tripHandler.Get)
 			admin.Post("/admin/trips", tripHandler.Create)
+			admin.Post("/admin/tours", tripHandler.CreateTour)
 			admin.Put("/admin/trips/{id}", tripHandler.Update)
 			admin.Delete("/admin/trips/{id}", tripHandler.Delete)
 

@@ -25,16 +25,18 @@ type TripService struct {
 	repo          repository.TripRepositoryI
 	orderRepo     *repository.OrderRepo
 	tripHotelRepo repository.HotelRepositoryI
+	routeRepo     repository.TripRouteRepository
 	telegram      *helpers.TelegramClient
 	frontendURL   string
 	log           *zap.SugaredLogger
 }
 
-func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.OrderRepo, tripHotelRepo repository.HotelRepositoryI, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
+func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.OrderRepo, tripHotelRepo repository.HotelRepositoryI, routeRepo repository.TripRouteRepository, telegram *helpers.TelegramClient, frontendURL string, log *zap.SugaredLogger) *TripService {
 	return &TripService{
 		repo:          repo,
 		orderRepo:     orderRepo,
 		tripHotelRepo: tripHotelRepo,
+		routeRepo:     routeRepo,
 		telegram:      telegram,
 		frontendURL:   frontendURL,
 		log:           log,
@@ -53,6 +55,8 @@ type TripServiceI interface {
 	IncrementBuys(ctx context.Context, id int) error
 	Buy(ctx context.Context, id int, req models.BuyRequest) error
 	BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error
+	CreateHotel(ctx context.Context, hotel *models.Hotel) error
+	CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error)
 }
 
 // List — список туров
@@ -365,4 +369,12 @@ func formatPrice(price float64) string {
 		}
 	}
 	return out.String()
+}
+
+func (s *TripService) CreateHotel(ctx context.Context, hotel *models.Hotel) error {
+	return s.tripHotelRepo.Create(ctx, hotel)
+}
+
+func (s *TripService) CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
+	return s.routeRepo.Create(ctx, tripID, req)
 }

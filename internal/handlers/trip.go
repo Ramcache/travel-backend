@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"github.com/Ramcache/travel-backend/internal/repository"
@@ -20,11 +21,12 @@ import (
 type TripHandler struct {
 	service      services.TripServiceI
 	orderService *services.OrderService
+	hotelService *services.HotelService
 	log          *zap.SugaredLogger
 }
 
-func NewTripHandler(service services.TripServiceI, orderService *services.OrderService, log *zap.SugaredLogger) *TripHandler {
-	return &TripHandler{service: service, orderService: orderService, log: log}
+func NewTripHandler(service services.TripServiceI, orderService *services.OrderService, hotelService *services.HotelService, log *zap.SugaredLogger) *TripHandler {
+	return &TripHandler{service: service, orderService: orderService, hotelService: hotelService, log: log}
 }
 
 // List
@@ -390,5 +392,93 @@ func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
 	helpers.JSON(w, http.StatusOK, map[string]string{
 		"status":  "success",
 		"message": "Заявка успешно отправлена",
+	})
+}
+
+// CreateTour — создаёт тур, отель и маршрут за один запрос
+// @Summary Create Tour with Hotel and Route
+// @Description Админская ручка: создаёт тур, отель и маршрут одним запросом
+// @Tags admin, trips
+// @Accept json
+// @Produce json
+// @Param data body models.CreateTourRequest true "Tour + Hotel + Route"
+// @Success 201 {object} models.CreateTourResponse
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/tours [post]
+func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
+	var req models.CreateTourRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный JSON")
+		return
+	}
+
+	ctx := r.Context()
+
+	// 1. Создаём тур
+	trip, err := h.service.Create(ctx, req.Trip)
+	if err != nil {
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка создания тура")
+		return
+	}
+
+	// 2. Создаём отели
+	var hotels []models.HotelResponse
+	for _, hreq := range req.Hotels {
+		hotel := models.Hotel{
+			Name:     hreq.Name,
+			City:     hreq.City,
+			Stars:    hreq.Stars,
+			Distance: hreq.Distance,
+			Meals:    hreq.Meals,
+		}
+		if hreq.DistanceText != nil {
+			hotel.DistanceText = sql.NullString{String: *hreq.DistanceText, Valid: true}
+		}
+		if hreq.Guests != nil {
+			hotel.Guests = sql.NullString{String: *hreq.Guests, Valid: true}
+		}
+		if hreq.PhotoURL != nil {
+			hotel.PhotoURL = sql.NullString{String: *hreq.PhotoURL, Valid: true}
+		}
+		if hreq.Transfer != nil {
+			hotel.Transfer = sql.NullString{String: *hreq.Transfer, Valid: true}
+		}
+
+		if err := h.service.CreateHotel(ctx, &hotel); err != nil {
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
+			return
+		}
+
+		th := &models.TripHotel{
+			TripID:  trip.ID,
+			HotelID: hotel.ID,
+			Nights:  1,
+		}
+		if err := h.hotelService.Attach(ctx, th); err != nil {
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля к туру")
+			return
+		}
+
+		hotels = append(hotels, toHotelResponse(hotel))
+	}
+
+	// 3. Создаём маршруты
+	var routes []models.TripRoute
+	for _, rreq := range req.Routes {
+		rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
+		if err != nil {
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания маршрута")
+			return
+		}
+		routes = append(routes, *rt)
+	}
+
+	// 4. Возвращаем ответ
+	helpers.JSON(w, http.StatusCreated, models.CreateTourResponse{
+		Success: true,
+		Trip:    trip,
+		Hotels:  hotels,
+		Routes:  routes,
 	})
 }

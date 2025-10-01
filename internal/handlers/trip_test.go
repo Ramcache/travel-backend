@@ -23,6 +23,16 @@ type apiResponse struct {
 
 type MockTripService struct{ mock.Mock }
 
+func (m *MockTripService) CreateHotel(ctx context.Context, hotel *models.Hotel) error {
+	args := m.Called(ctx, hotel)
+	return args.Error(0)
+}
+
+func (m *MockTripService) CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
+	args := m.Called(ctx, tripID, req)
+	return args.Get(0).(*models.TripRoute), args.Error(1)
+}
+
 func (m *MockTripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error {
 	args := m.Called(ctx, req)
 	return args.Error(0)
@@ -82,7 +92,7 @@ func (m *MockTripService) IncrementBuys(ctx context.Context, id int) error {
 func newHandlerWithMock(t *testing.T) (*handlers.TripHandler, *MockTripService) {
 	mockSvc := new(MockTripService)
 	log := zaptest.NewLogger(t).Sugar()
-	h := handlers.NewTripHandler(mockSvc, nil, log) // ✅ добавили nil для orderService и notifyService
+	h := handlers.NewTripHandler(mockSvc, nil, nil, log)
 	return h, mockSvc
 }
 
