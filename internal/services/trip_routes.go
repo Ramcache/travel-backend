@@ -115,3 +115,12 @@ func (s *TripRouteService) CreateBatch(ctx context.Context, tripID int, reqs []m
 	}
 	return out, nil
 }
+
+func (s *TripRouteService) GetCitiesResponse(ctx context.Context, tripID int) (*models.TripRouteCitiesResponse, error) {
+	routes, err := s.repo.ListByTrip(ctx, tripID)
+	if err != nil {
+		return nil, err
+	}
+	resp := models.ConvertRoutesToCities(routes)
+	return &resp, nil
+}

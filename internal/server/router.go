@@ -103,7 +103,7 @@ func NewRouter(
 		})
 
 		// маршруты тура — публичный список
-		api.Get("/trips/{id}/routes", tripRouteHandler.List)
+		api.Get("/trips/{id}/routes", tripRouteHandler.GetTripRoutesCities)
 		api.Get("/trips/{id}/routes/ui", tripRouteHandler.ListUI)
 
 		// profile (требует JWT)
