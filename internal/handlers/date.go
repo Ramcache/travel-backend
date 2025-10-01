@@ -70,7 +70,7 @@ func (h *DateHandler) Today(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hijriStr := fmt.Sprintf("%d %s %d", hDate.Day, hijriMonths[int(hDate.Month)], hDate.Year)
+	hijriStr := fmt.Sprintf("%d %s", hDate.Day, hijriMonths[int(hDate.Month)])
 
 	resp := map[string]string{
 		"date": fmt.Sprintf("%s / %s", gregorian, hijriStr),
