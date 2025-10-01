@@ -1,8 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
-// Табличная модель (из БД)
 type TripRoute struct {
 	ID        int       `json:"id"`
 	TripID    int       `json:"trip_id"`
@@ -20,10 +22,9 @@ type TripRouteRequest struct {
 	Transport string `json:"transport,omitempty"`
 	Duration  string `json:"duration,omitempty"`
 	StopTime  string `json:"stop_time,omitempty"`
-	Position  int    `json:"position" validate:"required"`
+	Position  int    `json:"position,omitempty"`
 }
 
-// Старый фронтовый ответ (совместимость)
 type TripRouteSegment struct {
 	City      string `json:"city"`
 	Transport string `json:"transport,omitempty"`
@@ -36,14 +37,12 @@ type TripRouteResponse struct {
 	TotalDuration string             `json:"total_duration"`
 }
 
-// Новый UI-ответ для плашки
-// items: city → leg → city → leg → city
 type TripRouteUIItem struct {
-	Kind         string `json:"kind"`                     // "city" или "leg"
-	City         string `json:"city,omitempty"`           // для kind=city
-	Transport    string `json:"transport,omitempty"`      // для kind=leg (airplane/bus/train/...)
-	DurationText string `json:"duration_text,omitempty"`  // для kind=leg
-	StopTimeText string `json:"stop_time_text,omitempty"` // для kind=city (время пересадки)
+	Kind         string `json:"kind"`
+	City         string `json:"city,omitempty"`
+	Transport    string `json:"transport,omitempty"`
+	DurationText string `json:"duration_text,omitempty"`
+	StopTimeText string `json:"stop_time_text,omitempty"`
 }
 
 type TripRouteUIResponse struct {
@@ -56,4 +55,49 @@ type TripRouteUIResponse struct {
 
 type TripRouteBatchRequest struct {
 	Routes []TripRouteRequest `json:"routes" validate:"required,dive"`
+}
+
+type TripRouteCitiesRequest struct {
+	Cities map[string]TripRouteCity `json:"route_cities"`
+}
+
+type TripRouteCity struct {
+	City     string `json:"city" validate:"required"`
+	Duration string `json:"duration,omitempty"`
+	StopTime string `json:"stop_time,omitempty"`
+}
+
+type TripRouteCitiesResponse struct {
+	Cities map[string]TripRouteCity `json:"route_cities"`
+}
+
+func ConvertRoutesToCities(routes []TripRoute) TripRouteCitiesResponse {
+	resp := TripRouteCitiesResponse{Cities: make(map[string]TripRouteCity)}
+	for i, rt := range routes {
+		key := fmt.Sprintf("city_%d", i+1)
+		resp.Cities[key] = TripRouteCity{
+			City:     rt.City,
+			Duration: rt.Duration,
+			StopTime: rt.StopTime,
+		}
+	}
+	return resp
+}
+
+func ConvertCitiesToRoutes(cities map[string]TripRouteCity) []TripRouteRequest {
+	routes := make([]TripRouteRequest, 0, len(cities))
+	for i := 1; ; i++ {
+		key := fmt.Sprintf("city_%d", i)
+		c, ok := cities[key]
+		if !ok {
+			break
+		}
+		routes = append(routes, TripRouteRequest{
+			City:     c.City,
+			Duration: c.Duration,
+			StopTime: c.StopTime,
+			Position: i,
+		})
+	}
+	return routes
 }

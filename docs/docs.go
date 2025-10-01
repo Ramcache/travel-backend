@@ -2796,10 +2796,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.HotelRequest"
                     }
                 },
-                "routes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TripRouteRequest"
+                "route_cities": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.TripRouteCity"
                     }
                 },
                 "trip": {
@@ -3514,11 +3514,27 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TripRouteCity": {
+            "type": "object",
+            "required": [
+                "city"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "stop_time": {
+                    "type": "string"
+                }
+            }
+        },
         "models.TripRouteRequest": {
             "type": "object",
             "required": [
-                "city",
-                "position"
+                "city"
             ],
             "properties": {
                 "city": {
@@ -3573,23 +3589,18 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "city": {
-                    "description": "для kind=city",
                     "type": "string"
                 },
                 "duration_text": {
-                    "description": "для kind=leg",
                     "type": "string"
                 },
                 "kind": {
-                    "description": "\"city\" или \"leg\"",
                     "type": "string"
                 },
                 "stop_time_text": {
-                    "description": "для kind=city (время пересадки)",
                     "type": "string"
                 },
                 "transport": {
-                    "description": "для kind=leg (airplane/bus/train/...)",
                     "type": "string"
                 }
             }

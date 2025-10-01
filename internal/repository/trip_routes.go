@@ -48,6 +48,15 @@ func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.Tr
 }
 
 func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
+	if req.Position == 0 {
+		var pos int
+		err := r.pool.QueryRow(ctx, `SELECT COALESCE(MAX(position), 0) + 1 FROM trip_routes WHERE trip_id = $1`, tripID).Scan(&pos)
+		if err != nil {
+			return nil, err
+		}
+		req.Position = pos
+	}
+
 	row := r.pool.QueryRow(ctx, `
 		INSERT INTO trip_routes (trip_id, city, transport, duration, stop_time, position)
 		VALUES ($1, $2, $3, $4, $5, $6)

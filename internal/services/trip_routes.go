@@ -102,7 +102,11 @@ func (s *TripRouteService) GetUIRoute(ctx context.Context, tripID int) (*models.
 
 func (s *TripRouteService) CreateBatch(ctx context.Context, tripID int, reqs []models.TripRouteRequest) ([]models.TripRoute, error) {
 	out := make([]models.TripRoute, 0, len(reqs))
-	for _, req := range reqs {
+	for i, req := range reqs {
+		if req.Position == 0 {
+			req.Position = i + 1
+		}
+
 		row, err := s.repo.Create(ctx, tripID, req)
 		if err != nil {
 			return nil, err
