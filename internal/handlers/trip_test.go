@@ -92,7 +92,7 @@ func (m *MockTripService) IncrementBuys(ctx context.Context, id int) error {
 func newHandlerWithMock(t *testing.T) (*handlers.TripHandler, *MockTripService) {
 	mockSvc := new(MockTripService)
 	log := zaptest.NewLogger(t).Sugar()
-	h := handlers.NewTripHandler(mockSvc, nil, log) // ✅ добавили nil для orderService и notifyService
+	h := handlers.NewTripHandler(mockSvc, nil, nil, log)
 	return h, mockSvc
 }
 

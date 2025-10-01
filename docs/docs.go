@@ -2790,11 +2790,17 @@ const docTemplate = `{
         "models.CreateTourRequest": {
             "type": "object",
             "properties": {
-                "hotel": {
-                    "$ref": "#/definitions/models.HotelRequest"
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.HotelRequest"
+                    }
                 },
-                "route": {
-                    "$ref": "#/definitions/models.TripRouteRequest"
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteRequest"
+                    }
                 },
                 "trip": {
                     "$ref": "#/definitions/models.CreateTripRequest"
@@ -2804,11 +2810,17 @@ const docTemplate = `{
         "models.CreateTourResponse": {
             "type": "object",
             "properties": {
-                "hotel": {
-                    "$ref": "#/definitions/models.HotelResponse"
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.HotelResponse"
+                    }
                 },
-                "route": {
-                    "$ref": "#/definitions/models.TripRoute"
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRoute"
+                    }
                 },
                 "success": {
                     "type": "boolean"

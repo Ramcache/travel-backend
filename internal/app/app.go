@@ -110,7 +110,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	authHandler := handlers.NewAuthHandler(authService, log)
 	userHandler := handlers.NewUserHandler(userRepo, log)
 	currencyHandler := handlers.NewCurrencyHandler(currencyService, log)
-	tripHandler := handlers.NewTripHandler(tripService, orderService, log)
+	tripHandler := handlers.NewTripHandler(tripService, orderService, hotelService, log)
 	newsHandler := handlers.NewNewsHandler(newsService, log)
 	profileHandler := handlers.NewProfileHandler(authService, log)
 	newsCategoryHandler := handlers.NewNewsCategoryHandler(newsCategoryService, log)

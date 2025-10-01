@@ -75,14 +75,14 @@ type UpdateTripRequest struct {
 }
 
 type CreateTourRequest struct {
-	Trip  CreateTripRequest `json:"trip"`
-	Hotel HotelRequest      `json:"hotel"`
-	Route TripRouteRequest  `json:"route"`
+	Trip   CreateTripRequest  `json:"trip"`
+	Hotels []HotelRequest     `json:"hotels"`
+	Routes []TripRouteRequest `json:"routes"`
 }
 
 type CreateTourResponse struct {
-	Success bool          `json:"success"`
-	Trip    *Trip         `json:"trip"`
-	Hotel   HotelResponse `json:"hotel"`
-	Route   *TripRoute    `json:"route"`
+	Success bool            `json:"success"`
+	Trip    *Trip           `json:"trip"`
+	Hotels  []HotelResponse `json:"hotels"`
+	Routes  []TripRoute     `json:"routes"`
 }
