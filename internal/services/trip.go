@@ -44,7 +44,7 @@ func NewTripService(repo repository.TripRepositoryI, orderRepo *repository.Order
 }
 
 type TripServiceI interface {
-	List(ctx context.Context, city, ttype, season string) ([]models.Trip, error)
+	List(ctx context.Context, f models.TripFilter) ([]models.Trip, error)
 	Get(ctx context.Context, id int) (*models.Trip, error)
 	Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error)
 	Update(ctx context.Context, id int, req models.UpdateTripRequest) (*models.Trip, error)
@@ -60,9 +60,8 @@ type TripServiceI interface {
 }
 
 // List — список туров
-func (s *TripService) List(ctx context.Context, city, ttype, season string) ([]models.Trip, error) {
-	s.log.Debugw("list_trips", "city", city, "type", ttype, "season", season)
-	return s.repo.List(ctx, city, ttype, season)
+func (s *TripService) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+	return s.repo.List(ctx, f)
 }
 
 // Get — получить тур по ID
