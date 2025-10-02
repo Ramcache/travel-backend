@@ -92,6 +92,9 @@ func NewRouter(
 		api.Post("/trips/{id}/buy", tripHandler.Buy)
 		api.Post("/trips/buy", tripHandler.BuyWithoutTrip)
 		api.Get("/trips/popular", tripHandler.Popular)
+		api.Get("/trips/full", tripPageHandler.ListAll)
+		api.Get("/trips/relations", tripPageHandler.ListWithRelations)
+		api.Get("/trips/{id}/relations", tripPageHandler.GetWithRelations)
 
 		api.Post("/feedback", feedbackHandler.Create)
 

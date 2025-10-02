@@ -130,3 +130,77 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 	}
 	return resp, nil
 }
+
+func (s *TripPageService) ListAll(ctx context.Context) ([]models.TripPageResponse, error) {
+	trips, err := s.trips.List(ctx, "", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	var results []models.TripPageResponse
+	for _, t := range trips {
+		data, err := s.Get(ctx, t.ID) // t.ID теперь доступен
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, *data)
+	}
+	return results, nil
+}
+
+func (s *TripPageService) GetWithRelations(ctx context.Context, id int) (*models.TripWithRelations, error) {
+	trip, err := s.trips.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	hotels, err := s.hotels.ListByTrip(ctx, id)
+	if err != nil {
+		s.log.Errorw("trip_relations_hotels_failed", "trip_id", id, "err", err)
+		hotels = nil
+	}
+
+	routes, err := s.routes.GetCitiesResponse(ctx, id)
+	if err != nil {
+		s.log.Errorw("trip_relations_routes_failed", "trip_id", id, "err", err)
+		routes = &models.TripRouteCitiesResponse{Cities: map[string]models.TripRouteCity{}}
+	}
+
+	return &models.TripWithRelations{
+		Trip:   *trip,
+		Hotels: models.ToHotelResponses(hotels),
+		Routes: routes,
+	}, nil
+}
+
+func (s *TripPageService) ListWithRelations(ctx context.Context) ([]models.TripWithRelations, error) {
+	trips, err := s.trips.List(ctx, "", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	var results []models.TripWithRelations
+	for _, t := range trips {
+		// Отели
+		hotels, err := s.hotels.ListByTrip(ctx, t.ID)
+		if err != nil {
+			s.log.Errorw("trip_relations_hotels_failed", "trip_id", t.ID, "err", err)
+			hotels = nil
+		}
+
+		// Маршрут
+		routes, err := s.routes.GetCitiesResponse(ctx, t.ID)
+		if err != nil {
+			s.log.Errorw("trip_relations_routes_failed", "trip_id", t.ID, "err", err)
+			routes = &models.TripRouteCitiesResponse{Cities: map[string]models.TripRouteCity{}}
+		}
+
+		results = append(results, models.TripWithRelations{
+			Trip:   t,
+			Hotels: models.ToHotelResponses(hotels),
+			Routes: routes,
+		})
+	}
+
+	return results, nil
+}

@@ -2328,6 +2328,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/full": {
+            "get": {
+                "description": "Возвращает список всех туров вместе с отелями, маршрутами и опциями",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "All trips with full data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TripPageResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении туров",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/main": {
             "get": {
                 "description": "Получить главный тур для главной страницы (только название и обратный отсчёт)",
@@ -2384,6 +2413,35 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Не удалось получить популярные туры",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/trips/relations": {
+            "get": {
+                "description": "Возвращает все туры вместе с отелями и маршрутами",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "List all trips with hotels and routes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TripWithRelations"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -2562,6 +2620,47 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.TripPageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Тур не найден",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
+        "/trips/{id}/relations": {
+            "get": {
+                "description": "Возвращает тур вместе с отелями и маршрутом",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Get trip with hotels and routes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripWithRelations"
                         }
                     },
                     "404": {
@@ -3559,6 +3658,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TripRouteCitiesResponse": {
+            "type": "object",
+            "properties": {
+                "route_cities": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.TripRouteCity"
+                    }
+                }
+            }
+        },
         "models.TripRouteCity": {
             "type": "object",
             "required": [
@@ -3673,6 +3783,23 @@ const docTemplate = `{
                 },
                 "total_duration_minutes": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.TripWithRelations": {
+            "type": "object",
+            "properties": {
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.HotelResponse"
+                    }
+                },
+                "routes": {
+                    "$ref": "#/definitions/models.TripRouteCitiesResponse"
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.Trip"
                 }
             }
         },
