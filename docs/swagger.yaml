@@ -565,6 +565,13 @@ definitions:
     required:
     - routes
     type: object
+  models.TripRouteCitiesResponse:
+    properties:
+      route_cities:
+        additionalProperties:
+          $ref: '#/definitions/models.TripRouteCity'
+        type: object
+    type: object
   models.TripRouteCity:
     properties:
       city:
@@ -640,6 +647,17 @@ definitions:
         type: string
       total_duration_minutes:
         type: integer
+    type: object
+  models.TripWithRelations:
+    properties:
+      hotels:
+        items:
+          $ref: '#/definitions/models.HotelResponse'
+        type: array
+      routes:
+        $ref: '#/definitions/models.TripRouteCitiesResponse'
+      trip:
+        $ref: '#/definitions/models.Trip'
     type: object
   models.UpdateNewsCategoryRequest:
     properties:
@@ -2347,6 +2365,33 @@ paths:
       summary: Trip page data
       tags:
       - trips
+  /trips/{id}/relations:
+    get:
+      description: Возвращает тур вместе с отелями и маршрутом
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TripWithRelations'
+        "404":
+          description: Тур не найден
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Get trip with hotels and routes
+      tags:
+      - trips
   /trips/{id}/routes/ui:
     get:
       parameters:
@@ -2462,6 +2507,25 @@ paths:
       summary: Buy without trip
       tags:
       - trips
+  /trips/full:
+    get:
+      description: Возвращает список всех туров вместе с отелями, маршрутами и опциями
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TripPageResponse'
+            type: array
+        "500":
+          description: Ошибка при получении туров
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: All trips with full data
+      tags:
+      - trips
   /trips/main:
     get:
       description: Получить главный тур для главной страницы (только название и обратный
@@ -2502,6 +2566,25 @@ paths:
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get popular trips
+      tags:
+      - trips
+  /trips/relations:
+    get:
+      description: Возвращает все туры вместе с отелями и маршрутами
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TripWithRelations'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: List all trips with hotels and routes
       tags:
       - trips
 securityDefinitions:

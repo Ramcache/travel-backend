@@ -86,3 +86,10 @@ type CreateTourResponse struct {
 	Hotels  []HotelResponse `json:"hotels"`
 	Routes  []TripRoute     `json:"routes"`
 }
+
+// TripWithRelations — тур с отелями и маршрутом
+type TripWithRelations struct {
+	Trip   Trip                     `json:"trip"`
+	Hotels []HotelResponse          `json:"hotels"`
+	Routes *TripRouteCitiesResponse `json:"routes"`
+}
