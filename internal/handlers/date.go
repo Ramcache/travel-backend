@@ -61,7 +61,7 @@ var hijriMonths = map[int]string{
 func (h *DateHandler) Today(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
-	gregorian := fmt.Sprintf("%d %s %d", now.Day(), gregorianMonths[now.Month()], now.Year())
+	gregorian := fmt.Sprintf("%d %s", now.Day(), gregorianMonths[now.Month()])
 
 	hDate, err := hijri.CreateUmmAlQuraDate(now)
 	if err != nil {
