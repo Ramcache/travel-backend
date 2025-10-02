@@ -32,8 +32,56 @@ type TripRepositoryI interface {
 	GetOptions(ctx context.Context, tripID int) ([]models.TripOptionResponse, error)
 }
 
-// List with filters (показываем только активные туры)
-func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+// общий SELECT список
+const tripSelectFields = `
+	id, title, description, photo_url, departure_city, trip_type, season,
+	price, discount_percent, currency,
+	start_date, end_date, booking_deadline, main, active,
+	views_count, buys_count, created_at, updated_at
+`
+
+// ==================== приватные хелперы ====================
+
+// scanTrip — универсальный метод чтения одной строки в Trip
+func scanTrip(row pgx.Row) (models.Trip, error) {
+	var t models.Trip
+	err := row.Scan(
+		&t.ID, &t.Title, &t.Description, &t.PhotoURL,
+		&t.DepartureCity, &t.TripType, &t.Season,
+		&t.Price, &t.DiscountPercent, &t.Currency,
+		&t.StartDate, &t.EndDate, &t.BookingDeadline,
+		&t.Main, &t.Active,
+		&t.ViewsCount, &t.BuysCount,
+		&t.CreatedAt, &t.UpdatedAt,
+	)
+	if err != nil {
+		return t, err
+	}
+	t.CalculateFinalPrice()
+	return t, nil
+}
+
+// queryTrips — выполняет SELECT и возвращает список Trip
+func (r *TripRepository) queryTrips(ctx context.Context, query string, args ...interface{}) ([]models.Trip, error) {
+	rows, err := r.Db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var trips []models.Trip
+	for rows.Next() {
+		t, err := scanTrip(rows)
+		if err != nil {
+			return nil, err
+		}
+		trips = append(trips, t)
+	}
+	return trips, rows.Err()
+}
+
+// buildTripFilters — собирает WHERE часть и аргументы
+func buildTripFilters(f models.TripFilter) (string, []interface{}) {
 	filters := []string{"1=1"}
 	args := []interface{}{}
 	i := 1
@@ -74,89 +122,39 @@ func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]model
 		i++
 	}
 	if f.RouteCity != "" {
-		filters = append(filters, fmt.Sprintf("EXISTS (SELECT 1 FROM trip_routes WHERE trip_id=trips.id AND city ILIKE $%d)", i))
+		filters = append(filters, fmt.Sprintf(
+			"EXISTS (SELECT 1 FROM trip_routes WHERE trip_id=trips.id AND city ILIKE $%d)", i))
 		args = append(args, "%"+f.RouteCity+"%")
 		i++
 	}
 
-	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season,
-                     price, discount_percent, currency,
-                     start_date, end_date, booking_deadline, main, active,
-                     views_count, buys_count, created_at, updated_at
-              FROM trips WHERE ` + strings.Join(filters, " AND ") + `
-              ORDER BY created_at DESC`
+	return strings.Join(filters, " AND "), args
+}
+
+// ==================== публичные методы ====================
+
+func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+	where, args := buildTripFilters(f)
+
+	query := `SELECT ` + tripSelectFields + ` FROM trips WHERE ` + where + ` ORDER BY created_at DESC`
 
 	if f.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT $%d", i)
 		args = append(args, f.Limit)
-		i++
+		query += fmt.Sprintf(" LIMIT $%d", len(args))
 	}
 	if f.Offset > 0 {
-		query += fmt.Sprintf(" OFFSET $%d", i)
 		args = append(args, f.Offset)
-		i++
+		query += fmt.Sprintf(" OFFSET $%d", len(args))
 	}
 
-	rows, err := r.Db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var trips []models.Trip
-	for rows.Next() {
-		var t models.Trip
-		if err := rows.Scan(
-			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.DiscountPercent, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline,
-			&t.Main, &t.Active,
-			&t.ViewsCount, &t.BuysCount,
-			&t.CreatedAt, &t.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		// расчет финальной цены
-		if t.DiscountPercent > 0 {
-			t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
-		} else {
-			t.FinalPrice = t.Price
-		}
-
-		trips = append(trips, t)
-	}
-	return trips, rows.Err()
+	return r.queryTrips(ctx, query, args...)
 }
 
 func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, error) {
-	var t models.Trip
-	err := r.Db.QueryRow(ctx,
-		`SELECT id, title, description, photo_url, departure_city, trip_type, season,
-                price, discount_percent, currency,
-                start_date, end_date, booking_deadline, main, active,
-                views_count, buys_count, created_at, updated_at
-         FROM trips WHERE id=$1`, id).
-		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.DiscountPercent, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline,
-			&t.Main, &t.Active,
-			&t.ViewsCount, &t.BuysCount,
-			&t.CreatedAt, &t.UpdatedAt)
-	if err == pgx.ErrNoRows {
-		return nil, ErrNotFound
-	}
+	query := `SELECT ` + tripSelectFields + ` FROM trips WHERE id=$1`
+	t, err := scanTrip(r.Db.QueryRow(ctx, query, id))
 	if err != nil {
-		return nil, err
-	}
-
-	// расчет финальной цены
-	if t.DiscountPercent > 0 {
-		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
-	} else {
-		t.FinalPrice = t.Price
+		return nil, mapNotFound(err)
 	}
 
 	// подтягиваем отели
@@ -208,10 +206,10 @@ func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
 		t.StartDate, t.EndDate, t.BookingDeadline,
 		t.Main, t.Active, t.ID,
 	).Scan(&t.ViewsCount, &t.BuysCount, &t.UpdatedAt)
-	if err == pgx.ErrNoRows {
-		return ErrNotFound
+	if err != nil {
+		return mapNotFound(err)
 	}
-	return err
+	return nil
 }
 
 func (r *TripRepository) Delete(ctx context.Context, id int) error {
@@ -226,38 +224,14 @@ func (r *TripRepository) Delete(ctx context.Context, id int) error {
 }
 
 func (r *TripRepository) GetMain(ctx context.Context) (*models.Trip, error) {
-	var t models.Trip
-	err := r.Db.QueryRow(ctx,
-		`SELECT id, title, description, photo_url, departure_city, trip_type, season,
-                price, discount_percent, currency,
-                start_date, end_date, booking_deadline, main, active,
-                views_count, buys_count, created_at, updated_at
-         FROM trips WHERE main = true AND active = true LIMIT 1`).
-		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.DiscountPercent, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline,
-			&t.Main, &t.Active,
-			&t.ViewsCount, &t.BuysCount,
-			&t.CreatedAt, &t.UpdatedAt)
-	if err == pgx.ErrNoRows {
-		return nil, ErrNotFound
-	}
+	query := `SELECT ` + tripSelectFields + ` FROM trips WHERE main = true AND active = true LIMIT 1`
+	t, err := scanTrip(r.Db.QueryRow(ctx, query))
 	if err != nil {
-		return nil, err
+		return nil, mapNotFound(err)
 	}
-
-	// расчет финальной цены
-	if t.DiscountPercent > 0 {
-		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
-	} else {
-		t.FinalPrice = t.Price
-	}
-
 	return &t, nil
 }
 
-// ResetMain сбрасывает main у всех туров
 func (r *TripRepository) ResetMain(ctx context.Context, excludeID *int) error {
 	if excludeID != nil {
 		_, err := r.Db.Exec(ctx, `UPDATE trips SET main=false WHERE id <> $1`, *excludeID)
@@ -267,62 +241,20 @@ func (r *TripRepository) ResetMain(ctx context.Context, excludeID *int) error {
 	return err
 }
 
-// Popular — топ туров по количеству покупок (только активные)
 func (r *TripRepository) Popular(ctx context.Context, limit int) ([]models.Trip, error) {
-	rows, err := r.Db.Query(ctx, `
-        SELECT id, title, description, photo_url, departure_city, trip_type, season,
-               price, discount_percent, currency,
-               start_date, end_date, booking_deadline, main, active,
-               views_count, buys_count, created_at, updated_at
-        FROM trips
-        WHERE active = true
-        ORDER BY buys_count DESC, views_count DESC
-        LIMIT $1`, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var trips []models.Trip
-	for rows.Next() {
-		var t models.Trip
-		if err := rows.Scan(
-			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.DiscountPercent, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline,
-			&t.Main, &t.Active,
-			&t.ViewsCount, &t.BuysCount,
-			&t.CreatedAt, &t.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		// расчет финальной цены
-		if t.DiscountPercent > 0 {
-			t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
-		} else {
-			t.FinalPrice = t.Price
-		}
-
-		trips = append(trips, t)
-	}
-	return trips, rows.Err()
+	query := `SELECT ` + tripSelectFields + ` FROM trips WHERE active = true ORDER BY buys_count DESC, views_count DESC LIMIT $1`
+	return r.queryTrips(ctx, query, limit)
 }
 
 func (r *TripRepository) IncrementViews(ctx context.Context, id int) error {
 	_, err := r.Db.Exec(ctx,
-		`UPDATE trips SET views_count = views_count + 1 WHERE id = $1`,
-		id,
-	)
+		`UPDATE trips SET views_count = views_count + 1 WHERE id = $1`, id)
 	return err
 }
 
 func (r *TripRepository) IncrementBuys(ctx context.Context, id int) error {
 	_, err := r.Db.Exec(ctx,
-		`UPDATE trips SET buys_count = buys_count + 1 WHERE id = $1`,
-		id,
-	)
+		`UPDATE trips SET buys_count = buys_count + 1 WHERE id = $1`, id)
 	return err
 }
 

@@ -3,23 +3,48 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-var ErrNotFound = errors.New("record not found")
 
 type NewsRepository struct {
 	db *pgxpool.Pool
 }
 
 func NewNewsRepository(db *pgxpool.Pool) *NewsRepository { return &NewsRepository{db: db} }
+
+// общий SELECT список
+const newsFields = `
+	n.id, n.slug, n.title, n.excerpt, n.content,
+    n.category_id, n.media_type, n.preview_url, n.video_url,
+    n.comments_count, n.reposts_count, n.views_count,
+    n.author_id, n.status, n.published_at,
+    n.created_at, n.updated_at
+`
+
+// сканер новости
+func scanNews(row interface{ Scan(dest ...any) error }) (models.News, error) {
+	var n models.News
+	var categoryID sql.NullInt32
+	err := row.Scan(
+		&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
+		&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
+		&n.AuthorID, &n.Status, &n.PublishedAt,
+		&n.CreatedAt, &n.UpdatedAt,
+	)
+	if err != nil {
+		return n, err
+	}
+	if categoryID.Valid {
+		val := int(categoryID.Int32)
+		n.CategoryID = &val
+	}
+	return n, nil
+}
 
 type NewsFilter struct {
 	CategoryID int
@@ -30,15 +55,6 @@ type NewsFilter struct {
 	Offset     int
 }
 
-// helper: единообразная обработка ErrNoRows
-func mapNotFound(err error) error {
-	if err == pgx.ErrNoRows {
-		return ErrNotFound
-	}
-	return err
-}
-
-// List — список новостей с фильтрацией + пагинацией
 func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News, int, error) {
 	var (
 		where []string
@@ -80,18 +96,13 @@ func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News,
 
 	// data query
 	args = append(args, f.Limit, f.Offset)
-	q := `
-SELECT n.id, n.slug, n.title, n.excerpt, n.content,
-       n.category_id, n.media_type, n.preview_url, n.video_url,
-       n.comments_count, n.reposts_count, n.views_count,
-       n.author_id, n.status, n.published_at,
-       n.created_at, n.updated_at
-FROM news n
-` + whereSQL + `
-ORDER BY n.published_at DESC, n.id DESC
-LIMIT $` + fmt.Sprint(idx) + ` OFFSET $` + fmt.Sprint(idx+1)
+	query := `SELECT ` + newsFields + `
+              FROM news n
+              ` + whereSQL + `
+              ORDER BY n.published_at DESC, n.id DESC
+              LIMIT $` + fmt.Sprint(idx) + ` OFFSET $` + fmt.Sprint(idx+1)
 
-	rows, err := r.db.Query(ctx, q, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -99,73 +110,31 @@ LIMIT $` + fmt.Sprint(idx) + ` OFFSET $` + fmt.Sprint(idx+1)
 
 	var items []models.News
 	for rows.Next() {
-		var n models.News
-		var categoryID sql.NullInt32
-
-		if err := rows.Scan(
-			&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
-			&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
-			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
-			&n.AuthorID, &n.Status, &n.PublishedAt,
-			&n.CreatedAt, &n.UpdatedAt,
-		); err != nil {
+		n, err := scanNews(rows)
+		if err != nil {
 			return nil, 0, err
 		}
-
-		if categoryID.Valid {
-			val := int(categoryID.Int32)
-			n.CategoryID = &val
-		} else {
-			n.CategoryID = nil
-		}
-
 		items = append(items, n)
 	}
 	return items, total, rows.Err()
 }
 
-// GetByID
 func (r *NewsRepository) GetByID(ctx context.Context, id int) (*models.News, error) {
-	return r.getOne(ctx, "n.id", id)
-}
-
-// GetBySlug
-func (r *NewsRepository) GetBySlug(ctx context.Context, slug string) (*models.News, error) {
-	return r.getOne(ctx, "n.slug", slug)
-}
-
-func (r *NewsRepository) getOne(ctx context.Context, by string, val any) (*models.News, error) {
-	q := `
-SELECT n.id, n.slug, n.title, n.excerpt, n.content,
-       n.category_id, n.media_type, n.preview_url, n.video_url,
-       n.comments_count, n.reposts_count, n.views_count,
-       n.author_id, n.status, n.published_at,
-       n.created_at, n.updated_at
-FROM news n
-WHERE ` + by + ` = $1`
-
-	var n models.News
-	var categoryID sql.NullInt32
-
-	err := r.db.QueryRow(ctx, q, val).Scan(
-		&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
-		&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
-		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
-		&n.AuthorID, &n.Status, &n.PublishedAt,
-		&n.CreatedAt, &n.UpdatedAt,
-	)
-
-	if categoryID.Valid {
-		val := int(categoryID.Int32)
-		n.CategoryID = &val
-	} else {
-		n.CategoryID = nil
+	n, err := scanNews(r.db.QueryRow(ctx, `SELECT `+newsFields+` FROM news n WHERE n.id=$1`, id))
+	if err != nil {
+		return nil, mapNotFound(err)
 	}
-
-	return &n, mapNotFound(err)
+	return &n, nil
 }
 
-// Create
+func (r *NewsRepository) GetBySlug(ctx context.Context, slug string) (*models.News, error) {
+	n, err := scanNews(r.db.QueryRow(ctx, `SELECT `+newsFields+` FROM news n WHERE n.slug=$1`, slug))
+	if err != nil {
+		return nil, mapNotFound(err)
+	}
+	return &n, nil
+}
+
 func (r *NewsRepository) Create(ctx context.Context, n *models.News) error {
 	return r.db.QueryRow(ctx, `
 INSERT INTO news (slug, title, excerpt, content, category_id, media_type, preview_url, video_url,
@@ -177,7 +146,6 @@ RETURNING id, created_at, updated_at`,
 	).Scan(&n.ID, &n.CreatedAt, &n.UpdatedAt)
 }
 
-// Update
 func (r *NewsRepository) Update(ctx context.Context, n *models.News) error {
 	err := r.db.QueryRow(ctx, `
 UPDATE news
@@ -191,7 +159,6 @@ RETURNING updated_at`,
 	return mapNotFound(err)
 }
 
-// Delete
 func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	tag, err := r.db.Exec(ctx, `DELETE FROM news WHERE id=$1`, id)
 	if err != nil {
@@ -203,7 +170,6 @@ func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// ExistsSlug
 func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, error) {
 	var exists bool
 	if err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM news WHERE slug=$1)`, slug).Scan(&exists); err != nil {
@@ -212,26 +178,23 @@ func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, err
 	return exists, nil
 }
 
-// IncrementViews
 func (r *NewsRepository) IncrementViews(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, `UPDATE news SET views_count = views_count + 1 WHERE id = $1`, id)
 	return err
 }
 
-// GetRecent
 func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
-	q := `
-SELECT n.id, n.slug, n.title, n.excerpt,
-       n.preview_url, n.media_type,
-       n.category_id, n.published_at,
-       n.comments_count, n.reposts_count, n.views_count,
-       n.created_at, n.updated_at
-FROM news n
-WHERE n.status = 'published'
-ORDER BY n.published_at DESC, n.id DESC
-LIMIT $1`
+	query := `SELECT n.id, n.slug, n.title, n.excerpt,
+                     n.preview_url, n.media_type,
+                     n.category_id, n.published_at,
+                     n.comments_count, n.reposts_count, n.views_count,
+                     n.created_at, n.updated_at
+              FROM news n
+              WHERE n.status = 'published'
+              ORDER BY n.published_at DESC, n.id DESC
+              LIMIT $1`
 
-	rows, err := r.db.Query(ctx, q, limit)
+	rows, err := r.db.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -239,45 +202,27 @@ LIMIT $1`
 
 	var list []models.News
 	for rows.Next() {
-		var n models.News
-		var categoryID sql.NullInt32
-
-		if err := rows.Scan(
-			&n.ID, &n.Slug, &n.Title, &n.Excerpt,
-			&n.PreviewURL, &n.MediaType,
-			&categoryID, &n.PublishedAt,
-			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
-			&n.CreatedAt, &n.UpdatedAt,
-		); err != nil {
+		n, err := scanNews(rows)
+		if err != nil {
 			return nil, err
 		}
-
-		if categoryID.Valid {
-			val := int(categoryID.Int32)
-			n.CategoryID = &val
-		} else {
-			n.CategoryID = nil
-		}
-
 		list = append(list, n)
 	}
 	return list, rows.Err()
 }
 
-// GetPopular
 func (r *NewsRepository) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
-	q := `
-SELECT n.id, n.slug, n.title, n.excerpt,
-       n.preview_url, n.media_type,
-       n.category_id, n.published_at,
-       n.comments_count, n.reposts_count, n.views_count,
-       n.created_at, n.updated_at
-FROM news n
-WHERE n.status = 'published'
-ORDER BY n.views_count DESC, n.published_at DESC
-LIMIT $1`
+	query := `SELECT n.id, n.slug, n.title, n.excerpt,
+                     n.preview_url, n.media_type,
+                     n.category_id, n.published_at,
+                     n.comments_count, n.reposts_count, n.views_count,
+                     n.created_at, n.updated_at
+              FROM news n
+              WHERE n.status = 'published'
+              ORDER BY n.views_count DESC, n.published_at DESC
+              LIMIT $1`
 
-	rows, err := r.db.Query(ctx, q, limit)
+	rows, err := r.db.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -285,26 +230,10 @@ LIMIT $1`
 
 	var list []models.News
 	for rows.Next() {
-		var n models.News
-		var categoryID sql.NullInt32
-
-		if err := rows.Scan(
-			&n.ID, &n.Slug, &n.Title, &n.Excerpt,
-			&n.PreviewURL, &n.MediaType,
-			&categoryID, &n.PublishedAt,
-			&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
-			&n.CreatedAt, &n.UpdatedAt,
-		); err != nil {
+		n, err := scanNews(rows)
+		if err != nil {
 			return nil, err
 		}
-
-		if categoryID.Valid {
-			val := int(categoryID.Int32)
-			n.CategoryID = &val
-		} else {
-			n.CategoryID = nil
-		}
-
 		list = append(list, n)
 	}
 	return list, rows.Err()

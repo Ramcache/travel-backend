@@ -16,50 +16,66 @@ func NewOrderRepo(db DB) *OrderRepo {
 	return &OrderRepo{db: db}
 }
 
-func (r *OrderRepo) Create(ctx context.Context, o *models.Order) error {
-	var tripID sql.NullInt32
+const orderFields = `
+	id, trip_id, user_name, user_phone, status, is_read, created_at
+`
 
-	if o.TripID.Valid {
-		tripID = sql.NullInt32{
-			Int32: o.TripID.Int32,
-			Valid: true,
-		}
-	} else {
-		tripID = sql.NullInt32{Valid: false}
+// приватный сканер
+func scanOrder(row interface{ Scan(dest ...any) error }) (models.Order, error) {
+	var o models.Order
+	err := row.Scan(
+		&o.ID,
+		&o.TripID,
+		&o.UserName,
+		&o.UserPhone,
+		&o.Status,
+		&o.IsRead,
+		&o.CreatedAt,
+	)
+	return o, err
+}
+
+// buildOrderFilters собирает WHERE + args
+func buildOrderFilters(status, phone string, isRead *bool) (string, []any) {
+	filters := "1=1"
+	args := []any{}
+	i := 1
+
+	if status != "" {
+		filters += fmt.Sprintf(" AND status = $%d", i)
+		args = append(args, status)
+		i++
 	}
+	if phone != "" {
+		filters += fmt.Sprintf(" AND user_phone ILIKE $%d", i)
+		args = append(args, "%"+phone+"%")
+		i++
+	}
+	if isRead != nil {
+		filters += fmt.Sprintf(" AND is_read = $%d", i)
+		args = append(args, *isRead)
+	}
+	return filters, args
+}
 
+func (r *OrderRepo) Create(ctx context.Context, o *models.Order) error {
 	query := `INSERT INTO orders (trip_id, user_name, user_phone, status)
-              VALUES ($1, $2, $3, $4) RETURNING id, created_at`
+              VALUES ($1, $2, $3, $4)
+              RETURNING id, created_at`
+
+	trip := sql.NullInt32{Int32: o.TripID.Int32, Valid: o.TripID.Valid}
 
 	return r.db.QueryRow(ctx, query,
-		tripID,
+		trip,
 		o.UserName,
 		o.UserPhone,
 		o.Status,
 	).Scan(&o.ID, &o.CreatedAt)
 }
 
-// Count возвращает количество заказов по тем же фильтрам
 func (r *OrderRepo) Count(ctx context.Context, status, phone string, isRead *bool) (int, error) {
-	query := `SELECT COUNT(*) FROM orders WHERE 1=1`
-	args := []interface{}{}
-	argID := 1
-
-	if status != "" {
-		query += fmt.Sprintf(" AND status = $%d", argID)
-		args = append(args, status)
-		argID++
-	}
-	if phone != "" {
-		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
-		args = append(args, "%"+phone+"%")
-		argID++
-	}
-	if isRead != nil {
-		query += fmt.Sprintf(" AND is_read = $%d", argID)
-		args = append(args, *isRead)
-		argID++
-	}
+	where, args := buildOrderFilters(status, phone, isRead)
+	query := `SELECT COUNT(*) FROM orders WHERE ` + where
 
 	var total int
 	if err := r.db.QueryRow(ctx, query, args...).Scan(&total); err != nil {
@@ -68,34 +84,15 @@ func (r *OrderRepo) Count(ctx context.Context, status, phone string, isRead *boo
 	return total, nil
 }
 
-// List с пагинацией и фильтрацией
 func (r *OrderRepo) List(ctx context.Context, limit, offset int, status, phone string, isRead *bool) ([]models.Order, error) {
-	query := `
-        SELECT id, trip_id, user_name, user_phone, status, is_read, created_at
-        FROM orders
-        WHERE 1=1
-    `
-	args := []interface{}{}
-	argID := 1
-
-	if status != "" {
-		query += fmt.Sprintf(" AND status = $%d", argID)
-		args = append(args, status)
-		argID++
-	}
-	if phone != "" {
-		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
-		args = append(args, "%"+phone+"%")
-		argID++
-	}
-	if isRead != nil {
-		query += fmt.Sprintf(" AND is_read = $%d", argID)
-		args = append(args, *isRead)
-		argID++
-	}
-
-	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argID, argID+1)
+	where, args := buildOrderFilters(status, phone, isRead)
 	args = append(args, limit, offset)
+
+	query := `SELECT ` + orderFields + `
+              FROM orders
+              WHERE ` + where + `
+              ORDER BY created_at DESC
+              LIMIT $` + fmt.Sprint(len(args)-1) + ` OFFSET $` + fmt.Sprint(len(args))
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -105,48 +102,38 @@ func (r *OrderRepo) List(ctx context.Context, limit, offset int, status, phone s
 
 	var list []models.Order
 	for rows.Next() {
-		var o models.Order
-		if err := rows.Scan(
-			&o.ID,
-			&o.TripID,
-			&o.UserName,
-			&o.UserPhone,
-			&o.Status,
-			&o.IsRead,
-			&o.CreatedAt,
-		); err != nil {
+		o, err := scanOrder(rows)
+		if err != nil {
 			return nil, err
 		}
 		list = append(list, o)
 	}
-	return list, nil
+	return list, rows.Err()
 }
 
 func (r *OrderRepo) UpdateStatus(ctx context.Context, id int, status string) error {
-	cmd, err := r.db.Exec(ctx,
-		`UPDATE orders SET status = $1 WHERE id = $2`, status, id)
+	cmd, err := r.db.Exec(ctx, `UPDATE orders SET status=$1 WHERE id=$2`, status, id)
 	if err != nil {
 		return err
 	}
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("order not found: %d", id)
+		return ErrNotFound
 	}
 	return nil
 }
 
-// MarkAsRead — отметить заказ как прочитанный
 func (r *OrderRepo) MarkAsRead(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, `UPDATE orders SET is_read = true WHERE id = $1`, id)
 	return err
 }
 
 func (r *OrderRepo) Delete(ctx context.Context, id int) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM orders WHERE id = $1`, id)
+	cmd, err := r.db.Exec(ctx, `DELETE FROM orders WHERE id=$1`, id)
 	if err != nil {
 		return err
 	}
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("order not found: %d", id)
+		return ErrNotFound
 	}
 	return nil
 }

@@ -14,20 +14,27 @@ type TripRouteRepository interface {
 }
 
 type tripRouteRepo struct {
-	pool DB // твой интерфейс абстракции над pgxpool (как в проекте)
+	pool DB
 }
 
 func NewTripRouteRepository(pool DB) TripRouteRepository {
 	return &tripRouteRepo{pool: pool}
 }
 
+const tripRouteFields = `
+	id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
+`
+
+func scanTripRoute(row interface{ Scan(dest ...any) error }) (models.TripRoute, error) {
+	var rt models.TripRoute
+	err := row.Scan(&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
+		&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt)
+	return rt, err
+}
+
 func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.TripRoute, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
-		FROM trip_routes
-		WHERE trip_id = $1
-		ORDER BY position ASC
-	`, tripID)
+	query := `SELECT ` + tripRouteFields + ` FROM trip_routes WHERE trip_id = $1 ORDER BY position ASC`
+	rows, err := r.pool.Query(ctx, query, tripID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,63 +42,56 @@ func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.Tr
 
 	var routes []models.TripRoute
 	for rows.Next() {
-		var rt models.TripRoute
-		if err := rows.Scan(
-			&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
-			&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
-		); err != nil {
+		rt, err := scanTripRoute(rows)
+		if err != nil {
 			return nil, err
 		}
 		routes = append(routes, rt)
 	}
-	return routes, nil
+	return routes, rows.Err()
 }
 
 func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
 	if req.Position == 0 {
-		var pos int
-		err := r.pool.QueryRow(ctx, `SELECT COALESCE(MAX(position), 0) + 1 FROM trip_routes WHERE trip_id = $1`, tripID).Scan(&pos)
+		err := r.pool.QueryRow(ctx, `SELECT COALESCE(MAX(position), 0) + 1 FROM trip_routes WHERE trip_id = $1`, tripID).Scan(&req.Position)
 		if err != nil {
 			return nil, err
 		}
-		req.Position = pos
 	}
 
-	row := r.pool.QueryRow(ctx, `
-		INSERT INTO trip_routes (trip_id, city, transport, duration, stop_time, position)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
-	`, tripID, req.City, req.Transport, req.Duration, req.StopTime, req.Position)
+	query := `INSERT INTO trip_routes (trip_id, city, transport, duration, stop_time, position)
+	          VALUES ($1,$2,$3,$4,$5,$6)
+	          RETURNING ` + tripRouteFields
 
-	var rt models.TripRoute
-	if err := row.Scan(
-		&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
-		&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
-	); err != nil {
+	row := r.pool.QueryRow(ctx, query, tripID, req.City, req.Transport, req.Duration, req.StopTime, req.Position)
+	rt, err := scanTripRoute(row)
+	if err != nil {
 		return nil, err
 	}
 	return &rt, nil
 }
 
 func (r *tripRouteRepo) Update(ctx context.Context, id int, req models.TripRouteRequest) (*models.TripRoute, error) {
-	row := r.pool.QueryRow(ctx, `
-		UPDATE trip_routes
-		SET city = $1, transport = $2, duration = $3, stop_time = $4, position = $5, updated_at = now()
-		WHERE id = $6
-		RETURNING id, trip_id, city, transport, duration, stop_time, position, created_at, updated_at
-	`, req.City, req.Transport, req.Duration, req.StopTime, req.Position, id)
+	query := `UPDATE trip_routes
+	          SET city=$1, transport=$2, duration=$3, stop_time=$4, position=$5, updated_at=now()
+	          WHERE id=$6
+	          RETURNING ` + tripRouteFields
 
-	var rt models.TripRoute
-	if err := row.Scan(
-		&rt.ID, &rt.TripID, &rt.City, &rt.Transport, &rt.Duration,
-		&rt.StopTime, &rt.Position, &rt.CreatedAt, &rt.UpdatedAt,
-	); err != nil {
-		return nil, err
+	row := r.pool.QueryRow(ctx, query, req.City, req.Transport, req.Duration, req.StopTime, req.Position, id)
+	rt, err := scanTripRoute(row)
+	if err != nil {
+		return nil, mapNotFound(err)
 	}
 	return &rt, nil
 }
 
 func (r *tripRouteRepo) Delete(ctx context.Context, id int) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM trip_routes WHERE id = $1`, id)
-	return err
+	tag, err := r.pool.Exec(ctx, `DELETE FROM trip_routes WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -15,27 +17,47 @@ func NewFeedbackRepo(db *pgxpool.Pool) *FeedbackRepo {
 	return &FeedbackRepo{db: db}
 }
 
+// общий SELECT список
+const feedbackFields = `
+	id, user_name, user_phone, is_read, created_at
+`
+
+// приватный сканер
+func scanFeedback(row pgx.Row) (models.Feedback, error) {
+	var f models.Feedback
+	err := row.Scan(&f.ID, &f.UserName, &f.UserPhone, &f.IsRead, &f.CreatedAt)
+	return f, err
+}
+
+// buildFeedbackFilters собирает WHERE + args
+func buildFeedbackFilters(phone string, isRead *bool) (string, []any) {
+	filters := "1=1"
+	args := []any{}
+	i := 1
+
+	if phone != "" {
+		filters += fmt.Sprintf(" AND user_phone ILIKE $%d", i)
+		args = append(args, "%"+phone+"%")
+		i++
+	}
+	if isRead != nil {
+		filters += fmt.Sprintf(" AND is_read = $%d", i)
+		args = append(args, *isRead)
+	}
+	return filters, args
+}
+
 func (r *FeedbackRepo) Create(ctx context.Context, f *models.Feedback) error {
-	query := `INSERT INTO feedbacks (user_name, user_phone) 
-              VALUES ($1, $2) RETURNING id, created_at`
-	return r.db.QueryRow(ctx, query, f.UserName, f.UserPhone).Scan(&f.ID, &f.CreatedAt)
+	query := `INSERT INTO feedbacks (user_name, user_phone)
+              VALUES ($1, $2)
+              RETURNING id, created_at`
+	return r.db.QueryRow(ctx, query, f.UserName, f.UserPhone).
+		Scan(&f.ID, &f.CreatedAt)
 }
 
 func (r *FeedbackRepo) Count(ctx context.Context, phone string, isRead *bool) (int, error) {
-	query := `SELECT COUNT(*) FROM feedbacks WHERE 1=1`
-	args := []interface{}{}
-	argID := 1
-
-	if phone != "" {
-		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
-		args = append(args, "%"+phone+"%")
-		argID++
-	}
-	if isRead != nil {
-		query += fmt.Sprintf(" AND is_read = $%d", argID)
-		args = append(args, *isRead)
-		argID++
-	}
+	where, args := buildFeedbackFilters(phone, isRead)
+	query := `SELECT COUNT(*) FROM feedbacks WHERE ` + where
 
 	var total int
 	if err := r.db.QueryRow(ctx, query, args...).Scan(&total); err != nil {
@@ -45,27 +67,14 @@ func (r *FeedbackRepo) Count(ctx context.Context, phone string, isRead *bool) (i
 }
 
 func (r *FeedbackRepo) List(ctx context.Context, limit, offset int, phone string, isRead *bool) ([]models.Feedback, error) {
-	query := `
-        SELECT id, user_name, user_phone, is_read, created_at
-        FROM feedbacks
-        WHERE 1=1
-    `
-	args := []interface{}{}
-	argID := 1
-
-	if phone != "" {
-		query += fmt.Sprintf(" AND user_phone ILIKE $%d", argID)
-		args = append(args, "%"+phone+"%")
-		argID++
-	}
-	if isRead != nil {
-		query += fmt.Sprintf(" AND is_read = $%d", argID)
-		args = append(args, *isRead)
-		argID++
-	}
-
-	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argID, argID+1)
+	where, args := buildFeedbackFilters(phone, isRead)
 	args = append(args, limit, offset)
+
+	query := `SELECT ` + feedbackFields + `
+              FROM feedbacks
+              WHERE ` + where + `
+              ORDER BY created_at DESC
+              LIMIT $` + fmt.Sprint(len(args)-1) + ` OFFSET $` + fmt.Sprint(len(args))
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -75,27 +84,33 @@ func (r *FeedbackRepo) List(ctx context.Context, limit, offset int, phone string
 
 	var list []models.Feedback
 	for rows.Next() {
-		var f models.Feedback
-		if err := rows.Scan(&f.ID, &f.UserName, &f.UserPhone, &f.IsRead, &f.CreatedAt); err != nil {
+		f, err := scanFeedback(rows)
+		if err != nil {
 			return nil, err
 		}
 		list = append(list, f)
 	}
-	return list, nil
+	return list, rows.Err()
 }
 
 func (r *FeedbackRepo) MarkAsRead(ctx context.Context, id int) error {
-	_, err := r.db.Exec(ctx, `UPDATE feedbacks SET is_read = true WHERE id = $1`, id)
-	return err
+	tag, err := r.db.Exec(ctx, `UPDATE feedbacks SET is_read = true WHERE id=$1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *FeedbackRepo) Delete(ctx context.Context, id int) error {
-	cmd, err := r.db.Exec(ctx, `DELETE FROM feedbacks WHERE id = $1`, id)
+	cmd, err := r.db.Exec(ctx, `DELETE FROM feedbacks WHERE id=$1`, id)
 	if err != nil {
 		return err
 	}
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("feedback not found: %d", id)
+		return ErrNotFound
 	}
 	return nil
 }

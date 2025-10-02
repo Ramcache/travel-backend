@@ -16,6 +16,35 @@ func NewSearchRepository(db DB) *SearchRepository {
 	return &SearchRepository{db: db}
 }
 
+// константы лимитов
+const (
+	searchLimitTrips = 20
+	searchLimitNews  = 20
+)
+
+// сканер результата поиска
+func scanSearchResultTrip(id int, highlighted string, createdAt time.Time) models.SearchResult {
+	return models.SearchResult{
+		Type:        "trip",
+		ID:          id,
+		Title:       highlighted,
+		Link:        "/trips/" + strconv.Itoa(id),
+		Date:        createdAt.Format(time.RFC3339),
+		Highlighted: true,
+	}
+}
+
+func scanSearchResultNews(id int, highlighted, slug string, createdAt time.Time) models.SearchResult {
+	return models.SearchResult{
+		Type:        "news",
+		ID:          id,
+		Title:       highlighted,
+		Link:        "/news/" + slug,
+		Date:        createdAt.Format(time.RFC3339),
+		Highlighted: true,
+	}
+}
+
 func (r *SearchRepository) SearchTrips(ctx context.Context, q string) ([]models.SearchResult, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id,
@@ -26,8 +55,8 @@ func (r *SearchRepository) SearchTrips(ctx context.Context, q string) ([]models.
 		WHERE to_tsvector('simple', title || ' ' || coalesce(description,'')) @@ plainto_tsquery(unaccent($1))
 		   OR similarity(unaccent(title), unaccent($1)) > 0.3
 		ORDER BY created_at DESC
-		LIMIT 20
-	`, q)
+		LIMIT $2
+	`, q, searchLimitTrips)
 	if err != nil {
 		return nil, err
 	}
@@ -41,14 +70,7 @@ func (r *SearchRepository) SearchTrips(ctx context.Context, q string) ([]models.
 		if err := rows.Scan(&id, &highlighted, &createdAt); err != nil {
 			return nil, err
 		}
-		results = append(results, models.SearchResult{
-			Type:        "trip",
-			ID:          id,
-			Title:       highlighted,
-			Link:        "/trips/" + strconv.Itoa(id),
-			Date:        createdAt.Format(time.RFC3339),
-			Highlighted: true,
-		})
+		results = append(results, scanSearchResultTrip(id, highlighted, createdAt))
 	}
 	return results, nil
 }
@@ -64,8 +86,8 @@ func (r *SearchRepository) SearchNews(ctx context.Context, q string) ([]models.S
 		WHERE to_tsvector('simple', unaccent(title || ' ' || coalesce(content,''))) @@ plainto_tsquery(unaccent($1))
 		   OR similarity(unaccent(title), unaccent($1)) > 0.3
 		ORDER BY created_at DESC
-		LIMIT 20
-	`, q)
+		LIMIT $2
+	`, q, searchLimitNews)
 	if err != nil {
 		return nil, err
 	}
@@ -79,15 +101,7 @@ func (r *SearchRepository) SearchNews(ctx context.Context, q string) ([]models.S
 		if err := rows.Scan(&id, &highlighted, &slug, &createdAt); err != nil {
 			return nil, err
 		}
-		results = append(results, models.SearchResult{
-			Type:        "news",
-			ID:          id,
-			Title:       highlighted,
-			Link:        "/news/" + slug,
-			Date:        createdAt.Format(time.RFC3339),
-			Highlighted: true,
-		})
-
+		results = append(results, scanSearchResultNews(id, highlighted, slug, createdAt))
 	}
 	return results, nil
 }

@@ -18,6 +18,7 @@ func NewStatsRepository(db *pgxpool.Pool) *StatsRepository {
 func (r *StatsRepository) Get(ctx context.Context) (models.Stats, error) {
 	var out models.Stats
 
+	// простые счётчики
 	if err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&out.TotalUsers); err != nil {
 		return out, err
 	}
@@ -28,6 +29,7 @@ func (r *StatsRepository) Get(ctx context.Context) (models.Stats, error) {
 		return out, err
 	}
 
+	// универсальный хелпер для KV
 	qKV := func(sql string) ([]models.KV, error) {
 		rows, err := r.db.Query(ctx, sql)
 		if err != nil {

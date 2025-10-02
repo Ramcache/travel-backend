@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,11 +15,23 @@ func NewReviewRepo(db *pgxpool.Pool) *ReviewRepo {
 	return &ReviewRepo{db: db}
 }
 
+// общий SELECT список
+const reviewFields = `
+	id, trip_id, user_name, rating, comment, created_at
+`
+
+// сканер отзыва
+func scanReview(row interface{ Scan(dest ...any) error }) (models.TripReview, error) {
+	var r models.TripReview
+	err := row.Scan(&r.ID, &r.TripID, &r.UserName, &r.Rating, &r.Comment, &r.CreatedAt)
+	return r, err
+}
+
 func (r *ReviewRepo) Create(ctx context.Context, rev *models.TripReview) error {
-	return r.db.QueryRow(ctx, `
-        INSERT INTO trip_reviews (trip_id, user_name, rating, comment)
-        VALUES ($1,$2,$3,$4)
-        RETURNING id, created_at`,
+	query := `INSERT INTO trip_reviews (trip_id, user_name, rating, comment)
+              VALUES ($1,$2,$3,$4)
+              RETURNING id, created_at`
+	return r.db.QueryRow(ctx, query,
 		rev.TripID, rev.UserName, rev.Rating, rev.Comment,
 	).Scan(&rev.ID, &rev.CreatedAt)
 }
@@ -29,12 +42,13 @@ func (r *ReviewRepo) ListByTrip(ctx context.Context, tripID, limit, offset int) 
 		return nil, 0, err
 	}
 
-	rows, err := r.db.Query(ctx, `
-        SELECT id, trip_id, user_name, rating, comment, created_at
-        FROM trip_reviews
-        WHERE trip_id=$1
-        ORDER BY created_at DESC
-        LIMIT $2 OFFSET $3`, tripID, limit, offset)
+	query := `SELECT ` + reviewFields + `
+              FROM trip_reviews
+              WHERE trip_id=$1
+              ORDER BY created_at DESC
+              LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.Query(ctx, query, tripID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -42,11 +56,11 @@ func (r *ReviewRepo) ListByTrip(ctx context.Context, tripID, limit, offset int) 
 
 	var reviews []models.TripReview
 	for rows.Next() {
-		var r models.TripReview
-		if err := rows.Scan(&r.ID, &r.TripID, &r.UserName, &r.Rating, &r.Comment, &r.CreatedAt); err != nil {
+		rev, err := scanReview(rows)
+		if err != nil {
 			return nil, 0, err
 		}
-		reviews = append(reviews, r)
+		reviews = append(reviews, rev)
 	}
 	return reviews, total, rows.Err()
 }

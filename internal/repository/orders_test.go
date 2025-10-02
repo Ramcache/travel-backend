@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Ramcache/travel-backend/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
-
-	"github.com/Ramcache/travel-backend/internal/models"
 )
 
 func TestOrderRepo_Count_WithFilters(t *testing.T) {
@@ -78,7 +77,7 @@ func TestOrderRepo_UpdateStatus_NotFound(t *testing.T) {
 	repo := NewOrderRepo(pool)
 	err := repo.UpdateStatus(context.Background(), 9, "canceled")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "order not found")
+	require.ErrorIs(t, err, ErrNotFound)
 }
 
 func ptrBool(v bool) *bool { return &v }
