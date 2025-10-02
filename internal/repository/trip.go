@@ -19,7 +19,7 @@ func NewTripRepository(db DB) *TripRepository {
 }
 
 type TripRepositoryI interface {
-	List(ctx context.Context, departureCity, tripType, season string) ([]models.Trip, error)
+	List(ctx context.Context, f models.TripFilter) ([]models.Trip, error)
 	GetByID(ctx context.Context, id int) (*models.Trip, error)
 	Create(ctx context.Context, t *models.Trip) error
 	Update(ctx context.Context, t *models.Trip) error
@@ -33,34 +33,67 @@ type TripRepositoryI interface {
 }
 
 // List with filters (показываем только активные туры)
-func (r *TripRepository) List(ctx context.Context, departureCity, tripType, season string) ([]models.Trip, error) {
-	filters := []string{"active = true"} // 🔹 скрываем неактивные туры
+func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+	filters := []string{"1=1"}
 	args := []interface{}{}
 	i := 1
 
-	if departureCity != "" {
+	if f.Title != "" {
+		filters = append(filters, fmt.Sprintf("title ILIKE $%d", i))
+		args = append(args, "%"+f.Title+"%")
+		i++
+	}
+	if f.DepartureCity != "" {
 		filters = append(filters, fmt.Sprintf("departure_city = $%d", i))
-		args = append(args, departureCity)
+		args = append(args, f.DepartureCity)
 		i++
 	}
-	if tripType != "" {
+	if f.TripType != "" {
 		filters = append(filters, fmt.Sprintf("trip_type = $%d", i))
-		args = append(args, tripType)
+		args = append(args, f.TripType)
 		i++
 	}
-	if season != "" {
+	if f.Season != "" {
 		filters = append(filters, fmt.Sprintf("season = $%d", i))
-		args = append(args, season)
+		args = append(args, f.Season)
+		i++
+	}
+	if f.Active != nil {
+		filters = append(filters, fmt.Sprintf("active = $%d", i))
+		args = append(args, *f.Active)
+		i++
+	}
+	if !f.StartAfter.IsZero() {
+		filters = append(filters, fmt.Sprintf("start_date >= $%d", i))
+		args = append(args, f.StartAfter)
+		i++
+	}
+	if !f.EndBefore.IsZero() {
+		filters = append(filters, fmt.Sprintf("end_date <= $%d", i))
+		args = append(args, f.EndBefore)
+		i++
+	}
+	if f.RouteCity != "" {
+		filters = append(filters, fmt.Sprintf("EXISTS (SELECT 1 FROM trip_routes WHERE trip_id=trips.id AND city ILIKE $%d)", i))
+		args = append(args, "%"+f.RouteCity+"%")
 		i++
 	}
 
 	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
                      start_date, end_date, booking_deadline, main, active, views_count, buys_count, created_at, updated_at
-              FROM trips`
-	if len(filters) > 0 {
-		query += " WHERE " + strings.Join(filters, " AND ")
+              FROM trips WHERE ` + strings.Join(filters, " AND ") + `
+              ORDER BY created_at DESC`
+
+	if f.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", i)
+		args = append(args, f.Limit)
+		i++
 	}
-	query += " ORDER BY created_at DESC"
+	if f.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", i)
+		args = append(args, f.Offset)
+		i++
+	}
 
 	rows, err := r.Db.Query(ctx, query, args...)
 	if err != nil {

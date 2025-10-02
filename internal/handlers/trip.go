@@ -31,29 +31,76 @@ func NewTripHandler(service services.TripServiceI, orderService *services.OrderS
 
 // List
 // @Summary List trips
-// @Description Публичный поиск туров с фильтрацией
+// @Description Публичный поиск туров с фильтрацией и пагинацией
 // @Tags trips
 // @Produce json
+// @Param title query string false "Поиск по названию тура"
 // @Param departure_city query string false "Город вылета"
-// @Param trip_type query string false "Тип тура (пляжный, экскурсионный, семейный)"
-// @Param season query string false "Сезон (например: 2025 или лето 2025)"
-// @Success 200 {array} models.Trip
+// @Param trip_type query string false "Тип тура"
+// @Param season query string false "Сезон"
+// @Param route_city query string false "Город в маршруте"
+// @Param active query bool false "Статус тура"
+// @Param start_after query string false "Дата начала с (YYYY-MM-DD)"
+// @Param end_before query string false "Дата окончания до (YYYY-MM-DD)"
+// @Param limit query int false "Лимит (по умолчанию 20)"
+// @Param offset query int false "Смещение"
+// @Success 200 {object} map[string]interface{} "success + items + meta"
 // @Failure 500 {object} helpers.ErrorData "Ошибка при получении списка туров"
 // @Router /trips [get]
 func (h *TripHandler) List(w http.ResponseWriter, r *http.Request) {
-	city := r.URL.Query().Get("departure_city")
-	ttype := r.URL.Query().Get("trip_type")
-	season := r.URL.Query().Get("season")
+	q := r.URL.Query()
 
-	trips, err := h.service.List(r.Context(), city, ttype, season)
+	var f models.TripFilter
+	f.Title = q.Get("title")
+	f.DepartureCity = q.Get("departure_city")
+	f.TripType = q.Get("trip_type")
+	f.Season = q.Get("season")
+	f.RouteCity = q.Get("route_city")
+
+	if v := q.Get("active"); v != "" {
+		val := v == "true" || v == "1"
+		f.Active = &val
+	}
+	if v := q.Get("start_after"); v != "" {
+		if t, err := time.Parse("2006-01-02", v); err == nil {
+			f.StartAfter = t
+		}
+	}
+	if v := q.Get("end_before"); v != "" {
+		if t, err := time.Parse("2006-01-02", v); err == nil {
+			f.EndBefore = t
+		}
+	}
+	if v := q.Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			f.Limit = n
+		}
+	}
+	if v := q.Get("offset"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			f.Offset = n
+		}
+	}
+	if f.Limit == 0 {
+		f.Limit = 20
+	}
+
+	trips, err := h.service.List(r.Context(), f)
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка туров", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список туров")
 		return
 	}
 
-	h.log.Infow("Список туров успешно получен", "count", len(trips))
-	helpers.JSON(w, http.StatusOK, trips)
+	helpers.JSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"items":   trips,
+		"meta": map[string]interface{}{
+			"limit":  f.Limit,
+			"offset": f.Offset,
+			"count":  len(trips),
+		},
+	})
 }
 
 // Get
@@ -122,7 +169,7 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.log.Infow("Тур успешно создан", "id", trip.ID)
-	helpers.JSON(w, http.StatusOK, trip)
+	helpers.JSON(w, http.StatusCreated, trip)
 }
 
 // Update

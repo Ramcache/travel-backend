@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/Ramcache/travel-backend/internal/models"
 	"strings"
 	"testing"
 	"time"
@@ -21,9 +22,10 @@ func TestTripRepository_List_WithFilters(t *testing.T) {
 	pool.expectQuery(func(_ context.Context, sql string, args []any) (pgx.Rows, error) {
 		require.Contains(t, sql, "FROM trips")
 		require.Contains(t, sql, "WHERE")
-		require.Len(t, args, 2)
+
 		require.Equal(t, "Moscow", args[0])
 		require.Equal(t, "пляжный", args[1])
+		require.Equal(t, 10, args[2]) // Limit всегда идёт после фильтров
 
 		rows := newMockRows([][]any{{
 			1,
@@ -49,7 +51,15 @@ func TestTripRepository_List_WithFilters(t *testing.T) {
 	})
 
 	repo := NewTripRepository(pool)
-	trips, err := repo.List(context.Background(), "Moscow", "пляжный", "")
+
+	filter := models.TripFilter{
+		DepartureCity: "Moscow",
+		TripType:      "пляжный",
+		Limit:         10,
+		Offset:        0,
+	}
+
+	trips, err := repo.List(context.Background(), filter)
 	require.NoError(t, err)
 	require.Len(t, trips, 1)
 	require.Equal(t, "Trip", trips[0].Title)

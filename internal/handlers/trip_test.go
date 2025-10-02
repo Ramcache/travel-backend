@@ -43,10 +43,11 @@ func (m *MockTripService) Buy(ctx context.Context, id int, req models.BuyRequest
 	return args.Error(0)
 }
 
-func (m *MockTripService) List(ctx context.Context, c, t, s string) ([]models.Trip, error) {
-	args := m.Called(ctx, c, t, s)
+func (m *MockTripService) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+	args := m.Called(ctx, f)
 	return args.Get(0).([]models.Trip), args.Error(1)
 }
+
 func (m *MockTripService) Get(ctx context.Context, id int) (*models.Trip, error) {
 	args := m.Called(ctx, id)
 	if v := args.Get(0); v != nil {
@@ -105,8 +106,9 @@ func withChiURLParam(r *http.Request, key, val string) *http.Request {
 func TestTripHandler_List(t *testing.T) {
 	h, mockSvc := newHandlerWithMock(t)
 
-	mockSvc.On("List", mock.Anything, "", "", "").
-		Return([]models.Trip{{ID: 1, Title: "Egypt"}}, nil)
+	mockSvc.On("List", mock.Anything, mock.MatchedBy(func(f models.TripFilter) bool {
+		return f.Limit == 20 && f.DepartureCity == ""
+	})).Return([]models.Trip{{ID: 1, Title: "Trip"}}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/trips", nil)
 	w := httptest.NewRecorder()
@@ -125,7 +127,7 @@ func TestTripHandler_Get(t *testing.T) {
 	mockSvc.On("Get", mock.Anything, 1).
 		Return(&models.Trip{ID: 1, Title: "Egypt"}, nil)
 	mockSvc.On("IncrementViews", mock.Anything, 1).
-		Return(nil) // ожидаем вызов, но без AssertCalled
+		Return(nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/trips/1", nil)
 	req = withChiURLParam(req, "id", "1")
@@ -156,9 +158,10 @@ func TestTripHandler_Create(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK { // 👈 поменял с 201 на 200
-		t.Fatalf("expected 200, got %d", res.StatusCode)
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", res.StatusCode)
 	}
+
 }
 
 func TestTripHandler_Update(t *testing.T) {

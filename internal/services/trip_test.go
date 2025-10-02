@@ -19,10 +19,11 @@ func (m *MockTripRepo) GetOptions(ctx context.Context, tripID int) ([]models.Tri
 	return args.Get(0).([]models.TripOptionResponse), args.Error(1)
 }
 
-func (m *MockTripRepo) List(ctx context.Context, c, t, s string) ([]models.Trip, error) {
-	args := m.Called(ctx, c, t, s)
+func (m *MockTripRepo) List(ctx context.Context, f models.TripFilter) ([]models.Trip, error) {
+	args := m.Called(ctx, f)
 	return args.Get(0).([]models.Trip), args.Error(1)
 }
+
 func (m *MockTripRepo) GetByID(ctx context.Context, id int) (*models.Trip, error) {
 	args := m.Called(ctx, id)
 	if v := args.Get(0); v != nil {

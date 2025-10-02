@@ -2232,7 +2232,7 @@ const docTemplate = `{
         },
         "/trips": {
             "get": {
-                "description": "Публичный поиск туров с фильтрацией",
+                "description": "Публичный поиск туров с фильтрацией и пагинацией",
                 "produces": [
                     "application/json"
                 ],
@@ -2243,31 +2243,71 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Поиск по названию тура",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Город вылета",
                         "name": "departure_city",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Тип тура (пляжный, экскурсионный, семейный)",
+                        "description": "Тип тура",
                         "name": "trip_type",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Сезон (например: 2025 или лето 2025)",
+                        "description": "Сезон",
                         "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Город в маршруте",
+                        "name": "route_city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Статус тура",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата начала с (YYYY-MM-DD)",
+                        "name": "start_after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания до (YYYY-MM-DD)",
+                        "name": "end_before",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит (по умолчанию 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "success + items + meta",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Trip"
-                            }
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -2430,6 +2470,68 @@ const docTemplate = `{
                     "trips"
                 ],
                 "summary": "List all trips with hotels and routes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Поиск по названию тура",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Город вылета",
+                        "name": "departure_city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип тура",
+                        "name": "trip_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Сезон",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Город в маршруте",
+                        "name": "route_city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Статус тура",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата начала с (YYYY-MM-DD)",
+                        "name": "start_after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания до (YYYY-MM-DD)",
+                        "name": "end_before",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит (по умолчанию 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2613,6 +2715,66 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Поиск по названию тура",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Город вылета",
+                        "name": "departure_city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип тура",
+                        "name": "trip_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Сезон",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Город в маршруте",
+                        "name": "route_city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Статус тура",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата начала с (YYYY-MM-DD)",
+                        "name": "start_after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания до (YYYY-MM-DD)",
+                        "name": "end_before",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит (по умолчанию 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {

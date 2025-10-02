@@ -131,15 +131,15 @@ func (s *TripPageService) Get(ctx context.Context, id int) (*models.TripPageResp
 	return resp, nil
 }
 
-func (s *TripPageService) ListAll(ctx context.Context) ([]models.TripPageResponse, error) {
-	trips, err := s.trips.List(ctx, "", "", "")
+func (s *TripPageService) ListAll(ctx context.Context, f models.TripFilter) ([]models.TripPageResponse, error) {
+	trips, err := s.trips.List(ctx, f)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []models.TripPageResponse
 	for _, t := range trips {
-		data, err := s.Get(ctx, t.ID) // t.ID теперь доступен
+		data, err := s.Get(ctx, t.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -173,22 +173,20 @@ func (s *TripPageService) GetWithRelations(ctx context.Context, id int) (*models
 	}, nil
 }
 
-func (s *TripPageService) ListWithRelations(ctx context.Context) ([]models.TripWithRelations, error) {
-	trips, err := s.trips.List(ctx, "", "", "")
+func (s *TripPageService) ListWithRelations(ctx context.Context, f models.TripFilter) ([]models.TripWithRelations, error) {
+	trips, err := s.trips.List(ctx, f)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []models.TripWithRelations
 	for _, t := range trips {
-		// Отели
 		hotels, err := s.hotels.ListByTrip(ctx, t.ID)
 		if err != nil {
 			s.log.Errorw("trip_relations_hotels_failed", "trip_id", t.ID, "err", err)
 			hotels = nil
 		}
 
-		// Маршрут
 		routes, err := s.routes.GetCitiesResponse(ctx, t.ID)
 		if err != nil {
 			s.log.Errorw("trip_relations_routes_failed", "trip_id", t.ID, "err", err)
@@ -201,6 +199,5 @@ func (s *TripPageService) ListWithRelations(ctx context.Context) ([]models.TripW
 			Routes: routes,
 		})
 	}
-
 	return results, nil
 }

@@ -2210,29 +2210,56 @@ paths:
       - search
   /trips:
     get:
-      description: Публичный поиск туров с фильтрацией
+      description: Публичный поиск туров с фильтрацией и пагинацией
       parameters:
+      - description: Поиск по названию тура
+        in: query
+        name: title
+        type: string
       - description: Город вылета
         in: query
         name: departure_city
         type: string
-      - description: Тип тура (пляжный, экскурсионный, семейный)
+      - description: Тип тура
         in: query
         name: trip_type
         type: string
-      - description: 'Сезон (например: 2025 или лето 2025)'
+      - description: Сезон
         in: query
         name: season
         type: string
+      - description: Город в маршруте
+        in: query
+        name: route_city
+        type: string
+      - description: Статус тура
+        in: query
+        name: active
+        type: boolean
+      - description: Дата начала с (YYYY-MM-DD)
+        in: query
+        name: start_after
+        type: string
+      - description: Дата окончания до (YYYY-MM-DD)
+        in: query
+        name: end_before
+        type: string
+      - description: Лимит (по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: success + items + meta
           schema:
-            items:
-              $ref: '#/definitions/models.Trip'
-            type: array
+            additionalProperties: true
+            type: object
         "500":
           description: Ошибка при получении списка туров
           schema:
@@ -2346,6 +2373,46 @@ paths:
         in: path
         name: id
         required: true
+        type: integer
+      - description: Поиск по названию тура
+        in: query
+        name: title
+        type: string
+      - description: Город вылета
+        in: query
+        name: departure_city
+        type: string
+      - description: Тип тура
+        in: query
+        name: trip_type
+        type: string
+      - description: Сезон
+        in: query
+        name: season
+        type: string
+      - description: Город в маршруте
+        in: query
+        name: route_city
+        type: string
+      - description: Статус тура
+        in: query
+        name: active
+        type: boolean
+      - description: Дата начала с (YYYY-MM-DD)
+        in: query
+        name: start_after
+        type: string
+      - description: Дата окончания до (YYYY-MM-DD)
+        in: query
+        name: end_before
+        type: string
+      - description: Лимит (по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
         type: integer
       produces:
       - application/json
@@ -2571,6 +2638,47 @@ paths:
   /trips/relations:
     get:
       description: Возвращает все туры вместе с отелями и маршрутами
+      parameters:
+      - description: Поиск по названию тура
+        in: query
+        name: title
+        type: string
+      - description: Город вылета
+        in: query
+        name: departure_city
+        type: string
+      - description: Тип тура
+        in: query
+        name: trip_type
+        type: string
+      - description: Сезон
+        in: query
+        name: season
+        type: string
+      - description: Город в маршруте
+        in: query
+        name: route_city
+        type: string
+      - description: Статус тура
+        in: query
+        name: active
+        type: boolean
+      - description: Дата начала с (YYYY-MM-DD)
+        in: query
+        name: start_after
+        type: string
+      - description: Дата окончания до (YYYY-MM-DD)
+        in: query
+        name: end_before
+        type: string
+      - description: Лимит (по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
