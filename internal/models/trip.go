@@ -11,6 +11,8 @@ type Trip struct {
 	TripType        string     `json:"trip_type"`
 	Season          string     `json:"season"`
 	Price           float64    `json:"price"`
+	FinalPrice      float64    `json:"final_price"`
+	DiscountPercent int        `json:"discount_percent"`
 	Currency        string     `json:"currency"`
 	Main            bool       `json:"main"`
 	Active          bool       `json:"active"`
@@ -48,6 +50,7 @@ type CreateTripRequest struct {
 	TripType        string        `json:"trip_type"`
 	Season          string        `json:"season"`
 	Price           float64       `json:"price"`
+	DiscountPercent int           `json:"discount_percent"`
 	Currency        string        `json:"currency"`
 	Main            bool          `json:"main"`
 	Active          bool          `json:"active"`
@@ -65,6 +68,7 @@ type UpdateTripRequest struct {
 	TripType        *string       `json:"trip_type,omitempty"`
 	Season          *string       `json:"season,omitempty"`
 	Price           *float64      `json:"price,omitempty"`
+	DiscountPercent *int          `json:"discount_percent,omitempty"`
 	Currency        *string       `json:"currency,omitempty"`
 	Main            *bool         `json:"main,omitempty"`
 	Active          *bool         `json:"active,omitempty"`

@@ -124,6 +124,8 @@ definitions:
         type: string
       description:
         type: string
+      discount_percent:
+        type: integer
       end_date:
         type: string
       hotels:
@@ -415,8 +417,12 @@ definitions:
         type: string
       description:
         type: string
+      discount_percent:
+        type: integer
       end_date:
         type: string
+      final_price:
+        type: number
       hotels:
         items:
           $ref: '#/definitions/models.TripHotelWithInfo'
@@ -708,6 +714,8 @@ definitions:
         type: string
       description:
         type: string
+      discount_percent:
+        type: integer
       end_date:
         type: string
       hotels:
