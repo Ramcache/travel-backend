@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,9 +18,21 @@ func NewNewsCategoryRepository(db *pgxpool.Pool) *NewsCategoryRepository {
 	return &NewsCategoryRepository{db: db}
 }
 
+// общий SELECT список
+const newsCategoryFields = `
+	id, slug, title, created_at, updated_at
+`
+
+// приватный сканер
+func scanNewsCategory(row interface{ Scan(dest ...any) error }) (models.NewsCategory, error) {
+	var c models.NewsCategory
+	err := row.Scan(&c.ID, &c.Slug, &c.Title, &c.CreatedAt, &c.UpdatedAt)
+	return c, err
+}
+
 func (r *NewsCategoryRepository) List(ctx context.Context) ([]models.NewsCategory, error) {
-	rows, err := r.db.Query(ctx,
-		`SELECT id, slug, title, created_at, updated_at FROM news_categories ORDER BY id`)
+	query := `SELECT ` + newsCategoryFields + ` FROM news_categories ORDER BY id`
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +40,8 @@ func (r *NewsCategoryRepository) List(ctx context.Context) ([]models.NewsCategor
 
 	var list []models.NewsCategory
 	for rows.Next() {
-		var c models.NewsCategory
-		if err := rows.Scan(&c.ID, &c.Slug, &c.Title, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		c, err := scanNewsCategory(rows)
+		if err != nil {
 			return nil, err
 		}
 		list = append(list, c)
@@ -38,15 +50,9 @@ func (r *NewsCategoryRepository) List(ctx context.Context) ([]models.NewsCategor
 }
 
 func (r *NewsCategoryRepository) GetByID(ctx context.Context, id int) (*models.NewsCategory, error) {
-	var c models.NewsCategory
-	err := r.db.QueryRow(ctx,
-		`SELECT id, slug, title, created_at, updated_at FROM news_categories WHERE id=$1`, id).
-		Scan(&c.ID, &c.Slug, &c.Title, &c.CreatedAt, &c.UpdatedAt)
+	c, err := scanNewsCategory(r.db.QueryRow(ctx, `SELECT `+newsCategoryFields+` FROM news_categories WHERE id=$1`, id))
 	if err != nil {
-		if err == ErrCategoryNotFound {
-			return nil, nil
-		}
-		return nil, err
+		return nil, mapNotFound(err)
 	}
 	return &c, nil
 }
@@ -59,17 +65,26 @@ func (r *NewsCategoryRepository) Create(ctx context.Context, c *models.NewsCateg
 }
 
 func (r *NewsCategoryRepository) Update(ctx context.Context, c *models.NewsCategory) error {
-	return r.db.QueryRow(ctx,
+	err := r.db.QueryRow(ctx,
 		`UPDATE news_categories SET slug=$1, title=$2, updated_at=now() WHERE id=$3 RETURNING updated_at`,
-		c.Slug, c.Title, c.ID).
-		Scan(&c.UpdatedAt)
+		c.Slug, c.Title, c.ID,
+	).Scan(&c.UpdatedAt)
+	if err != nil {
+		return mapNotFound(err)
+	}
+	return nil
 }
 
 func (r *NewsCategoryRepository) Delete(ctx context.Context, id int) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM news_categories WHERE id=$1`, id)
-	return err
+	tag, err := r.db.Exec(ctx, `DELETE FROM news_categories WHERE id=$1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
-
 func (r *NewsCategoryRepository) Exists(ctx context.Context, id int) (bool, error) {
 	var exists bool
 	if err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM news_categories WHERE id=$1)`, id).Scan(&exists); err != nil {

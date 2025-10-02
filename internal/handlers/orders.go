@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/Ramcache/travel-backend/internal/helpers"
+	"github.com/Ramcache/travel-backend/internal/repository"
 	"github.com/Ramcache/travel-backend/internal/services"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -90,7 +92,7 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.UpdateStatus(r.Context(), id, status); err != nil {
-		if strings.Contains(err.Error(), "order not found") {
+		if errors.Is(err, repository.ErrNotFound) {
 			h.log.Warnw("Заказ не найден при обновлении статуса", "id", id)
 			helpers.Error(w, http.StatusNotFound, "Заказ не найден")
 			return

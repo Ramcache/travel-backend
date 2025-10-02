@@ -97,3 +97,11 @@ type TripWithRelations struct {
 	Hotels []HotelResponse          `json:"hotels"`
 	Routes *TripRouteCitiesResponse `json:"routes"`
 }
+
+func (t *Trip) CalculateFinalPrice() {
+	if t.DiscountPercent > 0 {
+		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+	} else {
+		t.FinalPrice = t.Price
+	}
+}
