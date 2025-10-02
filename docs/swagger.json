@@ -3147,6 +3147,9 @@
                 "description": {
                     "type": "string"
                 },
+                "discount_percent": {
+                    "type": "integer"
+                },
                 "end_date": {
                     "type": "string"
                 },
@@ -3584,8 +3587,14 @@
                 "description": {
                     "type": "string"
                 },
+                "discount_percent": {
+                    "type": "integer"
+                },
                 "end_date": {
                     "type": "string"
+                },
+                "final_price": {
+                    "type": "number"
                 },
                 "hotels": {
                     "type": "array",
@@ -4032,6 +4041,9 @@
                 },
                 "description": {
                     "type": "string"
+                },
+                "discount_percent": {
+                    "type": "integer"
                 },
                 "end_date": {
                     "type": "string"

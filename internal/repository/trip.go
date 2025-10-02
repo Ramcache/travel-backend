@@ -79,8 +79,10 @@ func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]model
 		i++
 	}
 
-	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                     start_date, end_date, booking_deadline, main, active, views_count, buys_count, created_at, updated_at
+	query := `SELECT id, title, description, photo_url, departure_city, trip_type, season,
+                     price, discount_percent, currency,
+                     start_date, end_date, booking_deadline, main, active,
+                     views_count, buys_count, created_at, updated_at
               FROM trips WHERE ` + strings.Join(filters, " AND ") + `
               ORDER BY created_at DESC`
 
@@ -106,13 +108,23 @@ func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]model
 		var t models.Trip
 		if err := rows.Scan(
 			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season, &t.Price, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.Active,
+			&t.DepartureCity, &t.TripType, &t.Season,
+			&t.Price, &t.DiscountPercent, &t.Currency,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline,
+			&t.Main, &t.Active,
 			&t.ViewsCount, &t.BuysCount,
 			&t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
+		// расчет финальной цены
+		if t.DiscountPercent > 0 {
+			t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+		} else {
+			t.FinalPrice = t.Price
+		}
+
 		trips = append(trips, t)
 	}
 	return trips, rows.Err()
@@ -121,12 +133,18 @@ func (r *TripRepository) List(ctx context.Context, f models.TripFilter) ([]model
 func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, error) {
 	var t models.Trip
 	err := r.Db.QueryRow(ctx,
-		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                start_date, end_date, booking_deadline, main, active, views_count, buys_count, created_at, updated_at
+		`SELECT id, title, description, photo_url, departure_city, trip_type, season,
+                price, discount_percent, currency,
+                start_date, end_date, booking_deadline, main, active,
+                views_count, buys_count, created_at, updated_at
          FROM trips WHERE id=$1`, id).
-		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.Active,
-			&t.ViewsCount, &t.BuysCount, &t.CreatedAt, &t.UpdatedAt)
+		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL,
+			&t.DepartureCity, &t.TripType, &t.Season,
+			&t.Price, &t.DiscountPercent, &t.Currency,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline,
+			&t.Main, &t.Active,
+			&t.ViewsCount, &t.BuysCount,
+			&t.CreatedAt, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
@@ -134,7 +152,14 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 		return nil, err
 	}
 
-	// 🔹 тянем отели для тура
+	// расчет финальной цены
+	if t.DiscountPercent > 0 {
+		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+	} else {
+		t.FinalPrice = t.Price
+	}
+
+	// подтягиваем отели
 	rows, err := r.Db.Query(ctx, `
         SELECT h.id, h.name, h.city, h.distance, h.meals, h.rating, th.nights
         FROM trip_hotels th
@@ -159,12 +184,14 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 
 func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 	return r.Db.QueryRow(ctx,
-		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season, price, currency,
+		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season,
+                            price, discount_percent, currency,
                             start_date, end_date, booking_deadline, main, active)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          RETURNING id, views_count, buys_count, created_at, updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
-		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.Main, t.Active,
+		t.Price, t.DiscountPercent, t.Currency,
+		t.StartDate, t.EndDate, t.BookingDeadline, t.Main, t.Active,
 	).Scan(&t.ID, &t.ViewsCount, &t.BuysCount, &t.CreatedAt, &t.UpdatedAt)
 }
 
@@ -172,11 +199,14 @@ func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
 	err := r.Db.QueryRow(ctx,
 		`UPDATE trips
          SET title=$1, description=$2, photo_url=$3, departure_city=$4, trip_type=$5, season=$6,
-             price=$7, currency=$8, start_date=$9, end_date=$10, booking_deadline=$11, main=$12, active=$13, updated_at=now()
-         WHERE id=$14
+             price=$7, discount_percent=$8, currency=$9,
+             start_date=$10, end_date=$11, booking_deadline=$12, main=$13, active=$14, updated_at=now()
+         WHERE id=$15
          RETURNING views_count, buys_count, updated_at`,
 		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
-		t.Price, t.Currency, t.StartDate, t.EndDate, t.BookingDeadline, t.Main, t.Active, t.ID,
+		t.Price, t.DiscountPercent, t.Currency,
+		t.StartDate, t.EndDate, t.BookingDeadline,
+		t.Main, t.Active, t.ID,
 	).Scan(&t.ViewsCount, &t.BuysCount, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return ErrNotFound
@@ -198,17 +228,33 @@ func (r *TripRepository) Delete(ctx context.Context, id int) error {
 func (r *TripRepository) GetMain(ctx context.Context) (*models.Trip, error) {
 	var t models.Trip
 	err := r.Db.QueryRow(ctx,
-		`SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-                start_date, end_date, booking_deadline, main, active, views_count, buys_count, created_at, updated_at
+		`SELECT id, title, description, photo_url, departure_city, trip_type, season,
+                price, discount_percent, currency,
+                start_date, end_date, booking_deadline, main, active,
+                views_count, buys_count, created_at, updated_at
          FROM trips WHERE main = true AND active = true LIMIT 1`).
-		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL, &t.DepartureCity, &t.TripType, &t.Season,
-			&t.Price, &t.Currency, &t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.Active,
+		Scan(&t.ID, &t.Title, &t.Description, &t.PhotoURL,
+			&t.DepartureCity, &t.TripType, &t.Season,
+			&t.Price, &t.DiscountPercent, &t.Currency,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline,
+			&t.Main, &t.Active,
 			&t.ViewsCount, &t.BuysCount,
 			&t.CreatedAt, &t.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
-	return &t, err
+	if err != nil {
+		return nil, err
+	}
+
+	// расчет финальной цены
+	if t.DiscountPercent > 0 {
+		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+	} else {
+		t.FinalPrice = t.Price
+	}
+
+	return &t, nil
 }
 
 // ResetMain сбрасывает main у всех туров
@@ -224,8 +270,10 @@ func (r *TripRepository) ResetMain(ctx context.Context, excludeID *int) error {
 // Popular — топ туров по количеству покупок (только активные)
 func (r *TripRepository) Popular(ctx context.Context, limit int) ([]models.Trip, error) {
 	rows, err := r.Db.Query(ctx, `
-        SELECT id, title, description, photo_url, departure_city, trip_type, season, price, currency,
-               start_date, end_date, booking_deadline, main, active, views_count, buys_count, created_at, updated_at
+        SELECT id, title, description, photo_url, departure_city, trip_type, season,
+               price, discount_percent, currency,
+               start_date, end_date, booking_deadline, main, active,
+               views_count, buys_count, created_at, updated_at
         FROM trips
         WHERE active = true
         ORDER BY buys_count DESC, views_count DESC
@@ -240,13 +288,23 @@ func (r *TripRepository) Popular(ctx context.Context, limit int) ([]models.Trip,
 		var t models.Trip
 		if err := rows.Scan(
 			&t.ID, &t.Title, &t.Description, &t.PhotoURL,
-			&t.DepartureCity, &t.TripType, &t.Season, &t.Price, &t.Currency,
-			&t.StartDate, &t.EndDate, &t.BookingDeadline, &t.Main, &t.Active,
+			&t.DepartureCity, &t.TripType, &t.Season,
+			&t.Price, &t.DiscountPercent, &t.Currency,
+			&t.StartDate, &t.EndDate, &t.BookingDeadline,
+			&t.Main, &t.Active,
 			&t.ViewsCount, &t.BuysCount,
 			&t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
+		// расчет финальной цены
+		if t.DiscountPercent > 0 {
+			t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+		} else {
+			t.FinalPrice = t.Price
+		}
+
 		trips = append(trips, t)
 	}
 	return trips, rows.Err()

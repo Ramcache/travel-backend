@@ -78,16 +78,17 @@ func (s *TripService) Get(ctx context.Context, id int) (*models.Trip, error) {
 
 func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) (*models.Trip, error) {
 	t := &models.Trip{
-		Title:         req.Title,
-		Description:   req.Description,
-		PhotoURL:      req.PhotoURL,
-		DepartureCity: req.DepartureCity,
-		TripType:      req.TripType,
-		Season:        req.Season,
-		Price:         req.Price,
-		Currency:      req.Currency,
-		Main:          req.Main,
-		Active:        req.Active, // 🔹 вот этого не хватало
+		Title:           req.Title,
+		Description:     req.Description,
+		PhotoURL:        req.PhotoURL,
+		DepartureCity:   req.DepartureCity,
+		TripType:        req.TripType,
+		Season:          req.Season,
+		Price:           req.Price,
+		DiscountPercent: req.DiscountPercent,
+		Currency:        req.Currency,
+		Main:            req.Main,
+		Active:          req.Active,
 	}
 
 	// parse dates
@@ -146,6 +147,7 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	if req.Title != nil {
 		trip.Title = *req.Title
 	}
+
 	if req.Description != nil {
 		trip.Description = *req.Description
 	}
@@ -164,6 +166,10 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	if req.Price != nil {
 		trip.Price = *req.Price
 	}
+	if req.DiscountPercent != nil {
+		trip.DiscountPercent = *req.DiscountPercent
+	}
+
 	if req.Currency != nil {
 		trip.Currency = *req.Currency
 	}
@@ -272,7 +278,7 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 		return err
 	}
 
-	price := formatPrice(trip.Price)
+	price := formatPrice(trip.FinalPrice)
 
 	msg := fmt.Sprintf(
 		"🛒 <b>Новый заказ!</b>\n\n"+

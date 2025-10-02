@@ -3154,6 +3154,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "discount_percent": {
+                    "type": "integer"
+                },
                 "end_date": {
                     "type": "string"
                 },
@@ -3591,8 +3594,14 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "discount_percent": {
+                    "type": "integer"
+                },
                 "end_date": {
                     "type": "string"
+                },
+                "final_price": {
+                    "type": "number"
                 },
                 "hotels": {
                     "type": "array",
@@ -4039,6 +4048,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "discount_percent": {
+                    "type": "integer"
                 },
                 "end_date": {
                     "type": "string"
