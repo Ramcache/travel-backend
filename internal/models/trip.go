@@ -105,3 +105,9 @@ func (t *Trip) CalculateFinalPrice() {
 		t.FinalPrice = t.Price
 	}
 }
+
+type TripFullUpdateRequest struct {
+	Trip   UpdateTripRequest `json:"trip"`
+	Hotels []TripHotel       `json:"hotels"`
+	Routes []TripRoute       `json:"routes"`
+}

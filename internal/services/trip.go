@@ -57,6 +57,7 @@ type TripServiceI interface {
 	BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error
 	CreateHotel(ctx context.Context, hotel *models.Hotel) error
 	CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error)
+	UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.Trip, error)
 }
 
 // List — список туров
@@ -381,5 +382,49 @@ func (s *TripService) CreateHotel(ctx context.Context, hotel *models.Hotel) erro
 }
 
 func (s *TripService) CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
-	return s.routeRepo.Create(ctx, tripID, req)
+	rt := &models.TripRoute{
+		TripID:    tripID,
+		City:      req.City,
+		Transport: req.Transport,
+		Duration:  req.Duration,
+		StopTime:  req.StopTime,
+		Position:  req.Position,
+	}
+	if err := s.routeRepo.Create(ctx, rt); err != nil {
+		return nil, err
+	}
+	return rt, nil
+}
+
+func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.Trip, error) {
+	trip, err := s.Update(ctx, id, req.Trip)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Hotels != nil {
+		if _, err := s.tripHotelRepo.ClearByTrip(ctx, id); err != nil {
+			return nil, fmt.Errorf("clear hotels: %w", err)
+		}
+		for _, h := range req.Hotels {
+			h.TripID = id
+			if err := s.tripHotelRepo.Attach(ctx, &h); err != nil {
+				return nil, fmt.Errorf("attach hotel: %w", err)
+			}
+		}
+	}
+
+	if req.Routes != nil {
+		if err := s.routeRepo.ClearByTrip(ctx, id); err != nil {
+			return nil, fmt.Errorf("clear routes: %w", err)
+		}
+		for _, r := range req.Routes {
+			r.TripID = id
+			if err := s.routeRepo.Create(ctx, &r); err != nil {
+				return nil, fmt.Errorf("create route: %w", err)
+			}
+		}
+	}
+
+	return trip, nil
 }

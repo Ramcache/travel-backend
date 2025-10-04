@@ -448,6 +448,19 @@ definitions:
       views_count:
         type: integer
     type: object
+  models.TripFullUpdateRequest:
+    properties:
+      hotels:
+        items:
+          $ref: '#/definitions/models.TripHotel'
+        type: array
+      routes:
+        items:
+          $ref: '#/definitions/models.TripRoute'
+        type: array
+      trip:
+        $ref: '#/definitions/models.UpdateTripRequest'
+    type: object
   models.TripHotel:
     properties:
       hotel_id:
@@ -1565,6 +1578,40 @@ paths:
       summary: Update trip (admin)
       tags:
       - trips
+  /admin/trips/{id}/full:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Trip with hotels and routes
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.TripFullUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Обновить тур, отели и маршруты одной кнопкой
+      tags:
+      - admin-trips
   /admin/trips/{id}/hotels:
     post:
       consumes:

@@ -535,3 +535,37 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 		"routes":  routeResp,
 	})
 }
+
+// UpdateFull
+// @Summary Обновить тур, отели и маршруты одной кнопкой
+// @Tags admin-trips
+// @Accept json
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Param body body models.TripFullUpdateRequest true "Trip with hotels and routes"
+// @Success 200 {object} models.Trip
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/trips/{id}/full [put]
+func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
+		return
+	}
+
+	var req models.TripFullUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
+		return
+	}
+
+	trip, err := h.service.UpdateFull(r.Context(), id, req)
+	if err != nil {
+		h.log.Errorw("trip_full_update_failed", "id", id, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления тура")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, trip)
+}

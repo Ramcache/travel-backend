@@ -1216,6 +1216,58 @@
                 }
             }
         },
+        "/admin/trips/{id}/full": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-trips"
+                ],
+                "summary": "Обновить тур, отели и маршруты одной кнопкой",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Trip with hotels and routes",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TripFullUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Trip"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/trips/{id}/hotels": {
             "post": {
                 "consumes": [
@@ -3631,6 +3683,26 @@
                 },
                 "views_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.TripFullUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripHotel"
+                    }
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRoute"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.UpdateTripRequest"
                 }
             }
         },
