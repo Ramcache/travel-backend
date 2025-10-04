@@ -575,7 +575,7 @@ func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
 // @Tags admin-trips
 // @Produce json
 // @Param id path int true "Trip ID"
-// @Success 200 {object} models.TripFullResponse
+// @Success 200 {object} models.TripFцullResponse
 // @Failure 404 {object} helpers.ErrorData
 // @Router /admin/trips/{id}/full [get]
 func (h *TripHandler) GetFull(w http.ResponseWriter, r *http.Request) {

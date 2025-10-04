@@ -57,7 +57,7 @@ type TripServiceI interface {
 	BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error
 	CreateHotel(ctx context.Context, hotel *models.Hotel) error
 	CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error)
-	UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.Trip, error)
+	UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.TripFullResponse, error)
 	GetFull(ctx context.Context, id int) (*models.TripFullResponse, error)
 }
 
@@ -397,12 +397,14 @@ func (s *TripService) CreateRoute(ctx context.Context, tripID int, req models.Tr
 	return rt, nil
 }
 
-func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.Trip, error) {
-	trip, err := s.Update(ctx, id, req.Trip)
+func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.TripFullResponse, error) {
+	// 1. Обновляем тур
+	_, err := s.Update(ctx, id, req.Trip)
 	if err != nil {
 		return nil, err
 	}
 
+	// 2. Обновляем отели
 	if req.Hotels != nil {
 		if _, err := s.tripHotelRepo.ClearByTrip(ctx, id); err != nil {
 			return nil, fmt.Errorf("clear hotels: %w", err)
@@ -415,6 +417,7 @@ func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFul
 		}
 	}
 
+	// 3. Обновляем маршруты
 	if req.Routes != nil {
 		if err := s.routeRepo.ClearByTrip(ctx, id); err != nil {
 			return nil, fmt.Errorf("clear routes: %w", err)
@@ -427,7 +430,28 @@ func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFul
 		}
 	}
 
-	return trip, nil
+	// 🔹 4. Теперь заново загружаем данные
+	trip, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("reload trip: %w", err)
+	}
+
+	// 🔹 5. Тянем связанные отели и маршруты
+	hotels, err := s.tripHotelRepo.ListByTrip(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("list hotels: %w", err)
+	}
+	routes, err := s.routeRepo.ListByTrip(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("list routes: %w", err)
+	}
+
+	// 🔹 6. Возвращаем полную структуру
+	return &models.TripFullResponse{
+		Trip:   *trip,
+		Hotels: models.ToHotelResponses(hotels),
+		Routes: routes,
+	}, nil
 }
 
 func (s *TripService) GetFull(ctx context.Context, id int) (*models.TripFullResponse, error) {
