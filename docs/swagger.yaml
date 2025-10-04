@@ -448,6 +448,19 @@ definitions:
       views_count:
         type: integer
     type: object
+  models.TripFullResponse:
+    properties:
+      hotels:
+        items:
+          $ref: '#/definitions/models.HotelResponse'
+        type: array
+      routes:
+        items:
+          $ref: '#/definitions/models.TripRoute'
+        type: array
+      trip:
+        $ref: '#/definitions/models.Trip'
+    type: object
   models.TripFullUpdateRequest:
     properties:
       hotels:
@@ -1579,6 +1592,27 @@ paths:
       tags:
       - trips
   /admin/trips/{id}/full:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TripFullResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить тур с отелями и маршрутами
+      tags:
+      - admin-trips
     put:
       consumes:
       - application/json

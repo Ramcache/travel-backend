@@ -1224,6 +1224,38 @@ const docTemplate = `{
             }
         },
         "/admin/trips/{id}/full": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-trips"
+                ],
+                "summary": "Получить тур с отелями и маршрутами",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TripFullResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            },
             "put": {
                 "consumes": [
                     "application/json"
@@ -3690,6 +3722,26 @@ const docTemplate = `{
                 },
                 "views_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.TripFullResponse": {
+            "type": "object",
+            "properties": {
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.HotelResponse"
+                    }
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRoute"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.Trip"
                 }
             }
         },
