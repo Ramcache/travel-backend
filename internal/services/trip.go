@@ -451,7 +451,7 @@ func (s *TripService) GetFull(ctx context.Context, id int) (*models.TripFullResp
 
 	return &models.TripFullResponse{
 		Trip:   *trip,
-		Hotels: hotels,
+		Hotels: models.ToHotelResponses(hotels),
 		Routes: routes,
 	}, nil
 }
