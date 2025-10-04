@@ -111,3 +111,9 @@ type TripFullUpdateRequest struct {
 	Hotels []TripHotel       `json:"hotels"`
 	Routes []TripRoute       `json:"routes"`
 }
+
+type TripFullResponse struct {
+	Trip   Trip        `json:"trip"`
+	Hotels []Hotel     `json:"hotels"`
+	Routes []TripRoute `json:"routes"`
+}

@@ -134,6 +134,7 @@ func NewRouter(
 			admin.Put("/admin/trips/{id}", tripHandler.Update)
 			admin.Delete("/admin/trips/{id}", tripHandler.Delete)
 			admin.Put("/admin/trips/{id}/full", tripHandler.UpdateFull)
+			admin.Get("/admin/trips/{id}/full", tripHandler.GetFull)
 
 			admin.Get("/admin/news", newsHandler.AdminList)
 			admin.Post("/admin/news", newsHandler.Create)
