@@ -58,6 +58,7 @@ type TripServiceI interface {
 	CreateHotel(ctx context.Context, hotel *models.Hotel) error
 	CreateRoute(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error)
 	UpdateFull(ctx context.Context, id int, req models.TripFullUpdateRequest) (*models.Trip, error)
+	GetFull(ctx context.Context, id int) (*models.TripFullResponse, error)
 }
 
 // List — список туров
@@ -427,4 +428,30 @@ func (s *TripService) UpdateFull(ctx context.Context, id int, req models.TripFul
 	}
 
 	return trip, nil
+}
+
+func (s *TripService) GetFull(ctx context.Context, id int) (*models.TripFullResponse, error) {
+	// 1. Основная инфа о туре
+	trip, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Отели
+	hotels, err := s.tripHotelRepo.ListByTrip(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("list hotels: %w", err)
+	}
+
+	// 3. Маршруты
+	routes, err := s.routeRepo.ListByTrip(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("list routes: %w", err)
+	}
+
+	return &models.TripFullResponse{
+		Trip:   *trip,
+		Hotels: hotels,
+		Routes: routes,
+	}, nil
 }

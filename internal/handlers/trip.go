@@ -569,3 +569,28 @@ func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
 
 	helpers.JSON(w, http.StatusOK, trip)
 }
+
+// GetFull
+// @Summary Получить тур с отелями и маршрутами
+// @Tags admin-trips
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Success 200 {object} models.TripFullResponse
+// @Failure 404 {object} helpers.ErrorData
+// @Router /admin/trips/{id}/full [get]
+func (h *TripHandler) GetFull(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
+		return
+	}
+
+	resp, err := h.service.GetFull(r.Context(), id)
+	if err != nil {
+		h.log.Errorw("trip_full_get_failed", "id", id, "err", err)
+		helpers.Error(w, http.StatusNotFound, "Тур не найден")
+		return
+	}
+
+	helpers.JSON(w, http.StatusOK, resp)
+}
