@@ -99,20 +99,30 @@ func (s *TripRouteService) GetUIRoute(ctx context.Context, tripID int) (*models.
 	}
 	return resp, nil
 }
-
 func (s *TripRouteService) CreateBatch(ctx context.Context, tripID int, reqs []models.TripRouteRequest) ([]models.TripRoute, error) {
 	out := make([]models.TripRoute, 0, len(reqs))
+
 	for i, req := range reqs {
 		if req.Position == 0 {
 			req.Position = i + 1
 		}
 
-		row, err := s.repo.Create(ctx, tripID, req)
-		if err != nil {
+		rt := &models.TripRoute{
+			TripID:    tripID,
+			City:      req.City,
+			Transport: req.Transport,
+			Duration:  req.Duration,
+			StopTime:  req.StopTime,
+			Position:  req.Position,
+		}
+
+		if err := s.repo.Create(ctx, rt); err != nil {
 			return nil, err
 		}
-		out = append(out, *row)
+
+		out = append(out, *rt)
 	}
+
 	return out, nil
 }
 

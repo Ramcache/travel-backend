@@ -133,6 +133,7 @@ func NewRouter(
 			admin.Post("/admin/tours", tripHandler.CreateTour)
 			admin.Put("/admin/trips/{id}", tripHandler.Update)
 			admin.Delete("/admin/trips/{id}", tripHandler.Delete)
+			admin.Put("/admin/trips/{id}/full", tripHandler.UpdateFull)
 
 			admin.Get("/admin/news", newsHandler.AdminList)
 			admin.Post("/admin/news", newsHandler.Create)
@@ -168,6 +169,7 @@ func NewRouter(
 			admin.Post("/admin/trips/{id}/routes/batch", tripRouteHandler.CreateBatch)
 			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
+
 		})
 
 	})

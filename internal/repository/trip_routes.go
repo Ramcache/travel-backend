@@ -7,10 +7,11 @@ import (
 )
 
 type TripRouteRepository interface {
-	Create(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error)
+	Create(ctx context.Context, r *models.TripRoute) error
 	ListByTrip(ctx context.Context, tripID int) ([]models.TripRoute, error)
 	Update(ctx context.Context, id int, req models.TripRouteRequest) (*models.TripRoute, error)
 	Delete(ctx context.Context, id int) error
+	ClearByTrip(ctx context.Context, tripID int) error
 }
 
 type tripRouteRepo struct {
@@ -51,11 +52,13 @@ func (r *tripRouteRepo) ListByTrip(ctx context.Context, tripID int) ([]models.Tr
 	return routes, rows.Err()
 }
 
-func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripRouteRequest) (*models.TripRoute, error) {
-	if req.Position == 0 {
-		err := r.pool.QueryRow(ctx, `SELECT COALESCE(MAX(position), 0) + 1 FROM trip_routes WHERE trip_id = $1`, tripID).Scan(&req.Position)
+// Create — создание маршрута
+func (r *tripRouteRepo) Create(ctx context.Context, rt *models.TripRoute) error {
+	if rt.Position == 0 {
+		err := r.pool.QueryRow(ctx, `SELECT COALESCE(MAX(position), 0) + 1 FROM trip_routes WHERE trip_id = $1`, rt.TripID).
+			Scan(&rt.Position)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -63,12 +66,13 @@ func (r *tripRouteRepo) Create(ctx context.Context, tripID int, req models.TripR
 	          VALUES ($1,$2,$3,$4,$5,$6)
 	          RETURNING ` + tripRouteFields
 
-	row := r.pool.QueryRow(ctx, query, tripID, req.City, req.Transport, req.Duration, req.StopTime, req.Position)
-	rt, err := scanTripRoute(row)
+	row := r.pool.QueryRow(ctx, query, rt.TripID, rt.City, rt.Transport, rt.Duration, rt.StopTime, rt.Position)
+	newRt, err := scanTripRoute(row)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &rt, nil
+	*rt = newRt
+	return nil
 }
 
 func (r *tripRouteRepo) Update(ctx context.Context, id int, req models.TripRouteRequest) (*models.TripRoute, error) {
@@ -94,4 +98,10 @@ func (r *tripRouteRepo) Delete(ctx context.Context, id int) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// ClearByTrip — удаляет все маршруты тура
+func (r *tripRouteRepo) ClearByTrip(ctx context.Context, tripID int) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM trip_routes WHERE trip_id = $1`, tripID)
+	return err
 }
