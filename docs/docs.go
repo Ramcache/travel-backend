@@ -3080,17 +3080,20 @@ const docTemplate = `{
         "models.BuyRequest": {
             "type": "object",
             "properties": {
+                "date": {
+                    "type": "string"
+                },
                 "name": {
-                    "type": "string",
-                    "example": "Иван"
+                    "type": "string"
                 },
                 "phone": {
-                    "type": "string",
-                    "example": "+79998887766"
+                    "type": "string"
                 },
-                "trip_id": {
-                    "type": "integer",
-                    "example": 1
+                "price": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -3529,24 +3532,33 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "date": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "is_read": {
                     "type": "boolean"
                 },
+                "name": {
+                    "description": "пользовательские поля без префиксов",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string"
                 },
                 "trip_id": {
-                    "description": "TripID может быть числом или null\nswagger:strfmt int32",
                     "type": "integer",
                     "example": 123
                 },
-                "user_name": {
-                    "type": "string"
-                },
-                "user_phone": {
+                "username": {
                     "type": "string"
                 }
             }

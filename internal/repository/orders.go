@@ -17,22 +17,41 @@ func NewOrderRepo(db DB) *OrderRepo {
 }
 
 const orderFields = `
-	id, trip_id, user_name, user_phone, status, is_read, created_at
+	id, trip_id, name, date, price, user_name, user_phone, status, is_read, created_at
 `
 
 // приватный сканер
 func scanOrder(row interface{ Scan(dest ...any) error }) (models.Order, error) {
 	var o models.Order
+	var name, date, price sql.NullString
+
 	err := row.Scan(
 		&o.ID,
 		&o.TripID,
+		&name,
+		&date,
+		&price,
 		&o.UserName,
 		&o.UserPhone,
 		&o.Status,
 		&o.IsRead,
 		&o.CreatedAt,
 	)
-	return o, err
+	if err != nil {
+		return o, err
+	}
+
+	if name.Valid {
+		o.Name = &name.String
+	}
+	if date.Valid {
+		o.Date = &date.String
+	}
+	if price.Valid {
+		o.Price = &price.String
+	}
+
+	return o, nil
 }
 
 // buildOrderFilters собирает WHERE + args
@@ -59,14 +78,17 @@ func buildOrderFilters(status, phone string, isRead *bool) (string, []any) {
 }
 
 func (r *OrderRepo) Create(ctx context.Context, o *models.Order) error {
-	query := `INSERT INTO orders (trip_id, user_name, user_phone, status)
-              VALUES ($1, $2, $3, $4)
-              RETURNING id, created_at`
+	query := `INSERT INTO orders (trip_id, name, date, price, user_name, user_phone, status)
+	          VALUES ($1, $2, $3, $4, $5, $6, $7)
+	          RETURNING id, created_at`
 
 	trip := sql.NullInt32{Int32: o.TripID.Int32, Valid: o.TripID.Valid}
 
 	return r.db.QueryRow(ctx, query,
 		trip,
+		o.Name,
+		o.Date,
+		o.Price,
 		o.UserName,
 		o.UserPhone,
 		o.Status,
