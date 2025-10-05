@@ -18,15 +18,16 @@ definitions:
     type: object
   models.BuyRequest:
     properties:
+      date:
+        type: string
       name:
-        example: Иван
         type: string
       phone:
-        example: "+79998887766"
         type: string
-      trip_id:
-        example: 1
-        type: integer
+      price:
+        type: string
+      username:
+        type: string
     type: object
   models.Countdown:
     properties:
@@ -315,21 +316,25 @@ definitions:
     properties:
       created_at:
         type: string
+      date:
+        type: string
       id:
         type: integer
       is_read:
         type: boolean
+      name:
+        description: пользовательские поля без префиксов
+        type: string
+      phone:
+        type: string
+      price:
+        type: string
       status:
         type: string
       trip_id:
-        description: |-
-          TripID может быть числом или null
-          swagger:strfmt int32
         example: 123
         type: integer
-      user_name:
-        type: string
-      user_phone:
+      username:
         type: string
     type: object
   models.PaginatedTripReviews:

@@ -28,12 +28,16 @@ func (n *NullInt32) UnmarshalJSON(b []byte) error {
 }
 
 type Order struct {
-	ID int `json:"id"`
-	// TripID может быть числом или null
-	// swagger:strfmt int32
-	TripID    NullInt32 `json:"trip_id" swaggertype:"integer" example:"123"`
-	UserName  string    `json:"user_name"`
-	UserPhone string    `json:"user_phone"`
+	ID     int       `json:"id"`
+	TripID NullInt32 `json:"trip_id" swaggertype:"integer" example:"123"`
+
+	// пользовательские поля без префиксов
+	Name      *string `json:"name,omitempty"`
+	Date      *string `json:"date,omitempty"`
+	Price     *string `json:"price,omitempty"`
+	UserName  string  `json:"username"`
+	UserPhone string  `json:"phone"`
+
 	Status    string    `json:"status"`
 	IsRead    bool      `json:"is_read"`
 	CreatedAt time.Time `json:"created_at"`

@@ -323,7 +323,9 @@ func (s *TripService) Buy(ctx context.Context, id int, req models.BuyRequest) er
 // BuyWithoutTrip — заявка без привязки к туру
 func (s *TripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest) error {
 	order := models.Order{
-		// TripID:    0, // закомментировано
+		Name:      &req.Name,
+		Date:      &req.Date,
+		Price:     &req.Price,
 		UserName:  req.UserName,
 		UserPhone: req.UserPhone,
 		Status:    "pending",
@@ -335,16 +337,30 @@ func (s *TripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest)
 
 	msg := fmt.Sprintf(
 		"🛒 <b>Новый заказ!</b>\n\n"+
-			"📅 <b>Дата:</b> %s\n"+
+			"🏖️ <b>Тур:</b> %s\n"+
+			"📅 <b>Дата поездки:</b> %s\n"+
+			"💰 <b>Цена:</b> %s\n\n"+
 			"👤 <b>Имя:</b> %s\n"+
-			"📞 <b>Телефон:</b> <a href=\"tel:%s\">%s</a>",
-		time.Now().Format("02.01.2006 15:04"),
+			"📞 <b>Телефон:</b> <a href=\"tel:%s\">%s</a>\n"+
+			"🕒 <b>Создан:</b> %s",
+		helpers.IfEmpty(order.Name, "—"),
+		helpers.IfEmpty(order.Date, "—"),
+		helpers.IfEmpty(order.Price, "—"),
 		order.UserName,
 		order.UserPhone, order.UserPhone,
+		time.Now().Format("02.01.2006 15:04"),
 	)
 
+	//if s.telegram != nil {
+	//	if err := s.telegram.SendMessage(msg); err != nil {
+	//		s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
+	//		return err
+	//	}
+	//}
+
 	if s.telegram != nil {
-		if err := s.telegram.SendMessage(msg); err != nil {
+		link := fmt.Sprintf("%s/admin/orders", strings.TrimRight(s.frontendURL, "/"))
+		if err := s.telegram.SendMessageWithButton(msg, "Открыть заказы", link); err != nil {
 			s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
 			return err
 		}
