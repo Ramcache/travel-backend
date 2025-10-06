@@ -359,7 +359,7 @@ func (s *TripService) BuyWithoutTrip(ctx context.Context, req models.BuyRequest)
 	//}
 
 	if s.telegram != nil {
-		link := fmt.Sprintf("https://web95.tech/api/v1/admin/orders") // не забудь
+		link := fmt.Sprintf("https://web95.tech/admin.html") // не забудь
 		if err := s.telegram.SendMessageWithButton(msg, "Открыть заказы", link); err != nil {
 			s.log.Errorw("Ошибка отправки заказа в Telegram", "order_id", order.ID, "err", err)
 			return err
