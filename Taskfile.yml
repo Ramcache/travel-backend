@@ -98,7 +98,13 @@ tasks:
     desc: "Добавить все изменения, закоммитить и запушить (msg по умолчанию: update)"
     cmds:
       - git add .
-      - git commit -m "{{.msg}}"
+      - |
+        if ! git diff --cached --quiet; then
+          git commit -m "{{.msg}}"
+        else
+          echo "✅ Нет изменений для коммита"
+        fi
       - git push origin dev
     vars:
-      MESSAGE: "update"
+      msg: "update"
+
