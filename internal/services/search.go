@@ -32,7 +32,7 @@ func (s *SearchService) GlobalSearch(ctx context.Context, query string) ([]model
 
 	// проставляем абсолютные ссылки с /api/v1
 	for i := range trips {
-		trips[i].Link = fmt.Sprintf("https://.web95.tech/api/v1/trips/relations?title=%s", trips[i].ID)
+		trips[i].Link = fmt.Sprintf("https://web95.tech/api/v1/trips/relations?title=%d", trips[i].ID)
 	}
 	for i := range news {
 		// у news.Link внутри repo уже "/news/{slug}"
