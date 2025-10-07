@@ -18,6 +18,10 @@ type Config struct {
 	DB          DBConfig
 	TG          TelegramConfig
 	FrontendURL string
+
+	BaseURL     string
+	UploadDir   string
+	MaxUploadMB int
 }
 
 type DBConfig struct {
@@ -57,6 +61,9 @@ func Load() *Config {
 		JWTSecret:   getEnv("APP_JWT_SECRET", "changeme"),
 		JWTTTL:      ttl,
 		FrontendURL: getEnv("FRONTEND_URL", ""),
+		BaseURL:     getEnv("APP_BASE_URL", "http://localhost:8080"),
+		UploadDir:   getEnv("UPLOAD_DIR", "uploads"),
+		MaxUploadMB: int(getEnvInt("MAX_UPLOAD_MB", 20)),
 		DB: DBConfig{
 			URL:         dbURL,
 			MaxConns:    getEnvInt("DB_MAX_CONNS", 10),

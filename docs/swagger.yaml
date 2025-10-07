@@ -775,6 +775,13 @@ definitions:
       role_id:
         type: integer
     type: object
+  models.UploadResponse:
+    properties:
+      urls:
+        items:
+          type: string
+        type: array
+    type: object
   models.User:
     properties:
       avatar:
@@ -1936,6 +1943,85 @@ paths:
       summary: Обновить данные пользователя
       tags:
       - users
+  /api/v1/admin/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - collectionFormat: csv
+        description: Multiple files
+        in: formData
+        items:
+          type: file
+        name: files
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Upload files and get URLs
+      tags:
+      - upload
+  /api/v1/admin/upload/{filename}:
+    delete:
+      parameters:
+      - description: File name
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: deleted
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Delete uploaded file
+      tags:
+      - upload
+    put:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Old file name
+        in: path
+        name: filename
+        required: true
+        type: string
+      - description: New file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UploadResponse'
+      summary: Replace uploaded file
+      tags:
+      - upload
   /api/v1/trips/{id}/routes:
     get:
       consumes:
