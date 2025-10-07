@@ -59,14 +59,17 @@ definitions:
         type: string
       media_type:
         type: string
-      preview_url:
-        type: string
       published_at:
         type: string
       status:
         type: string
       title:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
       video_url:
         type: string
     type: object
@@ -135,8 +138,6 @@ definitions:
         type: array
       main:
         type: boolean
-      photo_url:
-        type: string
       price:
         type: number
       season:
@@ -147,6 +148,11 @@ definitions:
         type: string
       trip_type:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
     type: object
   models.CreateUserRequest:
     properties:
@@ -207,12 +213,15 @@ definitions:
         type: string
       name:
         type: string
-      photo_url:
-        type: string
       stars:
         type: integer
       transfer:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
     type: object
   models.HotelResponse:
     properties:
@@ -234,14 +243,17 @@ definitions:
         type: string
       nights:
         type: integer
-      photo_url:
-        type: string
       stars:
         type: integer
       transfer:
         type: string
       updated_at:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
     type: object
   models.KV:
     properties:
@@ -280,8 +292,6 @@ definitions:
         type: integer
       media_type:
         type: string
-      preview_url:
-        type: string
       published_at:
         type: string
       reposts_count:
@@ -294,6 +304,11 @@ definitions:
         type: string
       updated_at:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок вместо preview_url"
+        items:
+          type: string
+        type: array
       video_url:
         type: string
       views_count:
@@ -436,8 +451,6 @@ definitions:
         type: integer
       main:
         type: boolean
-      photo_url:
-        type: string
       price:
         type: number
       season:
@@ -450,6 +463,11 @@ definitions:
         type: string
       updated_at:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок вместо photo_url"
+        items:
+          type: string
+        type: array
       views_count:
         type: integer
     type: object
@@ -713,8 +731,6 @@ definitions:
         type: string
       media_type:
         type: string
-      preview_url:
-        type: string
       published_at:
         type: string
       slug:
@@ -723,6 +739,11 @@ definitions:
         type: string
       title:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
       video_url:
         type: string
     type: object
@@ -755,8 +776,6 @@ definitions:
         type: array
       main:
         type: boolean
-      photo_url:
-        type: string
       price:
         type: number
       season:
@@ -767,6 +786,11 @@ definitions:
         type: string
       trip_type:
         type: string
+      urls:
+        description: "\U0001F448 массив ссылок"
+        items:
+          type: string
+        type: array
     type: object
   models.UpdateUserRequest:
     properties:
@@ -774,13 +798,6 @@ definitions:
         type: string
       role_id:
         type: integer
-    type: object
-  models.UploadResponse:
-    properties:
-      urls:
-        items:
-          type: string
-        type: array
     type: object
   models.User:
     properties:
@@ -1526,11 +1543,11 @@ paths:
           schema:
             $ref: '#/definitions/models.Trip'
         "400":
-          description: Некорректные данные
+          description: Bad Request
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Ошибка при создании тура
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       security:
@@ -1540,7 +1557,6 @@ paths:
       - trips
   /admin/trips/{id}:
     delete:
-      description: Удаление тура (только админ)
       parameters:
       - description: Trip ID
         in: path
@@ -1551,11 +1567,11 @@ paths:
         "204":
           description: No Content
         "404":
-          description: Тур не найден
+          description: Not Found
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Ошибка при удалении тура
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       security:
@@ -1566,7 +1582,6 @@ paths:
     put:
       consumes:
       - application/json
-      description: Обновление данных тура (только админ)
       parameters:
       - description: Trip ID
         in: path
@@ -1587,15 +1602,15 @@ paths:
           schema:
             $ref: '#/definitions/models.Trip'
         "400":
-          description: Некорректные данные
+          description: Bad Request
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "404":
-          description: Тур не найден
+          description: Not Found
           schema:
             $ref: '#/definitions/helpers.ErrorData'
         "500":
-          description: Ошибка при обновлении тура
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       security:
@@ -1803,6 +1818,30 @@ paths:
       - admin
       - trips
       - routes
+  /admin/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Фото (можно несколько)
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+      summary: Upload one or multiple photos
+      tags:
+      - Media
   /admin/users:
     get:
       produces:
@@ -1943,85 +1982,6 @@ paths:
       summary: Обновить данные пользователя
       tags:
       - users
-  /api/v1/admin/upload:
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - collectionFormat: csv
-        description: Multiple files
-        in: formData
-        items:
-          type: file
-        name: files
-        required: true
-        type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.UploadResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-        "413":
-          description: Request Entity Too Large
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-      summary: Upload files and get URLs
-      tags:
-      - upload
-  /api/v1/admin/upload/{filename}:
-    delete:
-      parameters:
-      - description: File name
-        in: path
-        name: filename
-        required: true
-        type: string
-      responses:
-        "200":
-          description: deleted
-          schema:
-            type: string
-        "404":
-          description: not found
-          schema:
-            type: string
-      summary: Delete uploaded file
-      tags:
-      - upload
-    put:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: Old file name
-        in: path
-        name: filename
-        required: true
-        type: string
-      - description: New file
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.UploadResponse'
-      summary: Replace uploaded file
-      tags:
-      - upload
   /api/v1/trips/{id}/routes:
     get:
       consumes:
@@ -2189,7 +2149,7 @@ paths:
     get:
       description: Публичный список новостей с фильтрами и пагинацией
       parameters:
-      - description: 'Фильтр: hadj|company'
+      - description: Фильтр по категории
         in: query
         name: category_id
         type: string
@@ -2197,7 +2157,7 @@ paths:
         in: query
         name: media_type
         type: string
-      - description: Поиск по заголовку или excerpt
+      - description: Поиск по заголовку или анонсу
         in: query
         name: search
         type: string
@@ -2722,38 +2682,6 @@ paths:
       summary: Leave review
       tags:
       - reviews
-  /trips/buy:
-    post:
-      consumes:
-      - application/json
-      description: Отправка заявки без указания тура
-      parameters:
-      - description: Данные покупателя
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/models.BuyRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Некорректные данные
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-        "500":
-          description: Ошибка при покупке
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-      summary: Buy without trip
-      tags:
-      - trips
   /trips/full:
     get:
       description: Возвращает список всех туров вместе с отелями, маршрутами и опциями

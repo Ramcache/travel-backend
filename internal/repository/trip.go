@@ -34,7 +34,7 @@ type TripRepositoryI interface {
 
 // общий SELECT список
 const tripSelectFields = `
-	id, title, description, photo_url, departure_city, trip_type, season,
+	id, title, description, urls, departure_city, trip_type, season,
 	price, discount_percent, currency,
 	start_date, end_date, booking_deadline, main, active,
 	views_count, buys_count, created_at, updated_at
@@ -46,7 +46,7 @@ const tripSelectFields = `
 func scanTrip(row pgx.Row) (models.Trip, error) {
 	var t models.Trip
 	err := row.Scan(
-		&t.ID, &t.Title, &t.Description, &t.PhotoURL,
+		&t.ID, &t.Title, &t.Description, &t.URLs, // 👈 urls TEXT[]
 		&t.DepartureCity, &t.TripType, &t.Season,
 		&t.Price, &t.DiscountPercent, &t.Currency,
 		&t.StartDate, &t.EndDate, &t.BookingDeadline,
@@ -182,12 +182,13 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 
 func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 	return r.Db.QueryRow(ctx,
-		`INSERT INTO trips (title, description, photo_url, departure_city, trip_type, season,
-                            price, discount_percent, currency,
-                            start_date, end_date, booking_deadline, main, active)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-         RETURNING id, views_count, buys_count, created_at, updated_at`,
-		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
+		`INSERT INTO trips (title, description, urls, departure_city, trip_type, season,
+                        price, discount_percent, currency,
+                        start_date, end_date, booking_deadline, main, active)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+     RETURNING id, views_count, buys_count, created_at, updated_at`,
+		t.Title, t.Description, t.URLs, // 👈 массив TEXT[]
+		t.DepartureCity, t.TripType, t.Season,
 		t.Price, t.DiscountPercent, t.Currency,
 		t.StartDate, t.EndDate, t.BookingDeadline, t.Main, t.Active,
 	).Scan(&t.ID, &t.ViewsCount, &t.BuysCount, &t.CreatedAt, &t.UpdatedAt)
@@ -196,16 +197,18 @@ func (r *TripRepository) Create(ctx context.Context, t *models.Trip) error {
 func (r *TripRepository) Update(ctx context.Context, t *models.Trip) error {
 	err := r.Db.QueryRow(ctx,
 		`UPDATE trips
-         SET title=$1, description=$2, photo_url=$3, departure_city=$4, trip_type=$5, season=$6,
-             price=$7, discount_percent=$8, currency=$9,
-             start_date=$10, end_date=$11, booking_deadline=$12, main=$13, active=$14, updated_at=now()
-         WHERE id=$15
-         RETURNING views_count, buys_count, updated_at`,
-		t.Title, t.Description, t.PhotoURL, t.DepartureCity, t.TripType, t.Season,
+     SET title=$1, description=$2, urls=$3, departure_city=$4, trip_type=$5, season=$6,
+         price=$7, discount_percent=$8, currency=$9,
+         start_date=$10, end_date=$11, booking_deadline=$12, main=$13, active=$14, updated_at=now()
+     WHERE id=$15
+     RETURNING views_count, buys_count, updated_at`,
+		t.Title, t.Description, t.URLs,
+		t.DepartureCity, t.TripType, t.Season,
 		t.Price, t.DiscountPercent, t.Currency,
 		t.StartDate, t.EndDate, t.BookingDeadline,
 		t.Main, t.Active, t.ID,
 	).Scan(&t.ViewsCount, &t.BuysCount, &t.UpdatedAt)
+
 	if err != nil {
 		return mapNotFound(err)
 	}

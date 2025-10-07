@@ -34,6 +34,7 @@ func NewRouter(
 	tripRouteHandler *handlers.TripRouteHandler,
 	tripPageHandler *handlers.TripPageHandler,
 	dateHandler *handlers.DateHandler,
+	mediaHandler *handlers.MediaHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 	db *pgxpool.Pool,
@@ -68,6 +69,7 @@ func NewRouter(
 		}
 		w.WriteHeader(http.StatusNoContent) // 204
 	})
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
 	// public
 	r.Route("/api/v1", func(api chi.Router) {
@@ -170,6 +172,8 @@ func NewRouter(
 			admin.Post("/admin/trips/{id}/routes/batch", tripRouteHandler.CreateBatch)
 			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
+
+			admin.Post("/admin/upload", mediaHandler.Upload)
 
 		})
 

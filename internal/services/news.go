@@ -165,7 +165,7 @@ func (s *NewsService) Create(ctx context.Context, authorID *int, req models.Crea
 		Content:     req.Content,
 		CategoryID:  &req.CategoryID,
 		MediaType:   req.MediaType,
-		PreviewURL:  req.PreviewURL,
+		URLs:        req.URLs, // 👈 массив ссылок
 		VideoURL:    req.VideoURL,
 		AuthorID:    authorID,
 		Status:      req.Status,
@@ -208,15 +208,14 @@ func (s *NewsService) Update(ctx context.Context, id int, req models.UpdateNewsR
 		}
 		n.CategoryID = v
 	}
-
 	if v := req.MediaType; v != nil {
 		if _, ok := allowedType[*v]; !ok {
 			return nil, helpers.ErrInvalidInput("Некорректный тип медиа")
 		}
 		n.MediaType = *v
 	}
-	if v := req.PreviewURL; v != nil {
-		n.PreviewURL = *v
+	if v := req.URLs; v != nil { // 👈 массив ссылок
+		n.URLs = *v
 	}
 	if v := req.VideoURL; v != nil {
 		n.VideoURL = v
@@ -254,12 +253,12 @@ func (s *NewsService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// GetRecent
+// GetRecent — последние новости
 func (s *NewsService) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
 	return s.repo.GetRecent(ctx, limit)
 }
 
-// GetPopular
+// GetPopular — популярные новости
 func (s *NewsService) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
 	return s.repo.GetPopular(ctx, limit)
 }
@@ -334,7 +333,7 @@ func slugify(s string) string {
 	return strings.Trim(string(res), "-")
 }
 
-// PublicList возвращает только опубликованные новости
+// PublicList — обёртка для обратной совместимости (используется в TripPageService)
 func (s *NewsService) PublicList(ctx context.Context, limit, offset int) ([]models.News, int, error) {
 	items, total, err := s.repo.List(ctx, repository.NewsFilter{
 		Status: "published",

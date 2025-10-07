@@ -2,11 +2,12 @@ package models
 
 import "time"
 
+// ======== Основная модель тура ========
 type Trip struct {
 	ID              int        `json:"id"`
 	Title           string     `json:"title"`
 	Description     string     `json:"description"`
-	PhotoURL        string     `json:"photo_url"`
+	URLs            []string   `json:"urls"` // 👈 массив ссылок вместо photo_url
 	DepartureCity   string     `json:"departure_city"`
 	TripType        string     `json:"trip_type"`
 	Season          string     `json:"season"`
@@ -27,6 +28,7 @@ type Trip struct {
 	Hotels []TripHotelWithInfo `json:"hotels,omitempty"`
 }
 
+// ======== Вспомогательные модели ========
 type TripHotelWithInfo struct {
 	HotelID  int     `json:"hotel_id"`
 	Name     string  `json:"name"`
@@ -42,10 +44,13 @@ type HotelAttach struct {
 	Nights  int `json:"nights"`
 }
 
+// ======== API-запросы ========
+
+// Создание тура
 type CreateTripRequest struct {
 	Title           string        `json:"title"`
 	Description     string        `json:"description"`
-	PhotoURL        string        `json:"photo_url"`
+	URLs            []string      `json:"urls"` // 👈 массив ссылок
 	DepartureCity   string        `json:"departure_city"`
 	TripType        string        `json:"trip_type"`
 	Season          string        `json:"season"`
@@ -60,10 +65,11 @@ type CreateTripRequest struct {
 	Hotels          []HotelAttach `json:"hotels,omitempty"`
 }
 
+// Обновление тура
 type UpdateTripRequest struct {
 	Title           *string       `json:"title,omitempty"`
 	Description     *string       `json:"description,omitempty"`
-	PhotoURL        *string       `json:"photo_url,omitempty"`
+	URLs            *[]string     `json:"urls,omitempty"` // 👈 массив ссылок
 	DepartureCity   *string       `json:"departure_city,omitempty"`
 	TripType        *string       `json:"trip_type,omitempty"`
 	Season          *string       `json:"season,omitempty"`
@@ -78,12 +84,14 @@ type UpdateTripRequest struct {
 	Hotels          []HotelAttach `json:"hotels,omitempty"`
 }
 
+// Полное создание тура (тур + отели + маршруты)
 type CreateTourRequest struct {
 	Trip        CreateTripRequest        `json:"trip"`
 	Hotels      []HotelRequest           `json:"hotels"`
 	RouteCities map[string]TripRouteCity `json:"route_cities"`
 }
 
+// Ответ на создание тура
 type CreateTourResponse struct {
 	Success bool            `json:"success"`
 	Trip    *Trip           `json:"trip"`
@@ -91,29 +99,36 @@ type CreateTourResponse struct {
 	Routes  []TripRoute     `json:"routes"`
 }
 
-// TripWithRelations — тур с отелями и маршрутом
-type TripWithRelations struct {
-	Trip   Trip                     `json:"trip"`
-	Hotels []HotelResponse          `json:"hotels"`
-	Routes *TripRouteCitiesResponse `json:"routes"`
-}
-
-func (t *Trip) CalculateFinalPrice() {
-	if t.DiscountPercent > 0 {
-		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
-	} else {
-		t.FinalPrice = t.Price
-	}
-}
-
+// Полное обновление тура
 type TripFullUpdateRequest struct {
 	Trip   UpdateTripRequest `json:"trip"`
 	Hotels []TripHotel       `json:"hotels"`
 	Routes []TripRoute       `json:"routes"`
 }
 
+// ======== API-ответы ========
+
+// Тур с отелями и маршрутами
+type TripWithRelations struct {
+	Trip   Trip                     `json:"trip"`
+	Hotels []HotelResponse          `json:"hotels"`
+	Routes *TripRouteCitiesResponse `json:"routes"`
+}
+
+// Полный ответ (тур + отели + маршруты)
 type TripFullResponse struct {
 	Trip   Trip            `json:"trip"`
 	Hotels []HotelResponse `json:"hotels"`
 	Routes []TripRoute     `json:"routes"`
+}
+
+// ======== Методы ========
+
+// CalculateFinalPrice пересчитывает цену с учётом скидки
+func (t *Trip) CalculateFinalPrice() {
+	if t.DiscountPercent > 0 {
+		t.FinalPrice = t.Price * (100 - float64(t.DiscountPercent)) / 100
+	} else {
+		t.FinalPrice = t.Price
+	}
 }

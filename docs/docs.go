@@ -1107,13 +1107,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректные данные",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при создании тура",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -1128,7 +1128,6 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Обновление данных тура (только админ)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1165,19 +1164,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректные данные",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "404": {
-                        "description": "Тур не найден",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при обновлении тура",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -1190,7 +1189,6 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Удаление тура (только админ)",
                 "tags": [
                     "trips"
                 ],
@@ -1209,13 +1207,13 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "404": {
-                        "description": "Тур не найден",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
                     },
                     "500": {
-                        "description": "Ошибка при удалении тура",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -1524,6 +1522,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/upload": {
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Upload one or multiple photos",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Фото (можно несколько)",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -1743,126 +1778,6 @@ const docTemplate = `{
                         "description": "Ошибка при удалении пользователя",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/admin/upload": {
-            "post": {
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "upload"
-                ],
-                "summary": "Upload files and get URLs",
-                "parameters": [
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "file"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Multiple files",
-                        "name": "files",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.UploadResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    },
-                    "413": {
-                        "description": "Request Entity Too Large",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/admin/upload/{filename}": {
-            "put": {
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "upload"
-                ],
-                "summary": "Replace uploaded file",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Old file name",
-                        "name": "filename",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "New file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.UploadResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "upload"
-                ],
-                "summary": "Delete uploaded file",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "File name",
-                        "name": "filename",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "deleted",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "not found",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 }
@@ -2131,7 +2046,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Фильтр: hadj|company",
+                        "description": "Фильтр по категории",
                         "name": "category_id",
                         "in": "query"
                     },
@@ -2143,7 +2058,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Поиск по заголовку или excerpt",
+                        "description": "Поиск по заголовку или анонсу",
                         "name": "search",
                         "in": "query"
                     },
@@ -2516,55 +2431,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ошибка при получении списка туров",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    }
-                }
-            }
-        },
-        "/trips/buy": {
-            "post": {
-                "description": "Отправка заявки без указания тура",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Buy without trip",
-                "parameters": [
-                    {
-                        "description": "Данные покупателя",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.BuyRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректные данные",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    },
-                    "500": {
-                        "description": "Ошибка при покупке",
                         "schema": {
                             "$ref": "#/definitions/helpers.ErrorData"
                         }
@@ -3262,9 +3128,6 @@ const docTemplate = `{
                 "media_type": {
                     "type": "string"
                 },
-                "preview_url": {
-                    "type": "string"
-                },
                 "published_at": {
                     "type": "string"
                 },
@@ -3273,6 +3136,13 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "video_url": {
                     "type": "string"
@@ -3376,9 +3246,6 @@ const docTemplate = `{
                 "main": {
                     "type": "boolean"
                 },
-                "photo_url": {
-                    "type": "string"
-                },
                 "price": {
                     "type": "number"
                 },
@@ -3393,6 +3260,13 @@ const docTemplate = `{
                 },
                 "trip_type": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3487,14 +3361,18 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "photo_url": {
-                    "type": "string"
-                },
                 "stars": {
                     "type": "integer"
                 },
                 "transfer": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3528,9 +3406,6 @@ const docTemplate = `{
                 "nights": {
                     "type": "integer"
                 },
-                "photo_url": {
-                    "type": "string"
-                },
                 "stars": {
                     "type": "integer"
                 },
@@ -3539,6 +3414,13 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3597,9 +3479,6 @@ const docTemplate = `{
                 "media_type": {
                     "type": "string"
                 },
-                "preview_url": {
-                    "type": "string"
-                },
                 "published_at": {
                     "type": "string"
                 },
@@ -3617,6 +3496,13 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок вместо preview_url",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "video_url": {
                     "type": "string"
@@ -3831,9 +3717,6 @@ const docTemplate = `{
                 "main": {
                     "type": "boolean"
                 },
-                "photo_url": {
-                    "type": "string"
-                },
                 "price": {
                     "type": "number"
                 },
@@ -3851,6 +3734,13 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок вместо photo_url",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "views_count": {
                     "type": "integer"
@@ -4256,9 +4146,6 @@ const docTemplate = `{
                 "media_type": {
                     "type": "string"
                 },
-                "preview_url": {
-                    "type": "string"
-                },
                 "published_at": {
                     "type": "string"
                 },
@@ -4270,6 +4157,13 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "video_url": {
                     "type": "string"
@@ -4320,9 +4214,6 @@ const docTemplate = `{
                 "main": {
                     "type": "boolean"
                 },
-                "photo_url": {
-                    "type": "string"
-                },
                 "price": {
                     "type": "number"
                 },
@@ -4337,6 +4228,13 @@ const docTemplate = `{
                 },
                 "trip_type": {
                     "type": "string"
+                },
+                "urls": {
+                    "description": "👈 массив ссылок",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -4348,17 +4246,6 @@ const docTemplate = `{
                 },
                 "role_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "models.UploadResponse": {
-            "type": "object",
-            "properties": {
-                "urls": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
