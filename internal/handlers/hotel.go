@@ -46,6 +46,7 @@ func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Stars:    req.Stars,
 		Distance: req.Distance,
 		Meals:    req.Meals,
+		URLs:     req.URLs, // 👈 массив ссылок вместо photo_url
 	}
 
 	if req.DistanceText != nil {
@@ -54,12 +55,10 @@ func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if req.Guests != nil {
 		hotel.Guests = sql.NullString{String: *req.Guests, Valid: true}
 	}
-	if req.PhotoURL != nil {
-		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
-	}
 	if req.Transfer != nil {
 		hotel.Transfer = sql.NullString{String: *req.Transfer, Valid: true}
 	}
+
 	if err := h.service.Create(r.Context(), &hotel); err != nil {
 		h.log.Errorw("Ошибка создания отеля", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось создать отель")
@@ -154,6 +153,7 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Stars:    req.Stars,
 		Distance: req.Distance,
 		Meals:    req.Meals,
+		URLs:     req.URLs, // 👈 массив ссылок
 	}
 
 	if req.DistanceText != nil {
@@ -161,9 +161,6 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Guests != nil {
 		hotel.Guests = sql.NullString{String: *req.Guests, Valid: true}
-	}
-	if req.PhotoURL != nil {
-		hotel.PhotoURL = sql.NullString{String: *req.PhotoURL, Valid: true}
 	}
 	if req.Transfer != nil {
 		hotel.Transfer = sql.NullString{String: *req.Transfer, Valid: true}
@@ -247,15 +244,12 @@ func (h *HotelHandler) AttachHotelToTrip(w http.ResponseWriter, r *http.Request)
 }
 
 func toHotelResponse(h models.Hotel) models.HotelResponse {
-	var distanceText, guests, photoURL, transfer *string
+	var distanceText, guests, transfer *string
 	if h.DistanceText.Valid {
 		distanceText = &h.DistanceText.String
 	}
 	if h.Guests.Valid {
 		guests = &h.Guests.String
-	}
-	if h.PhotoURL.Valid {
-		photoURL = &h.PhotoURL.String
 	}
 	if h.Transfer.Valid {
 		transfer = &h.Transfer.String
@@ -270,7 +264,7 @@ func toHotelResponse(h models.Hotel) models.HotelResponse {
 		DistanceText: distanceText,
 		Meals:        h.Meals,
 		Guests:       guests,
-		PhotoURL:     photoURL,
+		URLs:         h.URLs, // 👈 массив ссылок
 		Transfer:     getOrDefault(transfer, "не указано"),
 		Nights:       h.Nights,
 		CreatedAt:    h.CreatedAt,

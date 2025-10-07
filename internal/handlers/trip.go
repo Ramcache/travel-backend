@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/Ramcache/travel-backend/internal/repository"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
+	"github.com/Ramcache/travel-backend/internal/repository"
 	"github.com/Ramcache/travel-backend/internal/services"
 )
 
@@ -49,8 +49,8 @@ func NewTripHandler(service services.TripServiceI, orderService *services.OrderS
 // @Router /trips [get]
 func (h *TripHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-
 	var f models.TripFilter
+
 	f.Title = q.Get("title")
 	f.DepartureCity = q.Get("departure_city")
 	f.TripType = q.Get("trip_type")
@@ -145,8 +145,8 @@ func (h *TripHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param data body models.CreateTripRequest true "Trip data"
 // @Success 200 {object} models.Trip
-// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
-// @Failure 500 {object} helpers.ErrorData "Ошибка при создании тура"
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/trips [post]
 func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateTripRequest
@@ -159,7 +159,6 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 	trip, err := h.service.Create(r.Context(), req)
 	switch {
 	case helpers.IsInvalidInput(err):
-		h.log.Warnw("Ошибка валидации при создании тура", "err", err)
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	case err != nil:
@@ -174,7 +173,6 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Update trip (admin)
-// @Description Обновление данных тура (только админ)
 // @Tags trips
 // @Security Bearer
 // @Accept json
@@ -182,15 +180,14 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Trip ID"
 // @Param data body models.UpdateTripRequest true "Trip update"
 // @Success 200 {object} models.Trip
-// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
-// @Failure 404 {object} helpers.ErrorData "Тур не найден"
-// @Failure 500 {object} helpers.ErrorData "Ошибка при обновлении тура"
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 404 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/trips/{id} [put]
 func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	var req models.UpdateTripRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Errorw("Некорректный JSON при обновлении тура", "id", id, "err", err)
 		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
@@ -198,11 +195,9 @@ func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 	trip, err := h.service.Update(r.Context(), id, req)
 	switch {
 	case errors.Is(err, services.ErrTripNotFound):
-		h.log.Warnw("Тур не найден для обновления", "id", id)
 		helpers.Error(w, http.StatusNotFound, "Тур не найден")
 		return
 	case helpers.IsInvalidInput(err):
-		h.log.Warnw("Ошибка валидации при обновлении тура", "id", id, "err", err)
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	case err != nil:
@@ -211,26 +206,23 @@ func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.log.Infow("Тур успешно обновлён", "id", id)
 	helpers.JSON(w, http.StatusOK, trip)
 }
 
 // Delete
 // @Summary Delete trip (admin)
-// @Description Удаление тура (только админ)
 // @Tags trips
 // @Security Bearer
 // @Param id path int true "Trip ID"
-// @Success 204 "No Content"
-// @Failure 404 {object} helpers.ErrorData "Тур не найден"
-// @Failure 500 {object} helpers.ErrorData "Ошибка при удалении тура"
+// @Success 204
+// @Failure 404 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/trips/{id} [delete]
 func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	err := h.service.Delete(r.Context(), id)
 	switch {
 	case errors.Is(err, services.ErrTripNotFound):
-		h.log.Warnw("Тур не найден для удаления", "id", id)
 		helpers.Error(w, http.StatusNotFound, "Тур не найден")
 		return
 	case err != nil:
@@ -238,8 +230,6 @@ func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить тур")
 		return
 	}
-
-	h.log.Infow("Тур успешно удалён", "id", id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -256,21 +246,14 @@ func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	trip, err := h.service.Get(r.Context(), id)
-	switch {
-	case errors.Is(err, services.ErrTripNotFound):
-		h.log.Warnw("Тур не найден при countdown", "id", id)
+	if err != nil {
 		helpers.Error(w, http.StatusNotFound, "Тур не найден")
-		return
-	case err != nil:
-		h.log.Errorw("Ошибка получения тура при countdown", "id", id, "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить тур")
 		return
 	}
 
 	now := time.Now()
 	diff := trip.BookingDeadline.Sub(now)
 	if diff < 0 {
-		h.log.Infow("Срок бронирования истёк", "id", id)
 		helpers.JSON(w, http.StatusOK, map[string]int{
 			"days": 0, "hours": 0, "minutes": 0, "seconds": 0,
 		})
@@ -282,19 +265,8 @@ func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
 	minutes := int(diff.Minutes()) % 60
 	seconds := int(diff.Seconds()) % 60
 
-	h.log.Infow("Обратный отсчёт успешно рассчитан",
-		"id", id,
-		"days", days,
-		"hours", hours,
-		"minutes", minutes,
-		"seconds", seconds,
-	)
-
 	helpers.JSON(w, http.StatusOK, map[string]int{
-		"days":    days,
-		"hours":   hours,
-		"minutes": minutes,
-		"seconds": seconds,
+		"days": days, "hours": hours, "minutes": minutes, "seconds": seconds,
 	})
 }
 
@@ -317,11 +289,9 @@ func (h *TripHandler) GetMain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// считаем countdown
 	var days, hours, minutes, seconds int
 	if trip.BookingDeadline != nil {
-		now := time.Now()
-		diff := trip.BookingDeadline.Sub(now)
+		diff := trip.BookingDeadline.Sub(time.Now())
 		if diff > 0 {
 			days = int(diff.Hours()) / 24
 			hours = int(diff.Hours()) % 24
@@ -330,18 +300,12 @@ func (h *TripHandler) GetMain(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response := map[string]interface{}{
+	helpers.JSON(w, http.StatusOK, map[string]interface{}{
 		"title": trip.Title,
 		"countdown": map[string]int{
-			"days":    days,
-			"hours":   hours,
-			"minutes": minutes,
-			"seconds": seconds,
+			"days": days, "hours": hours, "minutes": minutes, "seconds": seconds,
 		},
-	}
-
-	h.log.Infow("Главный тур с countdown возвращён", "id", trip.ID, "title", trip.Title)
-	helpers.JSON(w, http.StatusOK, response)
+	})
 }
 
 // Popular
@@ -361,7 +325,6 @@ func (h *TripHandler) Popular(w http.ResponseWriter, r *http.Request) {
 	}
 	trips, err := h.service.Popular(r.Context(), limit)
 	if err != nil {
-		h.log.Errorw("Ошибка получения популярных туров", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить популярные туры")
 		return
 	}
@@ -383,63 +346,34 @@ func (h *TripHandler) Popular(w http.ResponseWriter, r *http.Request) {
 // @Router /trips/{id}/buy [post]
 func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-
 	var req models.BuyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Errorw("Некорректный JSON при покупке тура", "id", id, "err", err)
 		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
-
 	if err := h.service.Buy(r.Context(), id, req); err != nil {
-		switch {
-		case errors.Is(err, services.ErrTripNotFound):
-			h.log.Warnw("Тур не найден при покупке", "id", id)
+		if errors.Is(err, services.ErrTripNotFound) {
 			helpers.Error(w, http.StatusNotFound, "Тур не найден")
-		default:
-			h.log.Errorw("Ошибка при покупке тура", "id", id, "err", err)
-			helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
+			return
 		}
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка при покупке тура")
 		return
 	}
-
-	h.log.Infow("Заявка на тур успешно обработана", "id", id, "name", req.UserName, "phone", req.UserPhone)
-	helpers.JSON(w, http.StatusOK, map[string]string{
-		"status":  "success",
-		"message": "Заявка успешно отправлена",
-	})
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "success"})
 }
 
 // BuyWithoutTrip
-// @Summary Buy without trip
-// @Description Отправка заявки без указания тура
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Param data body models.BuyRequest true "Данные покупателя"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
-// @Failure 500 {object} helpers.ErrorData "Ошибка при покупке"
-// @Router /trips/buy [post]
 func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
 	var req models.BuyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Errorw("Некорректный JSON при покупке без тура", "err", err)
 		helpers.Error(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
-
 	if err := h.service.BuyWithoutTrip(r.Context(), req); err != nil {
-		h.log.Errorw("Ошибка при покупке без тура", "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Не удалось обработать покупку")
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка при покупке без тура")
 		return
 	}
-
-	h.log.Infow("Заявка без тура успешно обработана", "name", req.UserName, "phone", req.UserPhone)
-	helpers.JSON(w, http.StatusOK, map[string]string{
-		"status":  "success",
-		"message": "Заявка успешно отправлена",
-	})
+	helpers.JSON(w, http.StatusOK, map[string]string{"status": "success"})
 }
 
 // CreateTour — создаёт тур, отель и маршрут за один запрос
@@ -461,15 +395,12 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-
-	// 1. Создаём тур
 	trip, err := h.service.Create(ctx, req.Trip)
 	if err != nil {
 		helpers.Error(w, http.StatusInternalServerError, "Ошибка создания тура")
 		return
 	}
 
-	// 2. Создаём отели
 	var hotels []models.HotelResponse
 	for _, hreq := range req.Hotels {
 		hotel := models.Hotel{
@@ -478,6 +409,7 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 			Stars:    hreq.Stars,
 			Distance: hreq.Distance,
 			Meals:    hreq.Meals,
+			URLs:     hreq.URLs,
 		}
 		if hreq.DistanceText != nil {
 			hotel.DistanceText = sql.NullString{String: *hreq.DistanceText, Valid: true}
@@ -485,35 +417,24 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 		if hreq.Guests != nil {
 			hotel.Guests = sql.NullString{String: *hreq.Guests, Valid: true}
 		}
-		if hreq.PhotoURL != nil {
-			hotel.PhotoURL = sql.NullString{String: *hreq.PhotoURL, Valid: true}
-		}
+
 		if hreq.Transfer != nil {
 			hotel.Transfer = sql.NullString{String: *hreq.Transfer, Valid: true}
 		}
-
 		if err := h.service.CreateHotel(ctx, &hotel); err != nil {
 			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
 			return
 		}
 
-		th := &models.TripHotel{
-			TripID:  trip.ID,
-			HotelID: hotel.ID,
-			Nights:  1,
-		}
+		th := &models.TripHotel{TripID: trip.ID, HotelID: hotel.ID, Nights: 1}
 		if err := h.hotelService.Attach(ctx, th); err != nil {
 			helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля к туру")
 			return
 		}
-
 		hotels = append(hotels, toHotelResponse(hotel))
 	}
 
-	// 3. Конвертируем новый формат маршрутов → []TripRouteRequest
 	routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
-
-	// 4. Сохраняем маршруты
 	var routes []models.TripRoute
 	for _, rreq := range routeReqs {
 		rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
@@ -524,10 +445,7 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 		routes = append(routes, *rt)
 	}
 
-	// 5. Конвертируем обратно для ответа (map[city_n])
 	routeResp := models.ConvertRoutesToCities(routes)
-
-	// 6. Ответ
 	helpers.JSON(w, http.StatusCreated, map[string]interface{}{
 		"success": true,
 		"trip":    trip,
@@ -553,20 +471,17 @@ func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
 		return
 	}
-
 	var req models.TripFullUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
 		return
 	}
-
 	trip, err := h.service.UpdateFull(r.Context(), id, req)
 	if err != nil {
 		h.log.Errorw("trip_full_update_failed", "id", id, "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления тура")
 		return
 	}
-
 	helpers.JSON(w, http.StatusOK, trip)
 }
 
@@ -584,13 +499,11 @@ func (h *TripHandler) GetFull(w http.ResponseWriter, r *http.Request) {
 		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
 		return
 	}
-
 	resp, err := h.service.GetFull(r.Context(), id)
 	if err != nil {
 		h.log.Errorw("trip_full_get_failed", "id", id, "err", err)
 		helpers.Error(w, http.StatusNotFound, "Тур не найден")
 		return
 	}
-
 	helpers.JSON(w, http.StatusOK, resp)
 }

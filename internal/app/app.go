@@ -64,7 +64,7 @@ type App struct {
 	TripRouteHandler    *handlers.TripRouteHandler
 	TripPageHandler     *handlers.TripPageHandler
 	DateHandler         *handlers.DateHandler
-	UploadHandler       *handlers.UploadHandler
+	MediaHandler        *handlers.MediaHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -123,8 +123,8 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	reviewsHandler := handlers.NewReviewHandler(reviewsService, log)
 	tripPageHandler := handlers.NewTripPageHandler(tripPageService, log)
 	tripRouteHandler := handlers.NewTripRouteHandler(tripRouteService, log)
-	uploadHandler := handlers.NewUploadHandler(cfg.BaseURL, cfg.UploadDir, cfg.MaxUploadMB)
 	dateHandler := handlers.NewDateHandler(log)
+	mediaHandler := handlers.NewMediaHandler(cfg)
 
 	return &App{
 		Config:              cfg,
@@ -157,6 +157,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		TripRouteHandler:    tripRouteHandler,
 		TripPageHandler:     tripPageHandler,
 		DateHandler:         dateHandler,
-		UploadHandler:       uploadHandler,
+		MediaHandler:        mediaHandler,
 	}
 }

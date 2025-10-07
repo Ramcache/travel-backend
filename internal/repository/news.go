@@ -14,15 +14,17 @@ type NewsRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewNewsRepository(db *pgxpool.Pool) *NewsRepository { return &NewsRepository{db: db} }
+func NewNewsRepository(db *pgxpool.Pool) *NewsRepository {
+	return &NewsRepository{db: db}
+}
 
 // общий SELECT список
 const newsFields = `
 	n.id, n.slug, n.title, n.excerpt, n.content,
-    n.category_id, n.media_type, n.preview_url, n.video_url,
-    n.comments_count, n.reposts_count, n.views_count,
-    n.author_id, n.status, n.published_at,
-    n.created_at, n.updated_at
+	n.category_id, n.media_type, n.urls, n.video_url,
+	n.comments_count, n.reposts_count, n.views_count,
+	n.author_id, n.status, n.published_at,
+	n.created_at, n.updated_at
 `
 
 // сканер новости
@@ -31,7 +33,7 @@ func scanNews(row interface{ Scan(dest ...any) error }) (models.News, error) {
 	var categoryID sql.NullInt32
 	err := row.Scan(
 		&n.ID, &n.Slug, &n.Title, &n.Excerpt, &n.Content,
-		&categoryID, &n.MediaType, &n.PreviewURL, &n.VideoURL,
+		&categoryID, &n.MediaType, &n.URLs, &n.VideoURL,
 		&n.CommentsCount, &n.RepostsCount, &n.ViewsCount,
 		&n.AuthorID, &n.Status, &n.PublishedAt,
 		&n.CreatedAt, &n.UpdatedAt,
@@ -55,6 +57,7 @@ type NewsFilter struct {
 	Offset     int
 }
 
+// List — список новостей с фильтрацией
 func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News, int, error) {
 	var (
 		where []string
@@ -119,6 +122,7 @@ func (r *NewsRepository) List(ctx context.Context, f NewsFilter) ([]models.News,
 	return items, total, rows.Err()
 }
 
+// GetByID — получить новость по ID
 func (r *NewsRepository) GetByID(ctx context.Context, id int) (*models.News, error) {
 	n, err := scanNews(r.db.QueryRow(ctx, `SELECT `+newsFields+` FROM news n WHERE n.id=$1`, id))
 	if err != nil {
@@ -127,6 +131,7 @@ func (r *NewsRepository) GetByID(ctx context.Context, id int) (*models.News, err
 	return &n, nil
 }
 
+// GetBySlug — получить новость по slug
 func (r *NewsRepository) GetBySlug(ctx context.Context, slug string) (*models.News, error) {
 	n, err := scanNews(r.db.QueryRow(ctx, `SELECT `+newsFields+` FROM news n WHERE n.slug=$1`, slug))
 	if err != nil {
@@ -135,30 +140,39 @@ func (r *NewsRepository) GetBySlug(ctx context.Context, slug string) (*models.Ne
 	return &n, nil
 }
 
+// Create — создать новость
 func (r *NewsRepository) Create(ctx context.Context, n *models.News) error {
 	return r.db.QueryRow(ctx, `
-INSERT INTO news (slug, title, excerpt, content, category_id, media_type, preview_url, video_url,
-                  comments_count, reposts_count, views_count, author_id, status, published_at)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,0,0,$9,$10,$11)
+INSERT INTO news (
+	slug, title, excerpt, content,
+	category_id, media_type, urls, video_url,
+	comments_count, reposts_count, views_count,
+	author_id, status, published_at
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,0,0,$9,$10,$11)
 RETURNING id, created_at, updated_at`,
-		n.Slug, n.Title, n.Excerpt, n.Content, n.CategoryID, n.MediaType, n.PreviewURL, n.VideoURL,
+		n.Slug, n.Title, n.Excerpt, n.Content,
+		n.CategoryID, n.MediaType, n.URLs, n.VideoURL,
 		n.AuthorID, n.Status, n.PublishedAt,
 	).Scan(&n.ID, &n.CreatedAt, &n.UpdatedAt)
 }
 
+// Update — обновить новость
 func (r *NewsRepository) Update(ctx context.Context, n *models.News) error {
 	err := r.db.QueryRow(ctx, `
 UPDATE news
-SET slug=$1, title=$2, excerpt=$3, content=$4, category_id=$5, media_type=$6,
-    preview_url=$7, video_url=$8, status=$9, published_at=$10
+SET slug=$1, title=$2, excerpt=$3, content=$4,
+	category_id=$5, media_type=$6, urls=$7, video_url=$8,
+	status=$9, published_at=$10
 WHERE id=$11
 RETURNING updated_at`,
-		n.Slug, n.Title, n.Excerpt, n.Content, n.CategoryID, n.MediaType,
-		n.PreviewURL, n.VideoURL, n.Status, n.PublishedAt, n.ID,
+		n.Slug, n.Title, n.Excerpt, n.Content,
+		n.CategoryID, n.MediaType, n.URLs, n.VideoURL,
+		n.Status, n.PublishedAt, n.ID,
 	).Scan(&n.UpdatedAt)
 	return mapNotFound(err)
 }
 
+// Delete — удалить новость
 func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	tag, err := r.db.Exec(ctx, `DELETE FROM news WHERE id=$1`, id)
 	if err != nil {
@@ -170,6 +184,7 @@ func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
+// ExistsSlug — проверяет уникальность slug
 func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, error) {
 	var exists bool
 	if err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM news WHERE slug=$1)`, slug).Scan(&exists); err != nil {
@@ -178,14 +193,16 @@ func (r *NewsRepository) ExistsSlug(ctx context.Context, slug string) (bool, err
 	return exists, nil
 }
 
+// IncrementViews — увеличить количество просмотров
 func (r *NewsRepository) IncrementViews(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, `UPDATE news SET views_count = views_count + 1 WHERE id = $1`, id)
 	return err
 }
 
+// GetRecent — последние опубликованные новости
 func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.News, error) {
 	query := `SELECT n.id, n.slug, n.title, n.excerpt,
-                     n.preview_url, n.media_type,
+                     n.urls, n.media_type,
                      n.category_id, n.published_at,
                      n.comments_count, n.reposts_count, n.views_count,
                      n.created_at, n.updated_at
@@ -211,9 +228,10 @@ func (r *NewsRepository) GetRecent(ctx context.Context, limit int) ([]models.New
 	return list, rows.Err()
 }
 
+// GetPopular — популярные новости
 func (r *NewsRepository) GetPopular(ctx context.Context, limit int) ([]models.News, error) {
 	query := `SELECT n.id, n.slug, n.title, n.excerpt,
-                     n.preview_url, n.media_type,
+                     n.urls, n.media_type,
                      n.category_id, n.published_at,
                      n.comments_count, n.reposts_count, n.views_count,
                      n.created_at, n.updated_at

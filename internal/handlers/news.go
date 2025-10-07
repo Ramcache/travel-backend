@@ -3,10 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 
 	"github.com/Ramcache/travel-backend/internal/helpers"
 	"github.com/Ramcache/travel-backend/internal/models"
@@ -27,9 +28,9 @@ func NewNewsHandler(s *services.NewsService, log *zap.SugaredLogger) *NewsHandle
 // @Description Публичный список новостей с фильтрами и пагинацией
 // @Tags news
 // @Produce json
-// @Param category_id query string false "Фильтр: hadj|company"
+// @Param category_id query string false "Фильтр по категории"
 // @Param media_type query string false "Тип медиа: photo|video"
-// @Param search query string false "Поиск по заголовку или excerpt"
+// @Param search query string false "Поиск по заголовку или анонсу"
 // @Param page query int false "Номер страницы (1)"
 // @Param limit query int false "Размер страницы (12)"
 // @Success 200 {object} map[string]interface{}
@@ -39,7 +40,6 @@ func (h *NewsHandler) PublicList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page, _ := strconv.Atoi(q.Get("page"))
 	limit, _ := strconv.Atoi(q.Get("limit"))
-
 	catID, _ := strconv.Atoi(q.Get("category_id"))
 
 	items, total, err := h.service.ListPublic(r.Context(), models.ListNewsParams{
@@ -49,7 +49,6 @@ func (h *NewsHandler) PublicList(w http.ResponseWriter, r *http.Request) {
 		Page:       page,
 		Limit:      limit,
 	})
-
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка новостей", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список новостей")
@@ -109,7 +108,6 @@ func (h *NewsHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page, _ := strconv.Atoi(q.Get("page"))
 	limit, _ := strconv.Atoi(q.Get("limit"))
-
 	catID, _ := strconv.Atoi(q.Get("category_id"))
 
 	items, total, err := h.service.AdminList(r.Context(), models.ListNewsParams{
@@ -120,7 +118,6 @@ func (h *NewsHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 		Page:       page,
 		Limit:      limit,
 	})
-
 	if err != nil {
 		h.log.Errorw("Ошибка получения списка новостей (admin)", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Не удалось получить список новостей")

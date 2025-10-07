@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// ======== Основная модель новости ========
 type News struct {
 	ID            int       `json:"id"`
 	Slug          string    `json:"slug"`
@@ -10,7 +11,7 @@ type News struct {
 	Content       string    `json:"content"`
 	CategoryID    *int      `json:"category_id,omitempty"`
 	MediaType     string    `json:"media_type"`
-	PreviewURL    string    `json:"preview_url"`
+	URLs          []string  `json:"urls"` // 👈 массив ссылок вместо preview_url
 	VideoURL      *string   `json:"video_url,omitempty"`
 	CommentsCount int       `json:"comments_count"`
 	RepostsCount  int       `json:"reposts_count"`
@@ -22,6 +23,7 @@ type News struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+// ======== Параметры фильтрации ========
 type ListNewsParams struct {
 	CategoryID int    `json:"category_id"`
 	MediaType  string `json:"media_type"`
@@ -31,27 +33,31 @@ type ListNewsParams struct {
 	Status     string `json:"status"`
 }
 
+// ======== API-запросы ========
+
+// Создание новости
 type CreateNewsRequest struct {
-	Title       string  `json:"title"`
-	Excerpt     string  `json:"excerpt"`
-	Content     string  `json:"content"`
-	CategoryID  int     `json:"category_id"`
-	MediaType   string  `json:"media_type"`
-	PreviewURL  string  `json:"preview_url"`
-	VideoURL    *string `json:"video_url,omitempty"`
-	Status      string  `json:"status"`
-	PublishedAt string  `json:"published_at"`
+	Title       string   `json:"title"`
+	Excerpt     string   `json:"excerpt"`
+	Content     string   `json:"content"`
+	CategoryID  int      `json:"category_id"`
+	MediaType   string   `json:"media_type"`
+	URLs        []string `json:"urls"` // 👈 массив ссылок
+	VideoURL    *string  `json:"video_url,omitempty"`
+	Status      string   `json:"status"`
+	PublishedAt string   `json:"published_at"`
 }
 
+// Обновление новости
 type UpdateNewsRequest struct {
-	Slug        *string `json:"slug,omitempty"`
-	Title       *string `json:"title,omitempty"`
-	Excerpt     *string `json:"excerpt,omitempty"`
-	Content     *string `json:"content,omitempty"`
-	CategoryID  *int    `json:"category_id,omitempty"`
-	MediaType   *string `json:"media_type,omitempty"`
-	PreviewURL  *string `json:"preview_url,omitempty"`
-	VideoURL    *string `json:"video_url,omitempty"`
-	Status      *string `json:"status,omitempty"`
-	PublishedAt *string `json:"published_at,omitempty"`
+	Slug        *string   `json:"slug,omitempty"`
+	Title       *string   `json:"title,omitempty"`
+	Excerpt     *string   `json:"excerpt,omitempty"`
+	Content     *string   `json:"content,omitempty"`
+	CategoryID  *int      `json:"category_id,omitempty"`
+	MediaType   *string   `json:"media_type,omitempty"`
+	URLs        *[]string `json:"urls,omitempty"` // 👈 массив ссылок
+	VideoURL    *string   `json:"video_url,omitempty"`
+	Status      *string   `json:"status,omitempty"`
+	PublishedAt *string   `json:"published_at,omitempty"`
 }

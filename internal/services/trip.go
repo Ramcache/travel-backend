@@ -82,7 +82,7 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 	t := &models.Trip{
 		Title:           req.Title,
 		Description:     req.Description,
-		PhotoURL:        req.PhotoURL,
+		URLs:            req.URLs,
 		DepartureCity:   req.DepartureCity,
 		TripType:        req.TripType,
 		Season:          req.Season,
@@ -153,8 +153,8 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	if req.Description != nil {
 		trip.Description = *req.Description
 	}
-	if req.PhotoURL != nil {
-		trip.PhotoURL = *req.PhotoURL
+	if req.URLs != nil {
+		trip.URLs = *req.URLs
 	}
 	if req.DepartureCity != nil {
 		trip.DepartureCity = *req.DepartureCity
