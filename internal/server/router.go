@@ -174,6 +174,9 @@ func NewRouter(
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
 
 			admin.Post("/admin/upload", mediaHandler.Upload)
+			admin.Get("/api/v1/admin/uploads", mediaHandler.ListUploads)
+			admin.Delete("/api/v1/admin/upload", mediaHandler.DeleteUpload)
+			admin.Post("/api/v1/admin/media/cleanup", mediaHandler.CleanupUnused)
 
 		})
 

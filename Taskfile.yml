@@ -95,16 +95,15 @@ tasks:
       - git pull origin dev
 
   git:acp:
-    desc: "Добавить все изменения, закоммитить и запушить (msg по умолчанию: update)"
+    desc: "Коммит и пуш с сообщением (по умолчанию: update)"
     cmds:
       - git add .
       - |
         if ! git diff --cached --quiet; then
-          git commit -m "{{.msg}}"
+          echo "🟢 Коммитим: {{.msg | default "update"}}"
+          git commit -m "{{.msg | default "update"}}"
         else
           echo "✅ Нет изменений для коммита"
         fi
+      - echo "🚀 Пушим в ветку dev..."
       - git push origin dev
-    vars:
-      msg: "update"
-
