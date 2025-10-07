@@ -1070,6 +1070,18 @@ paths:
       summary: Update hotel
       tags:
       - hotels
+  /admin/media/cleanup:
+    post:
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Cleanup unused uploaded files
+      tags:
+      - Media
   /admin/news:
     get:
       parameters:
@@ -1819,6 +1831,23 @@ paths:
       - trips
       - routes
   /admin/upload:
+    delete:
+      parameters:
+      - description: File name
+        in: query
+        name: file
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete uploaded file
+      tags:
+      - Media
     post:
       consumes:
       - multipart/form-data
@@ -1840,6 +1869,22 @@ paths:
               type: object
             type: array
       summary: Upload one or multiple photos
+      tags:
+      - Media
+  /admin/uploads:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+      summary: List all uploaded files
       tags:
       - Media
   /admin/users:
