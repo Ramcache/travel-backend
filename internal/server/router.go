@@ -34,7 +34,6 @@ func NewRouter(
 	tripRouteHandler *handlers.TripRouteHandler,
 	tripPageHandler *handlers.TripPageHandler,
 	dateHandler *handlers.DateHandler,
-	uploadHandler *handlers.UploadHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 	db *pgxpool.Pool,
@@ -106,9 +105,6 @@ func NewRouter(
 			r.Post("/", reviewHandler.Create)
 		})
 
-		// раздача файлов по /uploads/*
-		r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadHandler.UploadDir))))
-
 		// маршруты тура — публичный список
 		api.Get("/trips/{id}/routes", tripRouteHandler.GetTripRoutesCities)
 		api.Get("/trips/{id}/routes/ui", tripRouteHandler.ListUI)
@@ -175,10 +171,6 @@ func NewRouter(
 			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
 
-			// deps.Upload должен быть *handlers.UploadHandler
-			admin.Post("/admin/upload", uploadHandler.Upload)
-			admin.Put("/api/v1/upload/{filename}", uploadHandler.Update)
-			admin.Delete("/api/v1/upload/{filename}", uploadHandler.Delete)
 		})
 
 	})
