@@ -26,7 +26,7 @@ func NewTripPageHandler(svc *services.TripPageService, log *zap.SugaredLogger) *
 // Get
 // @Summary Trip page data
 // @Description Полный набор данных для страницы тура (тур, отели, отзывы, популярные туры, новости, курсы, countdown)
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Param title query string false "Поиск по названию тура"
@@ -65,7 +65,7 @@ func (h *TripPageHandler) Get(w http.ResponseWriter, r *http.Request) {
 // ListAll
 // @Summary All trips with full data
 // @Description Возвращает список всех туров вместе с отелями, маршрутами и опциями
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Success 200 {array} models.TripPageResponse
 // @Failure 500 {object} helpers.ErrorData "Ошибка при получении туров"
@@ -92,7 +92,7 @@ func (h *TripPageHandler) ListAll(w http.ResponseWriter, r *http.Request) {
 // GetWithRelations
 // @Summary Get trip with hotels and routes
 // @Description Возвращает тур вместе с отелями и маршрутом
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} models.TripWithRelations
@@ -116,7 +116,7 @@ func (h *TripPageHandler) GetWithRelations(w http.ResponseWriter, r *http.Reques
 // ListWithRelations
 // @Summary List all trips with hotels and routes
 // @Description Возвращает все туры вместе с отелями и маршрутами
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param title query string false "Поиск по названию тура"
 // @Param departure_city query string false "Город вылета"

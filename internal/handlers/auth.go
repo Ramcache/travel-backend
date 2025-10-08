@@ -23,7 +23,7 @@ func NewAuthHandler(service services.AuthServiceI, log *zap.SugaredLogger) *Auth
 
 // Register
 // @Summary Register
-// @Tags auth
+// @Tags System — Auth
 // @Accept json
 // @Produce json
 // @Param data body models.RegisterRequest true "register payload"
@@ -60,7 +60,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 // Login
 // @Summary Login
-// @Tags auth
+// @Tags System — Auth
 // @Accept json
 // @Produce json
 // @Param data body models.LoginRequest true "login payload"

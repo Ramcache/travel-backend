@@ -21,7 +21,7 @@ func NewCurrencyHandler(s *services.CurrencyService, log *zap.SugaredLogger) *Cu
 
 // GetRates
 // @Summary Получить курсы валют
-// @Tags currency
+// @Tags Public — Currency
 // @Produce json
 // @Success 200 {object} services.CurrencyRate
 // @Failure 500 {object} helpers.ErrorData "Ошибка получения курсов валют"

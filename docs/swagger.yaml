@@ -883,7 +883,7 @@ paths:
       - Bearer: []
       summary: Get feedbacks
       tags:
-      - admin
+      - Admin — Feedback
   /admin/feedbacks/{id}:
     delete:
       parameters:
@@ -915,7 +915,7 @@ paths:
       - Bearer: []
       summary: Delete feedback
       tags:
-      - admin
+      - Admin — Feedback
   /admin/feedbacks/{id}/read:
     post:
       parameters:
@@ -943,7 +943,7 @@ paths:
       - Bearer: []
       summary: Mark feedback as read
       tags:
-      - admin
+      - Admin — Feedback
   /admin/hotels:
     get:
       produces:
@@ -961,7 +961,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: List hotels
       tags:
-      - hotels
+      - Admin — Hotels
     post:
       consumes:
       - application/json
@@ -989,7 +989,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Create hotel
       tags:
-      - hotels
+      - Admin — Hotels
   /admin/hotels/{id}:
     delete:
       parameters:
@@ -1015,7 +1015,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Delete hotel
       tags:
-      - hotels
+      - Admin — Hotels
     get:
       parameters:
       - description: Hotel ID
@@ -1036,7 +1036,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get hotel by ID
       tags:
-      - hotels
+      - Admin — Hotels
     put:
       consumes:
       - application/json
@@ -1069,7 +1069,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Update hotel
       tags:
-      - hotels
+      - Admin — Hotels
   /admin/media/cleanup:
     post:
       description: Удалить неиспользуемые фото из /uploads (админка)
@@ -1088,7 +1088,7 @@ paths:
       - Bearer: []
       summary: Cleanup unused media files
       tags:
-      - admin
+      - Admin — Media
   /admin/news:
     get:
       parameters:
@@ -1132,7 +1132,7 @@ paths:
       - Bearer: []
       summary: List news (admin)
       tags:
-      - admin-news
+      - Admin — News
     post:
       consumes:
       - application/json
@@ -1162,7 +1162,7 @@ paths:
       - Bearer: []
       summary: Create news (admin)
       tags:
-      - admin-news
+      - Admin — News
   /admin/news/{id}:
     delete:
       parameters:
@@ -1188,7 +1188,7 @@ paths:
       - Bearer: []
       summary: Delete news (admin)
       tags:
-      - admin-news
+      - Admin — News
     put:
       consumes:
       - application/json
@@ -1227,7 +1227,7 @@ paths:
       - Bearer: []
       summary: Update news (admin)
       tags:
-      - admin-news
+      - Admin — News
   /admin/news/categories:
     get:
       produces:
@@ -1245,7 +1245,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Получить список категорий новостей
       tags:
-      - news-categories
+      - Admin — News
     post:
       consumes:
       - application/json
@@ -1273,7 +1273,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Создать категорию новостей
       tags:
-      - news-categories
+      - Admin — News
   /admin/news/categories/{id}:
     delete:
       parameters:
@@ -1295,7 +1295,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Удалить категорию новостей
       tags:
-      - news-categories
+      - Admin — News
     get:
       parameters:
       - description: ID категории
@@ -1320,7 +1320,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Получить категорию по ID
       tags:
-      - news-categories
+      - Admin — News
     put:
       consumes:
       - application/json
@@ -1357,7 +1357,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Обновить категорию новостей
       tags:
-      - news-categories
+      - Admin — News
   /admin/orders:
     get:
       description: Получить список заказов с пагинацией и фильтрацией
@@ -1397,7 +1397,7 @@ paths:
       - Bearer: []
       summary: Get orders list (admin)
       tags:
-      - admin
+      - Admin — Orders
   /admin/orders/{id}:
     delete:
       parameters:
@@ -1429,7 +1429,7 @@ paths:
       - Bearer: []
       summary: Delete order
       tags:
-      - admin
+      - Admin — Orders
   /admin/orders/{id}/read:
     post:
       description: Пометить заказ как прочитанный
@@ -1458,7 +1458,7 @@ paths:
       - Bearer: []
       summary: Mark order as read
       tags:
-      - admin
+      - Admin — Orders
   /admin/orders/{id}/status:
     post:
       description: Обновить статус заказа (admin)
@@ -1496,7 +1496,7 @@ paths:
       - Bearer: []
       summary: Update order status
       tags:
-      - admin
+      - Admin — Orders
   /admin/stats:
     get:
       produces:
@@ -1510,7 +1510,7 @@ paths:
       - Bearer: []
       summary: Admin statistics
       tags:
-      - admin
+      - Admin — Stats
   /admin/tours:
     post:
       consumes:
@@ -1540,8 +1540,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Create Tour with Hotel and Route
       tags:
-      - admin
-      - trips
+      - Admin — Trips
   /admin/trips:
     post:
       consumes:
@@ -1573,7 +1572,7 @@ paths:
       - Bearer: []
       summary: Create trip (admin)
       tags:
-      - trips
+      - Admin — Trips
   /admin/trips/{id}:
     delete:
       parameters:
@@ -1597,7 +1596,7 @@ paths:
       - Bearer: []
       summary: Delete trip (admin)
       tags:
-      - trips
+      - Admin — Trips
     put:
       consumes:
       - application/json
@@ -1636,7 +1635,7 @@ paths:
       - Bearer: []
       summary: Update trip (admin)
       tags:
-      - trips
+      - Admin — Trips
   /admin/trips/{id}/full:
     get:
       parameters:
@@ -1658,7 +1657,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Получить тур с отелями и маршрутами
       tags:
-      - admin-trips
+      - Admin — Trips
     put:
       consumes:
       - application/json
@@ -1691,7 +1690,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Обновить тур, отели и маршруты одной кнопкой
       tags:
-      - admin-trips
+      - Admin — Trips
   /admin/trips/{id}/hotels:
     post:
       consumes:
@@ -1727,7 +1726,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Attach hotel to trip
       tags:
-      - trips
+      - Admin — Trips
   /admin/trips/{id}/routes/batch:
     post:
       consumes:
@@ -1763,9 +1762,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Создать несколько маршрутов тура
       tags:
-      - admin
-      - trips
-      - routes
+      - Admin — Trips
   /admin/trips/{trip_id}/routes/{route_id}:
     delete:
       parameters:
@@ -1794,9 +1791,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Удалить маршрут тура
       tags:
-      - admin
-      - trips
-      - routes
+      - Admin — Trips
     put:
       consumes:
       - application/json
@@ -1834,9 +1829,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Обновить маршрут тура
       tags:
-      - admin
-      - trips
-      - routes
+      - Admin — Trips
   /admin/upload:
     delete:
       description: Удалить файл по имени (админка)
@@ -1869,7 +1862,7 @@ paths:
       - Bearer: []
       summary: Delete uploaded file
       tags:
-      - admin
+      - Admin — Media
     post:
       consumes:
       - multipart/form-data
@@ -1903,7 +1896,7 @@ paths:
       - Bearer: []
       summary: Upload photos
       tags:
-      - admin
+      - Admin — Media
   /admin/uploads:
     get:
       description: Получить список всех загруженных файлов (админка)
@@ -1926,7 +1919,7 @@ paths:
       - Bearer: []
       summary: Get all uploaded files
       tags:
-      - admin
+      - Admin — Media
   /admin/users:
     get:
       produces:
@@ -1946,7 +1939,7 @@ paths:
       - Bearer: []
       summary: Получить всех пользователей
       tags:
-      - users
+      - Admin — Users
     post:
       consumes:
       - application/json
@@ -1976,7 +1969,7 @@ paths:
       - Bearer: []
       summary: Создать пользователя
       tags:
-      - users
+      - Admin — Users
   /admin/users/{id}:
     delete:
       parameters:
@@ -2000,7 +1993,7 @@ paths:
       - Bearer: []
       summary: Удалить пользователя
       tags:
-      - users
+      - Admin — Users
     get:
       parameters:
       - description: User ID
@@ -2027,7 +2020,7 @@ paths:
       - Bearer: []
       summary: Получить пользователя по ID
       tags:
-      - users
+      - Admin — Users
     put:
       consumes:
       - application/json
@@ -2066,7 +2059,7 @@ paths:
       - Bearer: []
       summary: Обновить данные пользователя
       tags:
-      - users
+      - Admin — Users
   /api/v1/trips/{id}/routes:
     get:
       consumes:
@@ -2096,7 +2089,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Получить маршруты тура (новый формат)
       tags:
-      - trips
+      - Public — Trips
   /auth/login:
     post:
       consumes:
@@ -2129,7 +2122,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Login
       tags:
-      - auth
+      - System — Auth
   /auth/register:
     post:
       consumes:
@@ -2162,7 +2155,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Register
       tags:
-      - auth
+      - System — Auth
   /currency:
     get:
       produces:
@@ -2178,7 +2171,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Получить курсы валют
       tags:
-      - currency
+      - Public — Currency
   /date/today:
     get:
       description: Получить сегодняшнюю дату в григорианском и исламском календарях
@@ -2197,7 +2190,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get today's date
       tags:
-      - public
+      - Public — Date
   /feedback:
     post:
       consumes:
@@ -2229,7 +2222,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Feedback form
       tags:
-      - public
+      - Public — Feedback
   /news:
     get:
       description: Публичный список новостей с фильтрами и пагинацией
@@ -2268,7 +2261,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: List news (public)
       tags:
-      - news
+      - Public — News
   /news/{slug_or_id}:
     get:
       parameters:
@@ -2294,7 +2287,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get news by slug or id (public)
       tags:
-      - news
+      - Public — News
   /news/popular:
     get:
       parameters:
@@ -2317,7 +2310,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get popular news
       tags:
-      - news
+      - Public — News
   /news/recent:
     get:
       parameters:
@@ -2340,7 +2333,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get recent news
       tags:
-      - news
+      - Public — News
   /profile:
     get:
       produces:
@@ -2366,7 +2359,7 @@ paths:
       - Bearer: []
       summary: Получить профиль текущего пользователя
       tags:
-      - profile
+      - System — Auth
     put:
       consumes:
       - application/json
@@ -2404,7 +2397,7 @@ paths:
       - Bearer: []
       summary: Обновить профиль текущего пользователя
       tags:
-      - profile
+      - System — Auth
   /search:
     get:
       parameters:
@@ -2432,7 +2425,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Global search (trips + news)
       tags:
-      - search
+      - Public — Search
   /trips:
     get:
       description: Публичный поиск туров с фильтрацией и пагинацией
@@ -2491,7 +2484,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: List trips
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}:
     get:
       description: Публичный просмотр тура
@@ -2518,7 +2511,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get trip by id
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}/buy:
     post:
       consumes:
@@ -2559,7 +2552,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Buy trip
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}/countdown:
     get:
       description: Получить обратный отсчёт до конца бронирования
@@ -2588,7 +2581,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get booking countdown
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}/page:
     get:
       description: Полный набор данных для страницы тура (тур, отели, отзывы, популярные
@@ -2656,7 +2649,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Trip page data
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}/relations:
     get:
       description: Возвращает тур вместе с отелями и маршрутом
@@ -2683,7 +2676,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get trip with hotels and routes
       tags:
-      - trips
+      - Public — Trips
   /trips/{id}/routes/ui:
     get:
       parameters:
@@ -2705,8 +2698,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: UI-маршрут тура (для плашки)
       tags:
-      - trips
-      - routes
+      - Public — Trips
   /trips/{trip_id}/reviews:
     get:
       description: Получить список отзывов по туру
@@ -2737,7 +2729,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: List reviews for trip
       tags:
-      - reviews
+      - Public — Reviews
     post:
       consumes:
       - application/json
@@ -2766,7 +2758,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Leave review
       tags:
-      - reviews
+      - Public — Reviews
   /trips/full:
     get:
       description: Возвращает список всех туров вместе с отелями, маршрутами и опциями
@@ -2785,7 +2777,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: All trips with full data
       tags:
-      - trips
+      - Public — Trips
   /trips/main:
     get:
       description: Получить главный тур для главной страницы (только название и обратный
@@ -2804,7 +2796,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get main trip with countdown
       tags:
-      - trips
+      - Public — Trips
   /trips/popular:
     get:
       parameters:
@@ -2827,7 +2819,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get popular trips
       tags:
-      - trips
+      - Public — Trips
   /trips/relations:
     get:
       description: Возвращает все туры вместе с отелями и маршрутами
@@ -2887,7 +2879,7 @@ paths:
             $ref: '#/definitions/helpers.ErrorData'
       summary: List all trips with hotels and routes
       tags:
-      - trips
+      - Public — Trips
 securityDefinitions:
   Bearer:
     in: header

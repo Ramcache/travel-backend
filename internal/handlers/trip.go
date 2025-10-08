@@ -32,7 +32,7 @@ func NewTripHandler(service services.TripServiceI, orderService *services.OrderS
 // List
 // @Summary List trips
 // @Description Публичный поиск туров с фильтрацией и пагинацией
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param title query string false "Поиск по названию тура"
 // @Param departure_city query string false "Город вылета"
@@ -106,7 +106,7 @@ func (h *TripHandler) List(w http.ResponseWriter, r *http.Request) {
 // Get
 // @Summary Get trip by id
 // @Description Публичный просмотр тура
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} models.Trip
@@ -139,7 +139,7 @@ func (h *TripHandler) Get(w http.ResponseWriter, r *http.Request) {
 // Create
 // @Summary Create trip (admin)
 // @Description Создание нового тура (только админ)
-// @Tags trips
+// @Tags Admin — Trips
 // @Security Bearer
 // @Accept json
 // @Produce json
@@ -173,7 +173,7 @@ func (h *TripHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Update trip (admin)
-// @Tags trips
+// @Tags Admin — Trips
 // @Security Bearer
 // @Accept json
 // @Produce json
@@ -211,7 +211,7 @@ func (h *TripHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Delete trip (admin)
-// @Tags trips
+// @Tags Admin — Trips
 // @Security Bearer
 // @Param id path int true "Trip ID"
 // @Success 204
@@ -236,7 +236,7 @@ func (h *TripHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // Countdown
 // @Summary Get booking countdown
 // @Description Получить обратный отсчёт до конца бронирования
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} map[string]int
@@ -273,7 +273,7 @@ func (h *TripHandler) Countdown(w http.ResponseWriter, r *http.Request) {
 // GetMain
 // @Summary Get main trip with countdown
 // @Description Получить главный тур для главной страницы (только название и обратный отсчёт)
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @Failure 404 {object} helpers.ErrorData "Главный тур не найден"
@@ -310,7 +310,7 @@ func (h *TripHandler) GetMain(w http.ResponseWriter, r *http.Request) {
 
 // Popular
 // @Summary Get popular trips
-// @Tags trips
+// @Tags Public — Trips
 // @Produce json
 // @Param limit query int false "Количество туров (по умолчанию 5)"
 // @Success 200 {array} models.Trip
@@ -334,7 +334,7 @@ func (h *TripHandler) Popular(w http.ResponseWriter, r *http.Request) {
 // Buy
 // @Summary Buy trip
 // @Description Отправка заявки на покупку тура в Telegram
-// @Tags trips
+// @Tags Public — Trips
 // @Accept json
 // @Produce json
 // @Param id path int true "Trip ID"
@@ -363,6 +363,18 @@ func (h *TripHandler) Buy(w http.ResponseWriter, r *http.Request) {
 }
 
 // BuyWithoutTrip
+// @Summary Buy trip
+// @Description Отправка заявки на покупку тура в Telegram
+// @Tags Public — Trips
+// @Accept json
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Param data body models.BuyRequest true "Данные покупателя"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData "Некорректные данные"
+// @Failure 404 {object} helpers.ErrorData "Тур не найден"
+// @Failure 500 {object} helpers.ErrorData "Ошибка при покупке тура"
+// @Router /trips/{id}/buy [post]
 func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
 	var req models.BuyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -379,7 +391,7 @@ func (h *TripHandler) BuyWithoutTrip(w http.ResponseWriter, r *http.Request) {
 // CreateTour — создаёт тур, отель и маршрут за один запрос
 // @Summary Create Tour with Hotel and Route
 // @Description Админская ручка: создаёт тур, отель и маршрут одним запросом
-// @Tags admin, trips
+// @Tags Admin — Trips
 // @Accept json
 // @Produce json
 // @Param data body models.CreateTourRequest true "Tour + Hotel + Route"
@@ -456,7 +468,7 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 
 // UpdateFull
 // @Summary Обновить тур, отели и маршруты одной кнопкой
-// @Tags admin-trips
+// @Tags Admin — Trips
 // @Accept json
 // @Produce json
 // @Param id path int true "Trip ID"
@@ -487,7 +499,7 @@ func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
 
 // GetFull
 // @Summary Получить тур с отелями и маршрутами
-// @Tags admin-trips
+// @Tags Admin — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} models.TripFullResponse

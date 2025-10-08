@@ -24,7 +24,7 @@ func NewOrderHandler(service *services.OrderService, log *zap.SugaredLogger) *Or
 // List
 // @Summary Get orders list (admin)
 // @Description Получить список заказов с пагинацией и фильтрацией
-// @Tags admin
+// @Tags Admin — Orders
 // @Security Bearer
 // @Produce json
 // @Param limit query int false "Количество записей (по умолчанию 20)"
@@ -67,7 +67,7 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 // UpdateStatus
 // @Summary Update order status
 // @Description Обновить статус заказа (admin)
-// @Tags admin
+// @Tags Admin — Orders
 // @Security Bearer
 // @Param id path int true "Order ID"
 // @Param status query string true "Новый статус (new/in_progress/done/canceled)"
@@ -109,7 +109,7 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 // MarkAsRead
 // @Summary Mark order as read
 // @Description Пометить заказ как прочитанный
-// @Tags admin
+// @Tags Admin — Orders
 // @Security Bearer
 // @Param id path int true "Order ID"
 // @Success 200 {object} map[string]string
@@ -137,7 +137,7 @@ func (h *OrderHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 
 // Delete order
 // @Summary Delete order
-// @Tags admin
+// @Tags Admin — Orders
 // @Security Bearer
 // @Param id path int true "Order ID"
 // @Success 200 {object} map[string]string

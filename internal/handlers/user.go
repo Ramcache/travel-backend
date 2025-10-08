@@ -25,7 +25,7 @@ func NewUserHandler(repo repository.UserRepoI, log *zap.SugaredLogger) *UserHand
 
 // List
 // @Summary Получить всех пользователей
-// @Tags users
+// @Tags Admin — Users
 // @Security Bearer
 // @Produce json
 // @Success 200 {array} models.User
@@ -45,7 +45,7 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Get
 // @Summary Получить пользователя по ID
-// @Tags users
+// @Tags Admin — Users
 // @Security Bearer
 // @Produce json
 // @Param id path int true "User ID"
@@ -73,7 +73,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // Create
 // @Summary Создать пользователя
-// @Tags users
+// @Tags Admin — Users
 // @Security Bearer
 // @Accept json
 // @Produce json
@@ -116,7 +116,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Обновить данные пользователя
-// @Tags users
+// @Tags Admin — Users
 // @Security Bearer
 // @Accept json
 // @Produce json
@@ -173,7 +173,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Удалить пользователя
-// @Tags users
+// @Tags Admin — Users
 // @Security Bearer
 // @Param id path int true "User ID"
 // @Success 204 "No Content"

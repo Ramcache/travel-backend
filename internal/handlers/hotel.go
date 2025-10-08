@@ -24,7 +24,7 @@ func NewHotelHandler(s *services.HotelService, log *zap.SugaredLogger) *HotelHan
 
 // Create
 // @Summary Create hotel
-// @Tags hotels
+// @Tags Admin — Hotels
 // @Accept json
 // @Produce json
 // @Param hotel body models.HotelRequest true "Hotel"
@@ -71,7 +71,7 @@ func (h *HotelHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List
 // @Summary List hotels
-// @Tags hotels
+// @Tags Admin — Hotels
 // @Produce json
 // @Success 200 {array} models.HotelResponse
 // @Failure 500 {object} helpers.ErrorData "Не удалось получить список отелей"
@@ -95,7 +95,7 @@ func (h *HotelHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Get
 // @Summary Get hotel by ID
-// @Tags hotels
+// @Tags Admin — Hotels
 // @Produce json
 // @Param id path int true "Hotel ID"
 // @Success 200 {object} models.HotelResponse
@@ -122,7 +122,7 @@ func (h *HotelHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Update hotel
-// @Tags hotels
+// @Tags Admin — Hotels
 // @Accept json
 // @Produce json
 // @Param id path int true "Hotel ID"
@@ -178,7 +178,7 @@ func (h *HotelHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Delete hotel
-// @Tags hotels
+// @Tags Admin — Hotels
 // @Param id path int true "Hotel ID"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} helpers.ErrorData "Некорректный ID"
@@ -204,7 +204,7 @@ func (h *HotelHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 // AttachHotelToTrip
 // @Summary Attach hotel to trip
-// @Tags trips
+// @Tags Admin — Trips
 // @Accept json
 // @Produce json
 // @Param id path int true "Trip ID"

@@ -24,7 +24,7 @@ func NewReviewHandler(service *services.ReviewService, log *zap.SugaredLogger) *
 // Create
 // @Summary Leave review
 // @Description Добавить отзыв к туру
-// @Tags reviews
+// @Tags Public — Reviews
 // @Accept json
 // @Produce json
 // @Param request body models.CreateReviewRequest true "Review"
@@ -53,7 +53,7 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 // ListByTrip
 // @Summary List reviews for trip
 // @Description Получить список отзывов по туру
-// @Tags reviews
+// @Tags Public — Reviews
 // @Produce json
 // @Param trip_id path int true "Trip ID"
 // @Param limit query int false "Limit"
