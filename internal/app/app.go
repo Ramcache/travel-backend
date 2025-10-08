@@ -124,7 +124,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	tripPageHandler := handlers.NewTripPageHandler(tripPageService, log)
 	tripRouteHandler := handlers.NewTripRouteHandler(tripRouteService, log)
 	dateHandler := handlers.NewDateHandler(log)
-	mediaHandler := handlers.NewMediaHandler(cfg, pool)
+	mediaHandler := handlers.NewMediaHandler(cfg, pool, log)
 
 	return &App{
 		Config:              cfg,

@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/Ramcache/travel-backend/internal/config"
 	"github.com/Ramcache/travel-backend/internal/helpers"
@@ -17,37 +20,44 @@ import (
 type MediaHandler struct {
 	cfg *config.Config
 	db  *pgxpool.Pool
+	log *zap.SugaredLogger
 }
 
-func NewMediaHandler(cfg *config.Config, db *pgxpool.Pool) *MediaHandler {
-	return &MediaHandler{cfg: cfg, db: db}
+func NewMediaHandler(cfg *config.Config, db *pgxpool.Pool, log *zap.SugaredLogger) *MediaHandler {
+	return &MediaHandler{cfg: cfg, db: db, log: log}
 }
 
 // Upload
-// @Summary Upload one or multiple photos
-// @Tags Media
+// @Summary Upload photos
+// @Description Загрузка одного или нескольких фото (админка)
+// @Tags admin
+// @Security Bearer
 // @Accept multipart/form-data
 // @Produce json
 // @Param files formData file true "Фото (можно несколько)"
 // @Success 200 {array} map[string]string
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/upload [post]
 func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
-	maxSize := int64(h.cfg.MaxUploadMB) << 20 // MB → bytes
+	maxSize := int64(h.cfg.MaxUploadMB) << 20
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
 
 	if err := r.ParseMultipartForm(maxSize); err != nil {
-		http.Error(w, "cannot parse form: "+err.Error(), http.StatusBadRequest)
+		h.log.Errorw("Ошибка парсинга multipart формы", "err", err)
+		helpers.Error(w, http.StatusBadRequest, "Некорректная форма загрузки файлов")
 		return
 	}
 
 	files := r.MultipartForm.File["files"]
 	if len(files) == 0 {
-		http.Error(w, "no files uploaded", http.StatusBadRequest)
+		helpers.Error(w, http.StatusBadRequest, "Файлы не прикреплены")
 		return
 	}
 
 	if err := os.MkdirAll(h.cfg.UploadDir, 0755); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка создания директории загрузки", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка при сохранении файлов")
 		return
 	}
 
@@ -58,40 +68,48 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 		src, err := fh.Open()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			h.log.Errorw("Ошибка открытия файла", "err", err, "filename", fh.Filename)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка чтения файла")
 			return
 		}
 		defer src.Close()
 
 		out, err := os.Create(dst)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			h.log.Errorw("Ошибка создания файла", "err", err, "path", dst)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка сохранения файла")
 			return
 		}
 		defer out.Close()
 
 		if _, err := io.Copy(out, src); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			h.log.Errorw("Ошибка копирования файла", "err", err, "filename", fh.Filename)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка при копировании файла")
 			return
 		}
 
 		url := fmt.Sprintf("%s/uploads/%s", h.cfg.AppBaseURL, filename)
 		urls = append(urls, map[string]string{"url": url})
+		h.log.Infow("Файл успешно загружен", "file", filename, "url", url)
 	}
 
 	helpers.JSON(w, http.StatusOK, urls)
 }
 
 // ListUploads
-// @Summary List all uploaded files
-// @Tags Media
+// @Summary Get all uploaded files
+// @Description Получить список всех загруженных файлов (админка)
+// @Tags admin
+// @Security Bearer
 // @Produce json
 // @Success 200 {array} map[string]string
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/uploads [get]
-func (h *MediaHandler) ListUploads(w http.ResponseWriter, r *http.Request) {
+func (h *MediaHandler) ListUploads(w http.ResponseWriter, _ *http.Request) {
 	files, err := os.ReadDir(h.cfg.UploadDir)
 	if err != nil {
-		http.Error(w, "failed to read upload directory: "+err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка чтения директории загрузок", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось прочитать список файлов")
 		return
 	}
 
@@ -100,8 +118,10 @@ func (h *MediaHandler) ListUploads(w http.ResponseWriter, r *http.Request) {
 		if f.IsDir() {
 			continue
 		}
+
 		url := fmt.Sprintf("%s/uploads/%s", h.cfg.AppBaseURL, f.Name())
 		info, _ := f.Info()
+
 		result = append(result, map[string]string{
 			"name":      f.Name(),
 			"url":       url,
@@ -109,79 +129,73 @@ func (h *MediaHandler) ListUploads(w http.ResponseWriter, r *http.Request) {
 			"createdAt": info.ModTime().Format(time.RFC3339),
 		})
 	}
+
 	helpers.JSON(w, http.StatusOK, result)
 }
 
 // DeleteUpload
 // @Summary Delete uploaded file
-// @Tags Media
-// @Param file query string true "File name"
+// @Description Удалить файл по имени (админка)
+// @Tags admin
+// @Security Bearer
+// @Param file query string true "Имя файла"
 // @Success 200 {object} map[string]string
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 404 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/upload [delete]
 func (h *MediaHandler) DeleteUpload(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("file")
 	if fileName == "" {
-		http.Error(w, "missing ?file=", http.StatusBadRequest)
+		helpers.Error(w, http.StatusBadRequest, "Отсутствует параметр ?file=")
 		return
 	}
 
-	// защита от выхода за директорию
-	if strings.Contains(fileName, "..") || strings.Contains(fileName, "/") || strings.Contains(fileName, "\\") {
-		http.Error(w, "invalid filename", http.StatusBadRequest)
+	if strings.Contains(fileName, "..") || strings.ContainsAny(fileName, "/\\") {
+		helpers.Error(w, http.StatusBadRequest, "Некорректное имя файла")
 		return
 	}
 
 	filePath := filepath.Join(h.cfg.UploadDir, fileName)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		http.Error(w, "file not found", http.StatusNotFound)
+		helpers.Error(w, http.StatusNotFound, "Файл не найден")
 		return
 	}
 
 	if err := os.Remove(filePath); err != nil {
-		http.Error(w, "failed to delete file: "+err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка удаления файла", "err", err, "file", fileName)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось удалить файл")
 		return
 	}
 
+	h.log.Infow("Файл удалён", "file", fileName)
 	helpers.JSON(w, http.StatusOK, map[string]string{
-		"message": "deleted successfully",
-		"file":    fileName,
+		"status": "deleted",
+		"file":   fileName,
 	})
 }
 
 // CleanupUnused
-// @Summary Cleanup unused uploaded files
-// @Tags Media
+// @Summary Cleanup unused media files
+// @Description Удалить неиспользуемые фото из /uploads (админка)
+// @Tags admin
+// @Security Bearer
 // @Success 200 {object} map[string]int
+// @Failure 500 {object} helpers.ErrorData
 // @Router /admin/media/cleanup [post]
 func (h *MediaHandler) CleanupUnused(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	rows, err := h.db.Query(ctx, `
-		SELECT unnest(urls) FROM trips
-		UNION
-		SELECT unnest(urls) FROM hotels
-		UNION
-		SELECT unnest(urls) FROM news
-	`)
+	used, err := h.collectUsedFiles(ctx)
 	if err != nil {
-		http.Error(w, "failed to collect used URLs: "+err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка при сборе использованных ссылок", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось собрать ссылки из БД")
 		return
-	}
-	defer rows.Close()
-
-	used := make(map[string]struct{})
-	for rows.Next() {
-		var url string
-		rows.Scan(&url)
-		// Приводим к относительному виду /uploads/file.jpg
-		if idx := strings.LastIndex(url, "/uploads/"); idx != -1 {
-			used[url[idx+1:]] = struct{}{}
-		}
 	}
 
 	files, err := os.ReadDir(h.cfg.UploadDir)
 	if err != nil {
-		http.Error(w, "failed to read upload dir: "+err.Error(), http.StatusInternalServerError)
+		h.log.Errorw("Ошибка чтения директории загрузок", "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Не удалось прочитать директорию загрузок")
 		return
 	}
 
@@ -191,10 +205,39 @@ func (h *MediaHandler) CleanupUnused(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if _, ok := used[f.Name()]; !ok {
-			_ = os.Remove(filepath.Join(h.cfg.UploadDir, f.Name()))
-			deleted++
+			if err := os.Remove(filepath.Join(h.cfg.UploadDir, f.Name())); err == nil {
+				deleted++
+				h.log.Infow("Удалён неиспользуемый файл", "file", f.Name())
+			}
 		}
 	}
 
 	helpers.JSON(w, http.StatusOK, map[string]int{"deleted": deleted})
+}
+
+// collectUsedFiles — утилита для поиска всех файлов, используемых в БД
+func (h *MediaHandler) collectUsedFiles(ctx context.Context) (map[string]struct{}, error) {
+	rows, err := h.db.Query(ctx, `
+		SELECT unnest(urls) FROM trips
+		UNION
+		SELECT unnest(urls) FROM hotels
+		UNION
+		SELECT unnest(urls) FROM news
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	used := make(map[string]struct{})
+	for rows.Next() {
+		var url string
+		if err := rows.Scan(&url); err != nil {
+			continue
+		}
+		if idx := strings.LastIndex(url, "/"); idx != -1 {
+			used[url[idx+1:]] = struct{}{}
+		}
+	}
+	return used, nil
 }
