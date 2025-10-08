@@ -1072,6 +1072,7 @@ paths:
       - hotels
   /admin/media/cleanup:
     post:
+      description: Удалить неиспользуемые фото из /uploads (админка)
       responses:
         "200":
           description: OK
@@ -1079,9 +1080,15 @@ paths:
             additionalProperties:
               type: integer
             type: object
-      summary: Cleanup unused uploaded files
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Cleanup unused media files
       tags:
-      - Media
+      - admin
   /admin/news:
     get:
       parameters:
@@ -1832,8 +1839,9 @@ paths:
       - routes
   /admin/upload:
     delete:
+      description: Удалить файл по имени (админка)
       parameters:
-      - description: File name
+      - description: Имя файла
         in: query
         name: file
         required: true
@@ -1845,12 +1853,27 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
       summary: Delete uploaded file
       tags:
-      - Media
+      - admin
     post:
       consumes:
       - multipart/form-data
+      description: Загрузка одного или нескольких фото (админка)
       parameters:
       - description: Фото (можно несколько)
         in: formData
@@ -1868,11 +1891,22 @@ paths:
                 type: string
               type: object
             type: array
-      summary: Upload one or multiple photos
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Upload photos
       tags:
-      - Media
+      - admin
   /admin/uploads:
     get:
+      description: Получить список всех загруженных файлов (админка)
       produces:
       - application/json
       responses:
@@ -1884,9 +1918,15 @@ paths:
                 type: string
               type: object
             type: array
-      summary: List all uploaded files
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      security:
+      - Bearer: []
+      summary: Get all uploaded files
       tags:
-      - Media
+      - admin
   /admin/users:
     get:
       produces:

@@ -363,10 +363,16 @@ const docTemplate = `{
         },
         "/admin/media/cleanup": {
             "post": {
-                "tags": [
-                    "Media"
+                "security": [
+                    {
+                        "Bearer": []
+                    }
                 ],
-                "summary": "Cleanup unused uploaded files",
+                "description": "Удалить неиспользуемые фото из /uploads (админка)",
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Cleanup unused media files",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -375,6 +381,12 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "integer"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
@@ -1543,6 +1555,12 @@ const docTemplate = `{
         },
         "/admin/upload": {
             "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Загрузка одного или нескольких фото (админка)",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1550,9 +1568,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Media"
+                    "admin"
                 ],
-                "summary": "Upload one or multiple photos",
+                "summary": "Upload photos",
                 "parameters": [
                     {
                         "type": "file",
@@ -1574,18 +1592,36 @@ const docTemplate = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Удалить файл по имени (админка)",
                 "tags": [
-                    "Media"
+                    "admin"
                 ],
                 "summary": "Delete uploaded file",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "File name",
+                        "description": "Имя файла",
                         "name": "file",
                         "in": "query",
                         "required": true
@@ -1600,19 +1636,43 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
                     }
                 }
             }
         },
         "/admin/uploads": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Получить список всех загруженных файлов (админка)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Media"
+                    "admin"
                 ],
-                "summary": "List all uploaded files",
+                "summary": "Get all uploaded files",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1624,6 +1684,12 @@ const docTemplate = `{
                                     "type": "string"
                                 }
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
                         }
                     }
                 }
