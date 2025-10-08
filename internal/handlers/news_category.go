@@ -25,7 +25,7 @@ func NewNewsCategoryHandler(s *services.NewsCategoryService, log *zap.SugaredLog
 
 // List
 // @Summary Получить список категорий новостей
-// @Tags news-categories
+// @Tags Admin — News
 // @Produce json
 // @Success 200 {array} models.NewsCategory
 // @Failure 500 {object} helpers.ErrorData "Не удалось получить категории"
@@ -42,7 +42,7 @@ func (h *NewsCategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Get
 // @Summary Получить категорию по ID
-// @Tags news-categories
+// @Tags Admin — News
 // @Produce json
 // @Param id path int true "ID категории"
 // @Success 200 {object} models.NewsCategory
@@ -66,7 +66,7 @@ func (h *NewsCategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // Create
 // @Summary Создать категорию новостей
-// @Tags news-categories
+// @Tags Admin — News
 // @Accept json
 // @Produce json
 // @Param data body models.CreateNewsCategoryRequest true "Данные категории"
@@ -95,7 +95,7 @@ func (h *NewsCategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Обновить категорию новостей
-// @Tags news-categories
+// @Tags Admin — News
 // @Accept json
 // @Produce json
 // @Param id path int true "ID категории"
@@ -131,7 +131,7 @@ func (h *NewsCategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Удалить категорию новостей
-// @Tags news-categories
+// @Tags Admin — News
 // @Param id path int true "ID категории"
 // @Success 204 "Категория успешно удалена"
 // @Failure 404 {object} helpers.ErrorData "Категория не найдена"

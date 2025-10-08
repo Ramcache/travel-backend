@@ -20,7 +20,7 @@ func NewStatsHandler(svc *services.StatsService, log *zap.SugaredLogger) *StatsH
 
 // Get
 // @Summary Admin statistics
-// @Tags admin
+// @Tags Admin — Stats
 // @Security Bearer
 // @Produce json
 // @Success 200 {object} models.Stats

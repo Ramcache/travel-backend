@@ -30,7 +30,7 @@ func NewMediaHandler(cfg *config.Config, db *pgxpool.Pool, log *zap.SugaredLogge
 // Upload
 // @Summary Upload photos
 // @Description Загрузка одного или нескольких фото (админка)
-// @Tags admin
+// @Tags Admin — Media
 // @Security Bearer
 // @Accept multipart/form-data
 // @Produce json
@@ -99,7 +99,7 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 // ListUploads
 // @Summary Get all uploaded files
 // @Description Получить список всех загруженных файлов (админка)
-// @Tags admin
+// @Tags Admin — Media
 // @Security Bearer
 // @Produce json
 // @Success 200 {array} map[string]string
@@ -136,7 +136,7 @@ func (h *MediaHandler) ListUploads(w http.ResponseWriter, _ *http.Request) {
 // DeleteUpload
 // @Summary Delete uploaded file
 // @Description Удалить файл по имени (админка)
-// @Tags admin
+// @Tags Admin — Media
 // @Security Bearer
 // @Param file query string true "Имя файла"
 // @Success 200 {object} map[string]string
@@ -178,7 +178,7 @@ func (h *MediaHandler) DeleteUpload(w http.ResponseWriter, r *http.Request) {
 // CleanupUnused
 // @Summary Cleanup unused media files
 // @Description Удалить неиспользуемые фото из /uploads (админка)
-// @Tags admin
+// @Tags Admin — Media
 // @Security Bearer
 // @Success 200 {object} map[string]int
 // @Failure 500 {object} helpers.ErrorData

@@ -26,7 +26,7 @@ func NewTripRouteHandler(svc *services.TripRouteService, log *zap.SugaredLogger)
 
 // ListUI
 // @Summary UI-маршрут тура (для плашки)
-// @Tags trips, routes
+// @Tags Public — Trips
 // @Produce json
 // @Param id path int true "Trip ID"
 // @Success 200 {object} models.TripRouteUIResponse
@@ -46,7 +46,7 @@ func (h *TripRouteHandler) ListUI(w http.ResponseWriter, r *http.Request) {
 // GetTripRoutesCities godoc
 // @Summary Получить маршруты тура (новый формат)
 // @Description Возвращает список маршрутов в виде city_1, city_2, city_3...
-// @Tags trips
+// @Tags Public — Trips
 // @Accept json
 // @Produce json
 // @Param id path int true "ID тура"
@@ -76,7 +76,7 @@ func (h *TripRouteHandler) GetTripRoutesCities(w http.ResponseWriter, r *http.Re
 
 // CreateBatch
 // @Summary Создать несколько маршрутов тура
-// @Tags admin, trips, routes
+// @Tags Admin — Trips
 // @Accept json
 // @Produce json
 // @Param id path int true "Trip ID"
@@ -109,7 +109,7 @@ func (h *TripRouteHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 
 // Update
 // @Summary Обновить маршрут тура
-// @Tags admin, trips, routes
+// @Tags Admin — Trips
 // @Accept json
 // @Produce json
 // @Param trip_id path int true "Trip ID"
@@ -137,7 +137,7 @@ func (h *TripRouteHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete
 // @Summary Удалить маршрут тура
-// @Tags admin, trips, routes
+// @Tags Admin — Trips
 // @Produce json
 // @Param trip_id path int true "Trip ID"
 // @Param route_id path int true "Route ID"

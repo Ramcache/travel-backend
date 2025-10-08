@@ -27,7 +27,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Get feedbacks",
                 "parameters": [
@@ -80,7 +80,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Delete feedback",
                 "parameters": [
@@ -131,7 +131,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Mark feedback as read",
                 "parameters": [
@@ -174,7 +174,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "List hotels",
                 "responses": {
@@ -203,7 +203,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Create hotel",
                 "parameters": [
@@ -245,7 +245,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Get hotel by ID",
                 "parameters": [
@@ -280,7 +280,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Update hotel",
                 "parameters": [
@@ -324,7 +324,7 @@ const docTemplate = `{
             },
             "delete": {
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Delete hotel",
                 "parameters": [
@@ -370,7 +370,7 @@ const docTemplate = `{
                 ],
                 "description": "Удалить неиспользуемые фото из /uploads (админка)",
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Cleanup unused media files",
                 "responses": {
@@ -403,7 +403,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "List news (admin)",
                 "parameters": [
@@ -473,7 +473,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Create news (admin)",
                 "parameters": [
@@ -515,7 +515,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Получить список категорий новостей",
                 "responses": {
@@ -544,7 +544,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Создать категорию новостей",
                 "parameters": [
@@ -586,7 +586,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Получить категорию по ID",
                 "parameters": [
@@ -627,7 +627,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Обновить категорию новостей",
                 "parameters": [
@@ -677,7 +677,7 @@ const docTemplate = `{
             },
             "delete": {
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Удалить категорию новостей",
                 "parameters": [
@@ -722,7 +722,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Update news (admin)",
                 "parameters": [
@@ -777,7 +777,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Delete news (admin)",
                 "parameters": [
@@ -823,7 +823,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Get orders list (admin)",
                 "parameters": [
@@ -882,7 +882,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Delete order",
                 "parameters": [
@@ -934,7 +934,7 @@ const docTemplate = `{
                 ],
                 "description": "Пометить заказ как прочитанный",
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Mark order as read",
                 "parameters": [
@@ -980,7 +980,7 @@ const docTemplate = `{
                 ],
                 "description": "Обновить статус заказа (admin)",
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Update order status",
                 "parameters": [
@@ -1041,7 +1041,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Stats"
                 ],
                 "summary": "Admin statistics",
                 "responses": {
@@ -1064,8 +1064,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Create Tour with Hotel and Route",
                 "parameters": [
@@ -1116,7 +1115,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Create trip (admin)",
                 "parameters": [
@@ -1166,7 +1165,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Update trip (admin)",
                 "parameters": [
@@ -1221,7 +1220,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Delete trip (admin)",
                 "parameters": [
@@ -1258,7 +1257,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin-trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Получить тур с отелями и маршрутами",
                 "parameters": [
@@ -1293,7 +1292,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin-trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Обновить тур, отели и маршруты одной кнопкой",
                 "parameters": [
@@ -1345,7 +1344,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Attach hotel to trip",
                 "parameters": [
@@ -1400,9 +1399,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Создать несколько маршрутов тура",
                 "parameters": [
@@ -1457,9 +1454,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Обновить маршрут тура",
                 "parameters": [
@@ -1513,9 +1508,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Удалить маршрут тура",
                 "parameters": [
@@ -1568,7 +1561,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Upload photos",
                 "parameters": [
@@ -1615,7 +1608,7 @@ const docTemplate = `{
                 ],
                 "description": "Удалить файл по имени (админка)",
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Delete uploaded file",
                 "parameters": [
@@ -1670,7 +1663,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Get all uploaded files",
                 "responses": {
@@ -1706,7 +1699,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Получить всех пользователей",
                 "responses": {
@@ -1740,7 +1733,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Создать пользователя",
                 "parameters": [
@@ -1787,7 +1780,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Получить пользователя по ID",
                 "parameters": [
@@ -1833,7 +1826,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Обновить данные пользователя",
                 "parameters": [
@@ -1888,7 +1881,7 @@ const docTemplate = `{
                     }
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Удалить пользователя",
                 "parameters": [
@@ -1929,7 +1922,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Получить маршруты тура (новый формат)",
                 "parameters": [
@@ -1973,7 +1966,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "System — Auth"
                 ],
                 "summary": "Login",
                 "parameters": [
@@ -2024,7 +2017,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "System — Auth"
                 ],
                 "summary": "Register",
                 "parameters": [
@@ -2072,7 +2065,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "currency"
+                    "Public — Currency"
                 ],
                 "summary": "Получить курсы валют",
                 "responses": {
@@ -2098,7 +2091,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "public"
+                    "Public — Date"
                 ],
                 "summary": "Get today's date",
                 "responses": {
@@ -2130,7 +2123,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "public"
+                    "Public — Feedback"
                 ],
                 "summary": "Feedback form",
                 "parameters": [
@@ -2176,7 +2169,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "List news (public)",
                 "parameters": [
@@ -2234,7 +2227,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get popular news",
                 "parameters": [
@@ -2270,7 +2263,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get recent news",
                 "parameters": [
@@ -2306,7 +2299,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get news by slug or id (public)",
                 "parameters": [
@@ -2351,7 +2344,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "profile"
+                    "System — Auth"
                 ],
                 "summary": "Получить профиль текущего пользователя",
                 "responses": {
@@ -2394,7 +2387,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "profile"
+                    "System — Auth"
                 ],
                 "summary": "Обновить профиль текущего пользователя",
                 "parameters": [
@@ -2448,7 +2441,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "search"
+                    "Public — Search"
                 ],
                 "summary": "Global search (trips + news)",
                 "parameters": [
@@ -2492,7 +2485,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "List trips",
                 "parameters": [
@@ -2581,7 +2574,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "All trips with full data",
                 "responses": {
@@ -2610,7 +2603,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get main trip with countdown",
                 "responses": {
@@ -2636,7 +2629,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get popular trips",
                 "parameters": [
@@ -2673,7 +2666,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "List all trips with hotels and routes",
                 "parameters": [
@@ -2764,7 +2757,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get trip by id",
                 "parameters": [
@@ -2808,7 +2801,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Buy trip",
                 "parameters": [
@@ -2867,7 +2860,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get booking countdown",
                 "parameters": [
@@ -2911,7 +2904,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Trip page data",
                 "parameters": [
@@ -3012,7 +3005,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get trip with hotels and routes",
                 "parameters": [
@@ -3052,8 +3045,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trips",
-                    "routes"
+                    "Public — Trips"
                 ],
                 "summary": "UI-маршрут тура (для плашки)",
                 "parameters": [
@@ -3088,7 +3080,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "reviews"
+                    "Public — Reviews"
                 ],
                 "summary": "List reviews for trip",
                 "parameters": [
@@ -3136,7 +3128,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "reviews"
+                    "Public — Reviews"
                 ],
                 "summary": "Leave review",
                 "parameters": [

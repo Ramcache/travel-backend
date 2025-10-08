@@ -26,7 +26,7 @@ func NewNewsHandler(s *services.NewsService, log *zap.SugaredLogger) *NewsHandle
 // PublicList
 // @Summary List news (public)
 // @Description Публичный список новостей с фильтрами и пагинацией
-// @Tags news
+// @Tags Public — News
 // @Produce json
 // @Param category_id query string false "Фильтр по категории"
 // @Param media_type query string false "Тип медиа: photo|video"
@@ -64,7 +64,7 @@ func (h *NewsHandler) PublicList(w http.ResponseWriter, r *http.Request) {
 
 // PublicGet
 // @Summary Get news by slug or id (public)
-// @Tags news
+// @Tags Public — News
 // @Produce json
 // @Param slug_or_id path string true "Slug или ID новости"
 // @Success 200 {object} models.News
@@ -93,7 +93,7 @@ func (h *NewsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 // AdminList
 // @Summary List news (admin)
 // @Security Bearer
-// @Tags admin-news
+// @Tags Admin — News
 // @Produce json
 // @Param status query string false "Статус: draft|published|archived"
 // @Param category_id query string false "Фильтр по категории"
@@ -134,7 +134,7 @@ func (h *NewsHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 // Create
 // @Summary Create news (admin)
 // @Security Bearer
-// @Tags admin-news
+// @Tags Admin — News
 // @Accept json
 // @Produce json
 // @Param body body models.CreateNewsRequest true "payload"
@@ -176,7 +176,7 @@ func (h *NewsHandler) Create(w http.ResponseWriter, r *http.Request) {
 // Update
 // @Summary Update news (admin)
 // @Security Bearer
-// @Tags admin-news
+// @Tags Admin — News
 // @Accept json
 // @Produce json
 // @Param id path int true "id"
@@ -218,7 +218,7 @@ func (h *NewsHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete
 // @Summary Delete news (admin)
 // @Security Bearer
-// @Tags admin-news
+// @Tags Admin — News
 // @Param id path int true "id"
 // @Success 204 {string} string ""
 // @Failure 404 {object} helpers.ErrorData "Новость не найдена"
@@ -244,7 +244,7 @@ func (h *NewsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 // Recent
 // @Summary Get recent news
-// @Tags news
+// @Tags Public — News
 // @Produce json
 // @Param limit query int false "Количество новостей (по умолчанию 3)"
 // @Success 200 {array} models.News
@@ -271,7 +271,7 @@ func (h *NewsHandler) Recent(w http.ResponseWriter, r *http.Request) {
 
 // Popular
 // @Summary Get popular news
-// @Tags news
+// @Tags Public — News
 // @Produce json
 // @Param limit query int false "Количество новостей (по умолчанию 5)"
 // @Success 200 {array} models.News

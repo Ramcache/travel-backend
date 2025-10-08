@@ -19,7 +19,7 @@ func NewSearchHandler(service *services.SearchService, log *zap.SugaredLogger) *
 
 // GlobalSearch
 // @Summary Global search (trips + news)
-// @Tags search
+// @Tags Public — Search
 // @Produce json
 // @Param q query string true "Search query"
 // @Success 200 {array} models.SearchResult

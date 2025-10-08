@@ -25,7 +25,7 @@ func NewFeedbackHandler(service *services.FeedbackService, log *zap.SugaredLogge
 // Public: Feedback form
 // @Summary Feedback form
 // @Description Оставить заявку "Перезвоните мне"
-// @Tags public
+// @Tags Public — Feedback
 // @Accept json
 // @Produce json
 // @Param request body models.FeedbackRequest true "Имя и телефон"
@@ -53,7 +53,7 @@ func (h *FeedbackHandler) Create(w http.ResponseWriter, r *http.Request) {
 // List feedbacks
 // @Summary Get feedbacks
 // @Description Получить список заявок (админка) с пагинацией и фильтрацией
-// @Tags admin
+// @Tags Admin — Feedback
 // @Security Bearer
 // @Produce json
 // @Param limit query int false "Количество (20)"
@@ -91,7 +91,7 @@ func (h *FeedbackHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // MarkAsRead
 // @Summary Mark feedback as read
-// @Tags admin
+// @Tags Admin — Feedback
 // @Security Bearer
 // @Param id path int true "Feedback ID"
 // @Success 200 {object} map[string]string
@@ -115,7 +115,7 @@ func (h *FeedbackHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 
 // Delete feedback
 // @Summary Delete feedback
-// @Tags admin
+// @Tags Admin — Feedback
 // @Security Bearer
 // @Param id path int true "Feedback ID"
 // @Success 200 {object} map[string]string

@@ -20,7 +20,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Get feedbacks",
                 "parameters": [
@@ -73,7 +73,7 @@
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Delete feedback",
                 "parameters": [
@@ -124,7 +124,7 @@
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Feedback"
                 ],
                 "summary": "Mark feedback as read",
                 "parameters": [
@@ -167,7 +167,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "List hotels",
                 "responses": {
@@ -196,7 +196,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Create hotel",
                 "parameters": [
@@ -238,7 +238,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Get hotel by ID",
                 "parameters": [
@@ -273,7 +273,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Update hotel",
                 "parameters": [
@@ -317,7 +317,7 @@
             },
             "delete": {
                 "tags": [
-                    "hotels"
+                    "Admin — Hotels"
                 ],
                 "summary": "Delete hotel",
                 "parameters": [
@@ -363,7 +363,7 @@
                 ],
                 "description": "Удалить неиспользуемые фото из /uploads (админка)",
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Cleanup unused media files",
                 "responses": {
@@ -396,7 +396,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "List news (admin)",
                 "parameters": [
@@ -466,7 +466,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Create news (admin)",
                 "parameters": [
@@ -508,7 +508,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Получить список категорий новостей",
                 "responses": {
@@ -537,7 +537,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Создать категорию новостей",
                 "parameters": [
@@ -579,7 +579,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Получить категорию по ID",
                 "parameters": [
@@ -620,7 +620,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Обновить категорию новостей",
                 "parameters": [
@@ -670,7 +670,7 @@
             },
             "delete": {
                 "tags": [
-                    "news-categories"
+                    "Admin — News"
                 ],
                 "summary": "Удалить категорию новостей",
                 "parameters": [
@@ -715,7 +715,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Update news (admin)",
                 "parameters": [
@@ -770,7 +770,7 @@
                     }
                 ],
                 "tags": [
-                    "admin-news"
+                    "Admin — News"
                 ],
                 "summary": "Delete news (admin)",
                 "parameters": [
@@ -816,7 +816,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Get orders list (admin)",
                 "parameters": [
@@ -875,7 +875,7 @@
                     }
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Delete order",
                 "parameters": [
@@ -927,7 +927,7 @@
                 ],
                 "description": "Пометить заказ как прочитанный",
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Mark order as read",
                 "parameters": [
@@ -973,7 +973,7 @@
                 ],
                 "description": "Обновить статус заказа (admin)",
                 "tags": [
-                    "admin"
+                    "Admin — Orders"
                 ],
                 "summary": "Update order status",
                 "parameters": [
@@ -1034,7 +1034,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Stats"
                 ],
                 "summary": "Admin statistics",
                 "responses": {
@@ -1057,8 +1057,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Create Tour with Hotel and Route",
                 "parameters": [
@@ -1109,7 +1108,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Create trip (admin)",
                 "parameters": [
@@ -1159,7 +1158,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Update trip (admin)",
                 "parameters": [
@@ -1214,7 +1213,7 @@
                     }
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Delete trip (admin)",
                 "parameters": [
@@ -1251,7 +1250,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin-trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Получить тур с отелями и маршрутами",
                 "parameters": [
@@ -1286,7 +1285,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin-trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Обновить тур, отели и маршруты одной кнопкой",
                 "parameters": [
@@ -1338,7 +1337,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Admin — Trips"
                 ],
                 "summary": "Attach hotel to trip",
                 "parameters": [
@@ -1393,9 +1392,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Создать несколько маршрутов тура",
                 "parameters": [
@@ -1450,9 +1447,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Обновить маршрут тура",
                 "parameters": [
@@ -1506,9 +1501,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
-                    "trips",
-                    "routes"
+                    "Admin — Trips"
                 ],
                 "summary": "Удалить маршрут тура",
                 "parameters": [
@@ -1561,7 +1554,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Upload photos",
                 "parameters": [
@@ -1608,7 +1601,7 @@
                 ],
                 "description": "Удалить файл по имени (админка)",
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Delete uploaded file",
                 "parameters": [
@@ -1663,7 +1656,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "admin"
+                    "Admin — Media"
                 ],
                 "summary": "Get all uploaded files",
                 "responses": {
@@ -1699,7 +1692,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Получить всех пользователей",
                 "responses": {
@@ -1733,7 +1726,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Создать пользователя",
                 "parameters": [
@@ -1780,7 +1773,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Получить пользователя по ID",
                 "parameters": [
@@ -1826,7 +1819,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Обновить данные пользователя",
                 "parameters": [
@@ -1881,7 +1874,7 @@
                     }
                 ],
                 "tags": [
-                    "users"
+                    "Admin — Users"
                 ],
                 "summary": "Удалить пользователя",
                 "parameters": [
@@ -1922,7 +1915,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Получить маршруты тура (новый формат)",
                 "parameters": [
@@ -1966,7 +1959,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "System — Auth"
                 ],
                 "summary": "Login",
                 "parameters": [
@@ -2017,7 +2010,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "System — Auth"
                 ],
                 "summary": "Register",
                 "parameters": [
@@ -2065,7 +2058,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "currency"
+                    "Public — Currency"
                 ],
                 "summary": "Получить курсы валют",
                 "responses": {
@@ -2091,7 +2084,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "public"
+                    "Public — Date"
                 ],
                 "summary": "Get today's date",
                 "responses": {
@@ -2123,7 +2116,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "public"
+                    "Public — Feedback"
                 ],
                 "summary": "Feedback form",
                 "parameters": [
@@ -2169,7 +2162,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "List news (public)",
                 "parameters": [
@@ -2227,7 +2220,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get popular news",
                 "parameters": [
@@ -2263,7 +2256,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get recent news",
                 "parameters": [
@@ -2299,7 +2292,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "Public — News"
                 ],
                 "summary": "Get news by slug or id (public)",
                 "parameters": [
@@ -2344,7 +2337,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "profile"
+                    "System — Auth"
                 ],
                 "summary": "Получить профиль текущего пользователя",
                 "responses": {
@@ -2387,7 +2380,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "profile"
+                    "System — Auth"
                 ],
                 "summary": "Обновить профиль текущего пользователя",
                 "parameters": [
@@ -2441,7 +2434,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "search"
+                    "Public — Search"
                 ],
                 "summary": "Global search (trips + news)",
                 "parameters": [
@@ -2485,7 +2478,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "List trips",
                 "parameters": [
@@ -2574,7 +2567,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "All trips with full data",
                 "responses": {
@@ -2603,7 +2596,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get main trip with countdown",
                 "responses": {
@@ -2629,7 +2622,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get popular trips",
                 "parameters": [
@@ -2666,7 +2659,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "List all trips with hotels and routes",
                 "parameters": [
@@ -2757,7 +2750,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get trip by id",
                 "parameters": [
@@ -2801,7 +2794,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Buy trip",
                 "parameters": [
@@ -2860,7 +2853,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get booking countdown",
                 "parameters": [
@@ -2904,7 +2897,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Trip page data",
                 "parameters": [
@@ -3005,7 +2998,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips"
+                    "Public — Trips"
                 ],
                 "summary": "Get trip with hotels and routes",
                 "parameters": [
@@ -3045,8 +3038,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "trips",
-                    "routes"
+                    "Public — Trips"
                 ],
                 "summary": "UI-маршрут тура (для плашки)",
                 "parameters": [
@@ -3081,7 +3073,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "reviews"
+                    "Public — Reviews"
                 ],
                 "summary": "List reviews for trip",
                 "parameters": [
@@ -3129,7 +3121,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "reviews"
+                    "Public — Reviews"
                 ],
                 "summary": "Leave review",
                 "parameters": [

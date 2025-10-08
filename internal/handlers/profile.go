@@ -24,7 +24,7 @@ func NewProfileHandler(s services.AuthServiceI, log *zap.SugaredLogger) *Profile
 // Get profile
 // @Summary Получить профиль текущего пользователя
 // @Security Bearer
-// @Tags profile
+// @Tags System — Auth
 // @Produce json
 // @Success 200 {object} models.User
 // @Failure 401 {object} helpers.ErrorData "Неавторизованный доступ"
@@ -53,7 +53,7 @@ func (h *ProfileHandler) Get(w http.ResponseWriter, r *http.Request) {
 // Update profile
 // @Summary Обновить профиль текущего пользователя
 // @Security Bearer
-// @Tags profile
+// @Tags System — Auth
 // @Accept json
 // @Produce json
 // @Param body body models.UpdateProfileRequest true "Данные профиля"

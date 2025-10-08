@@ -53,7 +53,7 @@ var hijriMonths = map[int]string{
 // Public: Get today date
 // @Summary Get today's date
 // @Description Получить сегодняшнюю дату в григорианском и исламском календарях
-// @Tags public
+// @Tags Public — Date
 // @Produce json
 // @Success 200 {object} map[string]string
 // @Failure 500 {object} helpers.ErrorData
