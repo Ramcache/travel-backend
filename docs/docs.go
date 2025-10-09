@@ -1912,51 +1912,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/routes": {
-            "get": {
-                "description": "Возвращает список маршрутов в виде city_1, city_2, city_3...",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Public — Trips"
-                ],
-                "summary": "Получить маршруты тура (новый формат)",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID тура",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "success + routes в новом формате",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректный trip_id",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    },
-                    "500": {
-                        "description": "Ошибка получения маршрута",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorData"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/login": {
             "post": {
                 "consumes": [
@@ -3039,6 +2994,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/trips/{id}/routes": {
+            "get": {
+                "description": "Возвращает список маршрутов в виде city_1, city_2, city_3...",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Public — Trips"
+                ],
+                "summary": "Получить маршруты тура (новый формат)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID тура",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success + routes в новом формате",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный trip_id",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка получения маршрута",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ErrorData"
+                        }
+                    }
+                }
+            }
+        },
         "/trips/{id}/routes/ui": {
             "get": {
                 "produces": [
@@ -3313,6 +3313,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.TripRouteCity"
                     }
                 },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteRequest"
+                    }
+                },
                 "trip": {
                     "$ref": "#/definitions/models.CreateTripRequest"
                 }
@@ -3483,11 +3489,17 @@ const docTemplate = `{
                 "guests": {
                     "type": "string"
                 },
+                "hotel_id": {
+                    "type": "integer"
+                },
                 "meals": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "nights": {
+                    "type": "integer"
                 },
                 "stars": {
                     "type": "integer"

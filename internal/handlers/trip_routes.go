@@ -53,7 +53,7 @@ func (h *TripRouteHandler) ListUI(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]interface{} "success + routes в новом формате"
 // @Failure 400 {object} helpers.ErrorData "Некорректный trip_id"
 // @Failure 500 {object} helpers.ErrorData "Ошибка получения маршрута"
-// @Router /api/v1/trips/{id}/routes [get]
+// @Router /trips/{id}/routes [get]
 func (h *TripRouteHandler) GetTripRoutesCities(w http.ResponseWriter, r *http.Request) {
 	tripID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {

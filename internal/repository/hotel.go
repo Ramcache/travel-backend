@@ -16,6 +16,7 @@ type HotelRepositoryI interface {
 	Attach(ctx context.Context, th *models.TripHotel) error
 	ListByTrip(ctx context.Context, tripID int) ([]models.Hotel, error)
 	ClearByTrip(ctx context.Context, tripID int) (int64, error)
+	Exists(ctx context.Context, id int) (bool, error)
 }
 
 // ======== Реализация ========
@@ -203,4 +204,10 @@ func (r *HotelRepository) ClearByTrip(ctx context.Context, tripID int) (int64, e
 		return 0, err
 	}
 	return tag.RowsAffected(), nil
+}
+
+func (r *HotelRepository) Exists(ctx context.Context, id int) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM hotels WHERE id=$1)`, id).Scan(&exists)
+	return exists, err
 }

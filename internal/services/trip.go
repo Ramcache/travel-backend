@@ -93,19 +93,29 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 		Active:          req.Active,
 	}
 
-	// parse dates
-	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	// --- ✅ гарантируем непустой массив URL ---
+	if t.URLs == nil {
+		t.URLs = []string{}
+	}
+
+	// --- парсинг дат ---
+	startDate, err := helpers.ParseDateAny(req.StartDate)
 	if err != nil {
+		s.log.Errorw("trip_create_failed_parse_start_date", "err", err)
 		return nil, fmt.Errorf("invalid start_date: %w", err)
 	}
-	endDate, err := time.Parse("2006-01-02", req.EndDate)
+
+	endDate, err := helpers.ParseDateAny(req.EndDate)
 	if err != nil {
+		s.log.Errorw("trip_create_failed_parse_end_date", "err", err)
 		return nil, fmt.Errorf("invalid end_date: %w", err)
 	}
+
 	var bookingDeadline *time.Time
 	if req.BookingDeadline != "" {
-		bd, err := time.Parse("2006-01-02", req.BookingDeadline)
+		bd, err := helpers.ParseDateAny(req.BookingDeadline)
 		if err != nil {
+			s.log.Errorw("trip_create_failed_parse_deadline", "err", err)
 			return nil, fmt.Errorf("invalid booking_deadline: %w", err)
 		}
 		bookingDeadline = &bd
@@ -115,14 +125,17 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 	t.EndDate = endDate
 	t.BookingDeadline = bookingDeadline
 
-	// создаём тур
+	// --- создаём тур ---
 	if err := s.repo.Create(ctx, t); err != nil {
+		s.log.Errorw("trip_create_failed_db_insert", "err", err)
 		return nil, err
 	}
 
-	// если передали отели — привяжем
+	// --- если переданы отели — привязываем их ---
 	if len(req.Hotels) > 0 {
 		for _, h := range req.Hotels {
+			s.log.Infow("attaching_hotel", "trip_id", t.ID, "hotel_id", h.HotelID, "nights", h.Nights)
+
 			if h.HotelID > 0 {
 				th := &models.TripHotel{
 					TripID:  t.ID,
@@ -130,6 +143,7 @@ func (s *TripService) Create(ctx context.Context, req models.CreateTripRequest) 
 					Nights:  h.Nights,
 				}
 				if err := s.tripHotelRepo.Attach(ctx, th); err != nil {
+					s.log.Errorw("trip_attach_hotel_failed", "trip_id", t.ID, "hotel_id", h.HotelID, "err", err)
 					return nil, err
 				}
 			}
@@ -182,14 +196,14 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 		trip.Active = *req.Active
 	}
 	if req.StartDate != nil {
-		if d, err := time.Parse("2006-01-02", *req.StartDate); err == nil {
+		if d, err := helpers.ParseDateAny(*req.StartDate); err == nil {
 			trip.StartDate = d
 		} else {
 			return nil, fmt.Errorf("invalid start_date: %w", err)
 		}
 	}
 	if req.EndDate != nil {
-		if d, err := time.Parse("2006-01-02", *req.EndDate); err == nil {
+		if d, err := helpers.ParseDateAny(*req.EndDate); err == nil {
 			trip.EndDate = d
 		} else {
 			return nil, fmt.Errorf("invalid end_date: %w", err)
@@ -198,7 +212,7 @@ func (s *TripService) Update(ctx context.Context, id int, req models.UpdateTripR
 	if req.BookingDeadline != nil {
 		if *req.BookingDeadline == "" {
 			trip.BookingDeadline = nil
-		} else if d, err := time.Parse("2006-01-02", *req.BookingDeadline); err == nil {
+		} else if d, err := helpers.ParseDateAny(*req.BookingDeadline); err == nil {
 			trip.BookingDeadline = &d
 		} else {
 			return nil, fmt.Errorf("invalid booking_deadline: %w", err)

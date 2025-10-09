@@ -159,7 +159,7 @@ func (r *TripRepository) GetByID(ctx context.Context, id int) (*models.Trip, err
 
 	// подтягиваем отели
 	rows, err := r.Db.Query(ctx, `
-        SELECT h.id, h.name, h.city, h.distance, h.meals, h.rating, th.nights
+        SELECT h.id, h.name, h.city, h.distance, h.meals, h.stars, th.nights
         FROM trip_hotels th
         JOIN hotels h ON h.id = th.hotel_id
         WHERE th.trip_id = $1
