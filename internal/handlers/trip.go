@@ -407,14 +407,53 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+
+	// === Создаём тур ===
 	trip, err := h.service.Create(ctx, req.Trip)
 	if err != nil {
+		h.log.Errorw("create_tour_failed", "err", err)
 		helpers.Error(w, http.StatusInternalServerError, "Ошибка создания тура")
 		return
 	}
 
 	var hotels []models.HotelResponse
+
+	// === Обрабатываем отели ===
 	for _, hreq := range req.Hotels {
+		// определяем количество ночей
+		nights := hreq.Nights
+		if nights == 0 {
+			nights = 1
+		}
+
+		// 1️⃣ Если передан hotel_id — прикрепляем существующий отель
+		if hreq.HotelID > 0 {
+			th := &models.TripHotel{
+				TripID:  trip.ID,
+				HotelID: hreq.HotelID,
+				Nights:  nights,
+			}
+			if err := h.hotelService.Attach(ctx, th); err != nil {
+				h.log.Errorw("attach_existing_hotel_failed",
+					"trip_id", trip.ID,
+					"hotel_id", hreq.HotelID,
+					"err", err,
+				)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки существующего отеля к туру")
+				return
+			}
+
+			// добавляем отель в ответ
+			hotels = append(hotels, models.HotelResponse{
+				ID:        hreq.HotelID,
+				Nights:    nights,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			})
+			continue
+		}
+
+		// 2️⃣ Если hotel_id нет — создаём новый отель
 		hotel := models.Hotel{
 			Name:     hreq.Name,
 			City:     hreq.City,
@@ -423,41 +462,75 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 			Meals:    hreq.Meals,
 			URLs:     hreq.URLs,
 		}
+
 		if hreq.DistanceText != nil {
 			hotel.DistanceText = sql.NullString{String: *hreq.DistanceText, Valid: true}
 		}
 		if hreq.Guests != nil {
 			hotel.Guests = sql.NullString{String: *hreq.Guests, Valid: true}
 		}
-
 		if hreq.Transfer != nil {
 			hotel.Transfer = sql.NullString{String: *hreq.Transfer, Valid: true}
 		}
+
 		if err := h.service.CreateHotel(ctx, &hotel); err != nil {
+			h.log.Errorw("create_hotel_failed", "err", err)
 			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
 			return
 		}
 
-		th := &models.TripHotel{TripID: trip.ID, HotelID: hotel.ID, Nights: 1}
+		th := &models.TripHotel{
+			TripID:  trip.ID,
+			HotelID: hotel.ID,
+			Nights:  nights,
+		}
 		if err := h.hotelService.Attach(ctx, th); err != nil {
+			h.log.Errorw("attach_new_hotel_failed",
+				"trip_id", trip.ID,
+				"hotel_id", hotel.ID,
+				"err", err,
+			)
 			helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля к туру")
 			return
 		}
+
+		hotel.Nights = nights
+
 		hotels = append(hotels, toHotelResponse(hotel))
+
 	}
 
-	routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
+	// === Обработка маршрутов ===
 	var routes []models.TripRoute
-	for _, rreq := range routeReqs {
-		rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
-		if err != nil {
-			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания маршрута")
-			return
+
+	// новый формат (routes)
+	if len(req.Routes) > 0 {
+		for _, rreq := range req.Routes {
+			rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
+			if err != nil {
+				h.log.Errorw("create_route_failed", "trip_id", trip.ID, "err", err)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка создания маршрута")
+				return
+			}
+			routes = append(routes, *rt)
 		}
-		routes = append(routes, *rt)
+	} else {
+		// старый формат (route_cities)
+		routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
+		for _, rreq := range routeReqs {
+			rt, err := h.service.CreateRoute(ctx, trip.ID, rreq)
+			if err != nil {
+				h.log.Errorw("create_route_failed", "trip_id", trip.ID, "err", err)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка создания маршрута")
+				return
+			}
+			routes = append(routes, *rt)
+		}
 	}
 
 	routeResp := models.ConvertRoutesToCities(routes)
+
+	// === Успешный ответ ===
 	helpers.JSON(w, http.StatusCreated, map[string]interface{}{
 		"success": true,
 		"trip":    trip,

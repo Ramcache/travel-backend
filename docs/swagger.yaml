@@ -98,6 +98,10 @@ definitions:
         additionalProperties:
           $ref: '#/definitions/models.TripRouteCity'
         type: object
+      routes:
+        items:
+          $ref: '#/definitions/models.TripRouteRequest'
+        type: array
       trip:
         $ref: '#/definitions/models.CreateTripRequest'
     type: object
@@ -209,10 +213,14 @@ definitions:
         type: string
       guests:
         type: string
+      hotel_id:
+        type: integer
       meals:
         type: string
       name:
         type: string
+      nights:
+        type: integer
       stars:
         type: integer
       transfer:
@@ -2060,36 +2068,6 @@ paths:
       summary: Обновить данные пользователя
       tags:
       - Admin — Users
-  /api/v1/trips/{id}/routes:
-    get:
-      consumes:
-      - application/json
-      description: Возвращает список маршрутов в виде city_1, city_2, city_3...
-      parameters:
-      - description: ID тура
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: success + routes в новом формате
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Некорректный trip_id
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-        "500":
-          description: Ошибка получения маршрута
-          schema:
-            $ref: '#/definitions/helpers.ErrorData'
-      summary: Получить маршруты тура (новый формат)
-      tags:
-      - Public — Trips
   /auth/login:
     post:
       consumes:
@@ -2675,6 +2653,36 @@ paths:
           schema:
             $ref: '#/definitions/helpers.ErrorData'
       summary: Get trip with hotels and routes
+      tags:
+      - Public — Trips
+  /trips/{id}/routes:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список маршрутов в виде city_1, city_2, city_3...
+      parameters:
+      - description: ID тура
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success + routes в новом формате
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный trip_id
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+        "500":
+          description: Ошибка получения маршрута
+          schema:
+            $ref: '#/definitions/helpers.ErrorData'
+      summary: Получить маршруты тура (новый формат)
       tags:
       - Public — Trips
   /trips/{id}/routes/ui:

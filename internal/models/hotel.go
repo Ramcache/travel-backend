@@ -7,12 +7,14 @@ import (
 
 // ======== API-запрос ========
 type HotelRequest struct {
+	HotelID      int      `json:"hotel_id,omitempty"`
 	Name         string   `json:"name"`
 	City         string   `json:"city"`
 	Stars        int      `json:"stars"`
 	Distance     float64  `json:"distance"`
 	DistanceText *string  `json:"distance_text"`
 	Meals        string   `json:"meals"`
+	Nights       int      `json:"nights,omitempty"`
 	Guests       *string  `json:"guests"`
 	URLs         []string `json:"urls"` // 👈 массив ссылок
 	Transfer     *string  `json:"transfer"`
