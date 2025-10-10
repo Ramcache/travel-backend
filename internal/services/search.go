@@ -31,23 +31,25 @@ func (s *SearchService) GlobalSearch(ctx context.Context, query string) ([]model
 		return nil, err
 	}
 
-	// проставляем абсолютные ссылки с /api/v1
+	// Для туров теперь ссылка с ID и типом тура
 	for i := range trips {
-		encoded := url.QueryEscape(trips[i].Title)
-		trips[i].Link = fmt.Sprintf("https://web95.tech/api/v1/trips/relations?title=%s", encoded)
+		trips[i].Link = fmt.Sprintf("https://web95.tech/trip.html?id=%d&type=%s",
+			trips[i].ID,
+			url.QueryEscape(trips[i].TripType),
+		)
 	}
+
+	// Для новостей — ссылка по slug
 	for i := range news {
-		// у news.Link внутри repo уже "/news/{slug}"
-		// поэтому вырезаем slug и собираем абсолютный путь
 		parts := strings.Split(news[i].Link, "/")
 		slug := parts[len(parts)-1]
 		news[i].Link = fmt.Sprintf("https://web95.tech/article.html?slug=%s", slug)
 	}
 
-	// объединяем
+	// Объединяем результаты
 	results := append(trips, news...)
 
-	// сортировка по дате
+	// Сортировка по дате (по убыванию)
 	sort.Slice(results, func(i, j int) bool {
 		ti, _ := time.Parse(time.RFC3339, results[i].Date)
 		tj, _ := time.Parse(time.RFC3339, results[j].Date)

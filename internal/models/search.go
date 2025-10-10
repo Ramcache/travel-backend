@@ -6,5 +6,6 @@ type SearchResult struct {
 	Title       string `json:"title"`
 	Link        string `json:"link"`
 	Date        string `json:"date"`
+	TripType    string `json:"trip_type,omitempty"`
 	Highlighted bool   `json:"highlighted"`
 }

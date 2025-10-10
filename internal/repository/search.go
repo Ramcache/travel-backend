@@ -22,18 +22,20 @@ const (
 	searchLimitNews  = 20
 )
 
-// сканер результата поиска
-func scanSearchResultTrip(id int, highlighted string, createdAt time.Time) models.SearchResult {
+// сканер результата поиска для тура
+func scanSearchResultTrip(id int, highlighted string, tripType string, createdAt time.Time) models.SearchResult {
 	return models.SearchResult{
 		Type:        "trip",
 		ID:          id,
 		Title:       highlighted,
+		TripType:    tripType,
 		Link:        "/trips/" + strconv.Itoa(id),
 		Date:        createdAt.Format(time.RFC3339),
 		Highlighted: true,
 	}
 }
 
+// сканер результата поиска для новости
 func scanSearchResultNews(id int, highlighted, slug string, createdAt time.Time) models.SearchResult {
 	return models.SearchResult{
 		Type:        "news",
@@ -45,11 +47,13 @@ func scanSearchResultNews(id int, highlighted, slug string, createdAt time.Time)
 	}
 }
 
+// поиск туров
 func (r *SearchRepository) SearchTrips(ctx context.Context, q string) ([]models.SearchResult, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id,
 		       ts_headline('simple', title, plainto_tsquery(unaccent($1)),
 		                   'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, ShortWord=2, HighlightAll=TRUE') AS highlighted,
+		       trip_type,
 		       created_at
 		FROM trips
 		WHERE to_tsvector('simple', title || ' ' || coalesce(description,'')) @@ plainto_tsquery(unaccent($1))
@@ -65,16 +69,17 @@ func (r *SearchRepository) SearchTrips(ctx context.Context, q string) ([]models.
 	var results []models.SearchResult
 	for rows.Next() {
 		var id int
-		var highlighted string
+		var highlighted, tripType string
 		var createdAt time.Time
-		if err := rows.Scan(&id, &highlighted, &createdAt); err != nil {
+		if err := rows.Scan(&id, &highlighted, &tripType, &createdAt); err != nil {
 			return nil, err
 		}
-		results = append(results, scanSearchResultTrip(id, highlighted, createdAt))
+		results = append(results, scanSearchResultTrip(id, highlighted, tripType, createdAt))
 	}
 	return results, nil
 }
 
+// поиск новостей
 func (r *SearchRepository) SearchNews(ctx context.Context, q string) ([]models.SearchResult, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id,
