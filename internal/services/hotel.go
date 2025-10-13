@@ -63,3 +63,7 @@ func (s *HotelService) Attach(ctx context.Context, th *models.TripHotel) error {
 func (s *HotelService) ListByTrip(ctx context.Context, tripID int) ([]models.Hotel, error) {
 	return s.repo.ListByTrip(ctx, tripID)
 }
+
+func (s *HotelService) ClearByTrip(ctx context.Context, tripID int) (int64, error) {
+	return s.repo.ClearByTrip(ctx, tripID)
+}
