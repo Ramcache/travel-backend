@@ -443,13 +443,15 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			// добавляем отель в ответ
-			hotels = append(hotels, models.HotelResponse{
-				ID:        hreq.HotelID,
-				Nights:    nights,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			})
+			// ✅ Подтягиваем отель из базы
+			hotel, err := h.hotelService.GetByID(ctx, hreq.HotelID)
+			if err != nil {
+				h.log.Warnw("hotel_not_found_after_attach", "hotel_id", hreq.HotelID, "err", err)
+				continue
+			}
+
+			hotel.Nights = nights
+			hotels = append(hotels, toHotelResponse(*hotel))
 			continue
 		}
 
@@ -539,37 +541,6 @@ func (h *TripHandler) CreateTour(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// UpdateFull
-// @Summary Обновить тур, отели и маршруты одной кнопкой
-// @Tags Admin — Trips
-// @Accept json
-// @Produce json
-// @Param id path int true "Trip ID"
-// @Param body body models.TripFullUpdateRequest true "Trip with hotels and routes"
-// @Success 200 {object} models.Trip
-// @Failure 400 {object} helpers.ErrorData
-// @Failure 500 {object} helpers.ErrorData
-// @Router /admin/trips/{id}/full [put]
-func (h *TripHandler) UpdateFull(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
-		return
-	}
-	var req models.TripFullUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		helpers.Error(w, http.StatusBadRequest, "Некорректные данные")
-		return
-	}
-	trip, err := h.service.UpdateFull(r.Context(), id, req)
-	if err != nil {
-		h.log.Errorw("trip_full_update_failed", "id", id, "err", err)
-		helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления тура")
-		return
-	}
-	helpers.JSON(w, http.StatusOK, trip)
-}
-
 // GetFull
 // @Summary Получить тур с отелями и маршрутами
 // @Tags Admin — Trips
@@ -591,4 +562,137 @@ func (h *TripHandler) GetFull(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	helpers.JSON(w, http.StatusOK, resp)
+}
+
+// UpdateTour
+// @Summary Обновить тур, отели и маршруты одной кнопкой
+// @Tags Admin — Trips
+// @Accept json
+// @Produce json
+// @Param id path int true "Trip ID"
+// @Param body body models.UpdateTourRequest true "Trip with hotels and routes"
+// @Success 200 {object} models.Trip
+// @Failure 400 {object} helpers.ErrorData
+// @Failure 500 {object} helpers.ErrorData
+// @Router /admin/trips/{id}/full [put]
+func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	tripID, err := strconv.Atoi(idParam)
+	if err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный ID тура")
+		return
+	}
+
+	var req models.UpdateTourRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		helpers.Error(w, http.StatusBadRequest, "Некорректный JSON")
+		return
+	}
+
+	ctx := r.Context()
+
+	// 1️⃣ обновляем сам тур
+	trip, err := h.service.Update(ctx, tripID, req.Trip)
+	if err != nil {
+		h.log.Errorw("update_tour_failed", "trip_id", tripID, "err", err)
+		helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления тура")
+		return
+	}
+
+	// 2️⃣ обновляем / привязываем отели
+	var hotels []models.HotelResponse
+	for _, hreq := range req.Hotels {
+		nights := hreq.Nights
+		if nights == 0 {
+			nights = 1
+		}
+
+		// если отель существует — привязываем
+		if hreq.HotelID > 0 {
+			th := &models.TripHotel{
+				TripID:  tripID,
+				HotelID: hreq.HotelID,
+				Nights:  nights,
+			}
+			if err := h.hotelService.Attach(ctx, th); err != nil {
+				h.log.Errorw("attach_hotel_failed", "trip_id", tripID, "hotel_id", hreq.HotelID, "err", err)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
+				return
+			}
+
+			hotel, err := h.hotelService.GetByID(ctx, hreq.HotelID)
+			if err != nil {
+				h.log.Warnw("hotel_not_found_for_response", "hotel_id", hreq.HotelID, "err", err)
+			} else {
+				hotel.Nights = nights
+				hotels = append(hotels, toHotelResponse(*hotel))
+			}
+
+			continue
+		}
+
+		// иначе создаём новый отель
+		hotel := models.Hotel{
+			Name:     hreq.Name,
+			City:     hreq.City,
+			Stars:    hreq.Stars,
+			Distance: hreq.Distance,
+			Meals:    hreq.Meals,
+			URLs:     hreq.URLs,
+		}
+		if err := h.service.CreateHotel(ctx, &hotel); err != nil {
+			h.log.Errorw("create_hotel_failed", "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
+			return
+		}
+
+		th := &models.TripHotel{
+			TripID:  tripID,
+			HotelID: hotel.ID,
+			Nights:  nights,
+		}
+		if err := h.hotelService.Attach(ctx, th); err != nil {
+			h.log.Errorw("attach_new_hotel_failed", "trip_id", tripID, "hotel_id", hotel.ID, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
+			return
+		}
+
+		hotel.Nights = nights
+		hotels = append(hotels, toHotelResponse(hotel))
+	}
+
+	// 3️⃣ обновляем маршруты
+	var routes []models.TripRoute
+	if len(req.Routes) > 0 {
+		for _, rreq := range req.Routes {
+			rt, err := h.service.CreateRoute(ctx, tripID, rreq)
+			if err != nil {
+				h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
+				return
+			}
+			routes = append(routes, *rt)
+		}
+	} else {
+		// поддержка старого поля route_cities
+		routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
+		for _, rreq := range routeReqs {
+			rt, err := h.service.CreateRoute(ctx, tripID, rreq)
+			if err != nil {
+				h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
+				helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
+				return
+			}
+			routes = append(routes, *rt)
+		}
+	}
+
+	routeResp := models.ConvertRoutesToCities(routes)
+
+	helpers.JSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"trip":    trip,
+		"hotels":  hotels,
+		"routes":  routeResp,
+	})
 }

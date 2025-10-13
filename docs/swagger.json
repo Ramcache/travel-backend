@@ -1302,7 +1302,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.TripFullUpdateRequest"
+                            "$ref": "#/definitions/models.UpdateTourRequest"
                         }
                     }
                 ],
@@ -3753,6 +3753,9 @@
                 "title": {
                     "type": "string"
                 },
+                "trip_type": {
+                    "type": "string"
+                },
                 "type": {
                     "type": "string"
                 }
@@ -3869,7 +3872,7 @@
                     "type": "string"
                 },
                 "urls": {
-                    "description": "👈 массив ссылок вместо photo_url",
+                    "description": "👈 массив ссылок",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -3897,26 +3900,6 @@
                 },
                 "trip": {
                     "$ref": "#/definitions/models.Trip"
-                }
-            }
-        },
-        "models.TripFullUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "hotels": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TripHotel"
-                    }
-                },
-                "routes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TripRoute"
-                    }
-                },
-                "trip": {
-                    "$ref": "#/definitions/models.UpdateTripRequest"
                 }
             }
         },
@@ -4314,6 +4297,32 @@
                 }
             }
         },
+        "models.UpdateTourRequest": {
+            "type": "object",
+            "properties": {
+                "hotels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.HotelRequest"
+                    }
+                },
+                "route_cities": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.TripRouteCity"
+                    }
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TripRouteRequest"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/models.UpdateTripRequest"
+                }
+            }
+        },
         "models.UpdateTripRequest": {
             "type": "object",
             "properties": {
@@ -4363,7 +4372,6 @@
                     "type": "string"
                 },
                 "urls": {
-                    "description": "👈 массив ссылок",
                     "type": "array",
                     "items": {
                         "type": "string"

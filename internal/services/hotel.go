@@ -27,6 +27,10 @@ func (s *HotelService) Get(ctx context.Context, id int) (*models.Hotel, error) {
 	return s.repo.Get(ctx, id)
 }
 
+func (s *HotelService) GetByID(ctx context.Context, id int) (*models.Hotel, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
 // List — возвращает список отелей
 func (s *HotelService) List(ctx context.Context) ([]models.Hotel, error) {
 	return s.repo.List(ctx)
