@@ -394,6 +394,8 @@ definitions:
         type: string
       title:
         type: string
+      trip_type:
+        type: string
       type:
         type: string
     type: object
@@ -472,7 +474,7 @@ definitions:
       updated_at:
         type: string
       urls:
-        description: "\U0001F448 массив ссылок вместо photo_url"
+        description: "\U0001F448 массив ссылок"
         items:
           type: string
         type: array
@@ -491,19 +493,6 @@ definitions:
         type: array
       trip:
         $ref: '#/definitions/models.Trip'
-    type: object
-  models.TripFullUpdateRequest:
-    properties:
-      hotels:
-        items:
-          $ref: '#/definitions/models.TripHotel'
-        type: array
-      routes:
-        items:
-          $ref: '#/definitions/models.TripRoute'
-        type: array
-      trip:
-        $ref: '#/definitions/models.UpdateTripRequest'
     type: object
   models.TripHotel:
     properties:
@@ -762,6 +751,23 @@ definitions:
       full_name:
         type: string
     type: object
+  models.UpdateTourRequest:
+    properties:
+      hotels:
+        items:
+          $ref: '#/definitions/models.HotelRequest'
+        type: array
+      route_cities:
+        additionalProperties:
+          $ref: '#/definitions/models.TripRouteCity'
+        type: object
+      routes:
+        items:
+          $ref: '#/definitions/models.TripRouteRequest'
+        type: array
+      trip:
+        $ref: '#/definitions/models.UpdateTripRequest'
+    type: object
   models.UpdateTripRequest:
     properties:
       active:
@@ -795,7 +801,6 @@ definitions:
       trip_type:
         type: string
       urls:
-        description: "\U0001F448 массив ссылок"
         items:
           type: string
         type: array
@@ -1680,7 +1685,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/models.TripFullUpdateRequest'
+          $ref: '#/definitions/models.UpdateTourRequest'
       produces:
       - application/json
       responses:
