@@ -575,6 +575,7 @@ func (h *TripHandler) GetFull(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} helpers.ErrorData
 // @Failure 500 {object} helpers.ErrorData
 // @Router /admin/trips/{id}/full [put]
+// UpdateTour обновляет тур вместе с отелями и маршрутами (full update)
 func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	tripID, err := strconv.Atoi(idParam)
@@ -591,7 +592,7 @@ func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	// 1️⃣ обновляем сам тур
+	// 1️⃣ Обновляем сам тур
 	trip, err := h.service.Update(ctx, tripID, req.Trip)
 	if err != nil {
 		h.log.Errorw("update_tour_failed", "trip_id", tripID, "err", err)
@@ -599,91 +600,111 @@ func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2️⃣ обновляем / привязываем отели
+	// 2️⃣ Обновляем / привязываем отели (полная замена)
 	var hotels []models.HotelResponse
-	for _, hreq := range req.Hotels {
-		nights := hreq.Nights
-		if nights == 0 {
-			nights = 1
+
+	if req.Hotels != nil {
+		affected, err := h.hotelService.ClearByTrip(ctx, tripID)
+		if err != nil {
+			h.log.Errorw("clear_trip_hotels_failed", "trip_id", tripID, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка очистки старых отелей тура")
+			return
 		}
+		h.log.Infow("trip_hotels_cleared", "trip_id", tripID, "deleted_rows", affected)
 
-		// если отель существует — привязываем
-		if hreq.HotelID > 0 {
-			th := &models.TripHotel{
-				TripID:  tripID,
-				HotelID: hreq.HotelID,
-				Nights:  nights,
-			}
-			if err := h.hotelService.Attach(ctx, th); err != nil {
-				h.log.Errorw("attach_hotel_failed", "trip_id", tripID, "hotel_id", hreq.HotelID, "err", err)
-				helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
-				return
+		for _, hreq := range req.Hotels {
+			nights := hreq.Nights
+			if nights == 0 {
+				nights = 1
 			}
 
-			hotel, err := h.hotelService.GetByID(ctx, hreq.HotelID)
-			if err != nil {
-				h.log.Warnw("hotel_not_found_for_response", "hotel_id", hreq.HotelID, "err", err)
+			if hreq.HotelID > 0 {
+				// если отель уже существует — привязываем
+				th := &models.TripHotel{
+					TripID:  tripID,
+					HotelID: hreq.HotelID,
+					Nights:  nights,
+				}
+				if err := h.hotelService.Attach(ctx, th); err != nil {
+					h.log.Errorw("attach_hotel_failed", "trip_id", tripID, "hotel_id", hreq.HotelID, "err", err)
+					helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
+					return
+				}
+
+				hotel, err := h.hotelService.GetByID(ctx, hreq.HotelID)
+				if err != nil {
+					h.log.Warnw("hotel_not_found_for_response", "hotel_id", hreq.HotelID, "err", err)
+				} else {
+					hotel.Nights = nights
+					hotels = append(hotels, toHotelResponse(*hotel))
+				}
 			} else {
+				// иначе создаём новый отель и привязываем его
+				hotel := models.Hotel{
+					Name:     hreq.Name,
+					City:     hreq.City,
+					Stars:    hreq.Stars,
+					Distance: hreq.Distance,
+					Meals:    hreq.Meals,
+					URLs:     hreq.URLs,
+				}
+				if err := h.service.CreateHotel(ctx, &hotel); err != nil {
+					h.log.Errorw("create_hotel_failed", "err", err)
+					helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
+					return
+				}
+
+				th := &models.TripHotel{
+					TripID:  tripID,
+					HotelID: hotel.ID,
+					Nights:  nights,
+				}
+				if err := h.hotelService.Attach(ctx, th); err != nil {
+					h.log.Errorw("attach_new_hotel_failed", "trip_id", tripID, "hotel_id", hotel.ID, "err", err)
+					helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
+					return
+				}
+
 				hotel.Nights = nights
-				hotels = append(hotels, toHotelResponse(*hotel))
+				hotels = append(hotels, toHotelResponse(hotel))
 			}
-
-			continue
 		}
-
-		// иначе создаём новый отель
-		hotel := models.Hotel{
-			Name:     hreq.Name,
-			City:     hreq.City,
-			Stars:    hreq.Stars,
-			Distance: hreq.Distance,
-			Meals:    hreq.Meals,
-			URLs:     hreq.URLs,
-		}
-		if err := h.service.CreateHotel(ctx, &hotel); err != nil {
-			h.log.Errorw("create_hotel_failed", "err", err)
-			helpers.Error(w, http.StatusInternalServerError, "Ошибка создания отеля")
-			return
-		}
-
-		th := &models.TripHotel{
-			TripID:  tripID,
-			HotelID: hotel.ID,
-			Nights:  nights,
-		}
-		if err := h.hotelService.Attach(ctx, th); err != nil {
-			h.log.Errorw("attach_new_hotel_failed", "trip_id", tripID, "hotel_id", hotel.ID, "err", err)
-			helpers.Error(w, http.StatusInternalServerError, "Ошибка привязки отеля")
-			return
-		}
-
-		hotel.Nights = nights
-		hotels = append(hotels, toHotelResponse(hotel))
 	}
 
-	// 3️⃣ обновляем маршруты
+	// 3️⃣ Обновляем маршруты (полная замена)
 	var routes []models.TripRoute
-	if len(req.Routes) > 0 {
-		for _, rreq := range req.Routes {
-			rt, err := h.service.CreateRoute(ctx, tripID, rreq)
-			if err != nil {
-				h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
-				helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
-				return
-			}
-			routes = append(routes, *rt)
+
+	if req.Routes != nil {
+		affected, err := h.service.ClearRoutesByTrip(ctx, tripID)
+		if err != nil {
+			h.log.Errorw("clear_trip_routes_failed", "trip_id", tripID, "err", err)
+			helpers.Error(w, http.StatusInternalServerError, "Ошибка очистки старых маршрутов тура")
+			return
 		}
-	} else {
-		// поддержка старого поля route_cities
-		routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
-		for _, rreq := range routeReqs {
-			rt, err := h.service.CreateRoute(ctx, tripID, rreq)
-			if err != nil {
-				h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
-				helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
-				return
+		h.log.Infow("trip_routes_cleared", "trip_id", tripID, "deleted_rows", affected)
+
+		if len(req.Routes) > 0 {
+			for _, rreq := range req.Routes {
+				rt, err := h.service.CreateRoute(ctx, tripID, rreq)
+				if err != nil {
+					h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
+					helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
+					return
+				}
+				routes = append(routes, *rt)
 			}
-			routes = append(routes, *rt)
+		} else {
+			// поддержка старого поля route_cities
+			routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
+			for _, rreq := range routeReqs {
+				rt, err := h.service.CreateRoute(ctx, tripID, rreq)
+				if err != nil {
+					h.log.Errorw("update_route_failed", "trip_id", tripID, "err", err)
+					helpers.Error(w, http.StatusInternalServerError, "Ошибка обновления маршрута")
+					return
+				}
+				routes = append(routes, *rt)
+			}
 		}
 	}
 

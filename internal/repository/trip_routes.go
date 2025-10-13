@@ -11,7 +11,7 @@ type TripRouteRepository interface {
 	ListByTrip(ctx context.Context, tripID int) ([]models.TripRoute, error)
 	Update(ctx context.Context, id int, req models.TripRouteRequest) (*models.TripRoute, error)
 	Delete(ctx context.Context, id int) error
-	ClearByTrip(ctx context.Context, tripID int) error
+	ClearByTrip(ctx context.Context, tripID int) (int64, error)
 }
 
 type tripRouteRepo struct {
@@ -100,8 +100,11 @@ func (r *tripRouteRepo) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// ClearByTrip — удаляет все маршруты тура
-func (r *tripRouteRepo) ClearByTrip(ctx context.Context, tripID int) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM trip_routes WHERE trip_id = $1`, tripID)
-	return err
+// ClearByTrip — удаляет все маршруты, связанные с конкретным туром
+func (r *tripRouteRepo) ClearByTrip(ctx context.Context, tripID int) (int64, error) {
+	tag, err := r.pool.Exec(ctx, `DELETE FROM trip_routes WHERE trip_id = $1`, tripID)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
 }
