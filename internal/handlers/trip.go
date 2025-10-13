@@ -670,11 +670,15 @@ func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	// 3️⃣ Обновляем маршруты (полная замена)
+	// 3️⃣ обновляем маршруты (включая legacy route_cities)
 	var routes []models.TripRoute
 
-	if req.Routes != nil {
+	// Определяем, какие данные пришли — новые или старые
+	hasNewRoutes := req.Routes != nil
+	hasLegacyRoutes := req.Routes == nil && len(req.RouteCities) > 0
+
+	if hasNewRoutes || hasLegacyRoutes {
+		// 💥 Очистка старых маршрутов перед обновлением
 		affected, err := h.service.ClearRoutesByTrip(ctx, tripID)
 		if err != nil {
 			h.log.Errorw("clear_trip_routes_failed", "trip_id", tripID, "err", err)
@@ -683,7 +687,7 @@ func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 		}
 		h.log.Infow("trip_routes_cleared", "trip_id", tripID, "deleted_rows", affected)
 
-		if len(req.Routes) > 0 {
+		if hasNewRoutes && len(req.Routes) > 0 {
 			for _, rreq := range req.Routes {
 				rt, err := h.service.CreateRoute(ctx, tripID, rreq)
 				if err != nil {
@@ -693,8 +697,8 @@ func (h *TripHandler) UpdateTour(w http.ResponseWriter, r *http.Request) {
 				}
 				routes = append(routes, *rt)
 			}
-		} else {
-			// поддержка старого поля route_cities
+		} else if hasLegacyRoutes {
+			// Поддержка старого поля route_cities
 			routeReqs := models.ConvertCitiesToRoutes(req.RouteCities)
 			for _, rreq := range routeReqs {
 				rt, err := h.service.CreateRoute(ctx, tripID, rreq)
