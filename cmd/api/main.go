@@ -17,7 +17,7 @@ import (
 // @name Authorization
 func main() {
 	rootCmd := cli.NewRootCmd()
-
+	//test
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(" error:", err)
 		os.Exit(1)
