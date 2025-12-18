@@ -72,7 +72,10 @@ func (s *TripRouteService) GetUIRoute(ctx context.Context, tripID int) (*models.
 	})
 
 	var total time.Duration
-	// Переход от i-1 города к i-му: транспорт/длительность/стоп из i-го
+
+	// стоп в первом городе
+	total += helpers.ParseDurationText(routes[0].StopTime)
+
 	for i := 1; i < len(routes); i++ {
 		legDur := helpers.ParseDurationText(routes[i].Duration)
 		stopDur := helpers.ParseDurationText(routes[i].StopTime)
