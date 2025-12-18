@@ -18,7 +18,7 @@ type App struct {
 	Config *config.Config
 	Pool   *pgxpool.Pool
 	Log    *zap.SugaredLogger
-
+	//
 	// repositories
 	UserRepo         *repository.UserRepository
 	tripRepo         *repository.TripRepository
