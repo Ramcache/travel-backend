@@ -2,40 +2,61 @@ package helpers
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	reHM    = regexp.MustCompile(`(?i)(\d+)\s*(?:ч|час|часа|часов)`)
-	reMM    = regexp.MustCompile(`(?i)(\d+)\s*(?:м|мин|мин\.?|минута|минуты|минут)`)
-	reDD    = regexp.MustCompile(`(?i)(\d+)\s*(?:д|дн|день|дня|дней)`)
-	reClock = regexp.MustCompile(`^(?i)(\d{1,2}):(\d{2})$`)
+	reHM    = regexp.MustCompile(`(?i)(\d+)\s*(?:ч|час(?:а|ов)?)\b`)
+	reMM    = regexp.MustCompile(`(?i)(\d+)\s*(?:м|мин(?:\.|ута|уты|ут)?|минут)\b`)
+	reDD    = regexp.MustCompile(`(?i)(\d+)\s*(?:д|дн(?:ей|я)?|день|дня|дней)\b`)
+	reClock = regexp.MustCompile(`(?i)^\s*(\d{1,2})\s*:\s*(\d{2})\s*$`)
 )
 
-// ParseDurationText понимает: "6 часов", "2 часа", "45 минут", "1 день 3 часа", "12:30".
+// ParseDurationText понимает: "6 часов", "2 часа", "45 минут", "1 день 3 часа", "12:30", "2ч30м".
 func ParseDurationText(s string) time.Duration {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return 0
 	}
+
 	// HH:MM
 	if m := reClock.FindStringSubmatch(s); len(m) == 3 {
-		h := atoi(m[1])
-		mi := atoi(m[2])
+		h, err1 := strconv.Atoi(m[1])
+		mi, err2 := strconv.Atoi(m[2])
+		if err1 != nil || err2 != nil {
+			return 0
+		}
+		// Валидация диапазонов
+		if h < 0 || h > 23 || mi < 0 || mi > 59 {
+			return 0
+		}
 		return time.Duration(h)*time.Hour + time.Duration(mi)*time.Minute
 	}
 
 	var d time.Duration
-	if m := reDD.FindStringSubmatch(s); len(m) == 2 {
-		d += time.Duration(atoi(m[1])) * 24 * time.Hour
+
+	// Суммируем все совпадения, а не только первое
+	for _, m := range reDD.FindAllStringSubmatch(s, -1) {
+		n, err := strconv.Atoi(m[1])
+		if err == nil {
+			d += time.Duration(n) * 24 * time.Hour
+		}
 	}
-	if m := reHM.FindStringSubmatch(s); len(m) == 2 {
-		d += time.Duration(atoi(m[1])) * time.Hour
+	for _, m := range reHM.FindAllStringSubmatch(s, -1) {
+		n, err := strconv.Atoi(m[1])
+		if err == nil {
+			d += time.Duration(n) * time.Hour
+		}
 	}
-	if m := reMM.FindStringSubmatch(s); len(m) == 2 {
-		d += time.Duration(atoi(m[1])) * time.Minute
+	for _, m := range reMM.FindAllStringSubmatch(s, -1) {
+		n, err := strconv.Atoi(m[1])
+		if err == nil {
+			d += time.Duration(n) * time.Minute
+		}
 	}
+
 	return d
 }
 
@@ -48,14 +69,18 @@ func atoi(s string) int {
 }
 
 // FormatDuration -> "2 дня 3 часа" / "14 часов" / "45 минут"
+// FormatDuration -> "2 дня 3 часа 10 минут" / "14 часов" / "45 минут"
 func FormatDuration(d time.Duration) string {
 	if d <= 0 {
 		return "0 минут"
 	}
+
 	days := int(d / (24 * time.Hour))
-	d %= 24 * time.Hour
+	d -= time.Duration(days) * 24 * time.Hour
+
 	hours := int(d / time.Hour)
-	d %= time.Hour
+	d -= time.Duration(hours) * time.Hour
+
 	mins := int(d / time.Minute)
 
 	parts := make([]string, 0, 3)
@@ -65,7 +90,7 @@ func FormatDuration(d time.Duration) string {
 	if hours > 0 {
 		parts = append(parts, plural(hours, "час", "часа", "часов"))
 	}
-	if len(parts) == 0 && mins > 0 {
+	if mins > 0 || len(parts) == 0 {
 		parts = append(parts, plural(mins, "минута", "минуты", "минут"))
 	}
 	return strings.Join(parts, " ")
