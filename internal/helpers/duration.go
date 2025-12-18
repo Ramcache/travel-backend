@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	reHM    = regexp.MustCompile(`(?i)(\d+)\s*(?:ч|час(?:а|ов)?)\b`)
-	reMM    = regexp.MustCompile(`(?i)(\d+)\s*(?:м|мин(?:\.|ута|уты|ут)?|минут)\b`)
-	reDD    = regexp.MustCompile(`(?i)(\d+)\s*(?:д|дн(?:ей|я)?|день|дня|дней)\b`)
+	reHM    = regexp.MustCompile(`(?i)(\d+)\s*(?:ч|час(?:а|ов)?)\s*(?:$|\s)`)
+	reMM    = regexp.MustCompile(`(?i)(\d+)\s*(?:м|мин(?:\.|ута|уты|ут)?|минут)\s*(?:$|\s)`)
+	reDD    = regexp.MustCompile(`(?i)(\d+)\s*(?:д|дн(?:ей|я)?|день|дня|дней)\s*(?:$|\s)`)
 	reClock = regexp.MustCompile(`(?i)^\s*(\d{1,2})\s*:\s*(\d{2})\s*$`)
 )
 
@@ -21,42 +21,35 @@ func ParseDurationText(s string) time.Duration {
 		return 0
 	}
 
-	// HH:MM
 	if m := reClock.FindStringSubmatch(s); len(m) == 3 {
 		h, err1 := strconv.Atoi(m[1])
 		mi, err2 := strconv.Atoi(m[2])
-		if err1 != nil || err2 != nil {
+		if err1 != nil || err2 != nil || mi < 0 || mi > 59 {
 			return 0
 		}
-		// Валидация диапазонов
-		if h < 0 || h > 23 || mi < 0 || mi > 59 {
+		// Если вам нужно разрешить "36:00" как 36 часов — НЕ ограничивайте h до 23.
+		if h < 0 {
 			return 0
 		}
 		return time.Duration(h)*time.Hour + time.Duration(mi)*time.Minute
 	}
 
 	var d time.Duration
-
-	// Суммируем все совпадения, а не только первое
-	for _, m := range reDD.FindAllStringSubmatch(s, -1) {
-		n, err := strconv.Atoi(m[1])
-		if err == nil {
+	for _, m := range reDD.FindAllStringSubmatch(s+" ", -1) { // + " " чтобы сработало (?:$|\s)
+		if n, err := strconv.Atoi(m[1]); err == nil {
 			d += time.Duration(n) * 24 * time.Hour
 		}
 	}
-	for _, m := range reHM.FindAllStringSubmatch(s, -1) {
-		n, err := strconv.Atoi(m[1])
-		if err == nil {
+	for _, m := range reHM.FindAllStringSubmatch(s+" ", -1) {
+		if n, err := strconv.Atoi(m[1]); err == nil {
 			d += time.Duration(n) * time.Hour
 		}
 	}
-	for _, m := range reMM.FindAllStringSubmatch(s, -1) {
-		n, err := strconv.Atoi(m[1])
-		if err == nil {
+	for _, m := range reMM.FindAllStringSubmatch(s+" ", -1) {
+		if n, err := strconv.Atoi(m[1]); err == nil {
 			d += time.Duration(n) * time.Minute
 		}
 	}
-
 	return d
 }
 
