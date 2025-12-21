@@ -1,15 +1,18 @@
 package server
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/Ramcache/travel-backend/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 
 	docs "github.com/Ramcache/travel-backend/docs"
 
@@ -41,10 +44,30 @@ func NewRouter(
 ) http.Handler {
 	r := chi.NewRouter()
 
+	// ---- Rate limiters (IP-based) ----
+	// TTL чтобы map лимитеров не рос бесконечно
+	ttl := 10 * time.Minute
+
+	// Global: 10 rps, burst 20 (под фоновые сканеры уже хватает)
+	globalLimiter := middleware.NewIPLimiter(rate.Limit(10), 20, ttl)
+
+	// Auth: 1 rps, burst 3 (защита от брутфорса)
+	authLimiter := middleware.NewIPLimiter(rate.Limit(1), 3, ttl)
+
+	// Buy/feedback: 0.5 rps (~1 запрос в 2 секунды), burst 2
+	buyLimiter := middleware.NewIPLimiter(rate.Limit(0.5), 2, ttl)
+
+	// Admin upload/cleanup: 0.2 rps (~1 запрос в 5 секунд), burst 1
+	adminUploadLimiter := middleware.NewIPLimiter(rate.Limit(0.2), 1, ttl)
+
 	// middlewares
 	r.Use(middleware.CORS())
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
+
+	// Важно: rate limit после RealIP, чтобы лимитироваться по реальному IP за nginx
+	r.Use(middleware.RateLimit(globalLimiter))
+
 	r.Use(middleware.ZapLogger(log))
 	r.Use(middleware.Recoverer(log))
 	r.Use(middleware.MetricsMiddleware)
@@ -57,6 +80,8 @@ func NewRouter(
 	docs.SwaggerInfo.Title = "Travel API"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	// infra
 	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		promhttp.Handler().ServeHTTP(w, r)
 	})
@@ -71,13 +96,16 @@ func NewRouter(
 	})
 	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
-	// public
+	// public + api
 	r.Route("/api/v1", func(api chi.Router) {
-		api.Post("/auth/register", authHandler.Register)
-		api.Post("/auth/login", authHandler.Login)
+		// auth — отдельный tight лимит
+		api.Group(func(a chi.Router) {
+			a.Use(middleware.RateLimit(authLimiter))
+			a.Post("/auth/register", authHandler.Register)
+			a.Post("/auth/login", authHandler.Login)
+		})
 
 		api.Get("/date/today", dateHandler.Today)
-
 		api.Get("/currency", currencyHandler.GetRates)
 
 		api.Get("/trips", tripHandler.List)
@@ -91,25 +119,29 @@ func NewRouter(
 		api.Get("/news/recent", newsHandler.Recent)
 		api.Get("/news/popular", newsHandler.Popular)
 
-		api.Post("/trips/{id}/buy", tripHandler.Buy)
-		api.Post("/trips/buy", tripHandler.BuyWithoutTrip)
 		api.Get("/trips/popular", tripHandler.Popular)
 		api.Get("/trips/full", tripPageHandler.ListAll)
 		api.Get("/trips/relations", tripPageHandler.ListWithRelations)
 		api.Get("/trips/{id}/relations", tripPageHandler.GetWithRelations)
 
-		api.Post("/feedback", feedbackHandler.Create)
-
 		api.Get("/search", searchHandler.GlobalSearch)
 
-		api.Route("/trips/{trip_id}/reviews", func(r chi.Router) {
-			r.Get("/", reviewHandler.ListByTrip)
-			r.Post("/", reviewHandler.Create)
+		api.Route("/trips/{trip_id}/reviews", func(rr chi.Router) {
+			rr.Get("/", reviewHandler.ListByTrip)
+			rr.Post("/", reviewHandler.Create)
 		})
 
 		// маршруты тура — публичный список
 		api.Get("/trips/{id}/routes", tripRouteHandler.GetTripRoutesCities)
 		api.Get("/trips/{id}/routes/ui", tripRouteHandler.ListUI)
+
+		// buy + feedback — отдельный лимит (обычно достаточно жёсткий)
+		api.Group(func(b chi.Router) {
+			b.Use(middleware.RateLimit(buyLimiter))
+			b.Post("/trips/{id}/buy", tripHandler.Buy)
+			b.Post("/trips/buy", tripHandler.BuyWithoutTrip)
+			b.Post("/feedback", feedbackHandler.Create)
+		})
 
 		// profile (требует JWT)
 		api.Group(func(pr chi.Router) {
@@ -173,13 +205,17 @@ func NewRouter(
 			admin.Put("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Update)
 			admin.Delete("/admin/trips/{id}/routes/{route_id}", tripRouteHandler.Delete)
 
-			admin.Post("/admin/upload", mediaHandler.Upload)
-			admin.Get("/api/v1/admin/uploads", mediaHandler.ListUploads)
-			admin.Delete("/api/v1/admin/upload", mediaHandler.DeleteUpload)
-			admin.Post("/api/v1/admin/media/cleanup", mediaHandler.CleanupUnused)
+			// upload/cleanup — отдельный строгий лимит
+			admin.Group(func(up chi.Router) {
+				up.Use(middleware.RateLimit(adminUploadLimiter))
+				up.Post("/admin/upload", mediaHandler.Upload)
+				up.Post("/admin/media/cleanup", mediaHandler.CleanupUnused)
+			})
 
+			// оставшиеся admin media endpoints (как у вас)
+			admin.Get("/admin/uploads", mediaHandler.ListUploads)
+			admin.Delete("/admin/upload", mediaHandler.DeleteUpload)
 		})
-
 	})
 
 	return r
