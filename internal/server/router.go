@@ -38,6 +38,7 @@ func NewRouter(
 	tripPageHandler *handlers.TripPageHandler,
 	dateHandler *handlers.DateHandler,
 	mediaHandler *handlers.MediaHandler,
+	cloudflareHandler *handlers.CloudflareHandler,
 	jwtSecret string,
 	log *zap.SugaredLogger,
 	db *pgxpool.Pool,
@@ -154,6 +155,7 @@ func NewRouter(
 		api.Group(func(admin chi.Router) {
 			admin.Use(middleware.JWTAuth(jwtSecret))
 			admin.Use(middleware.RoleAuth(2))
+			admin.Post("/admin/cloudflare/purge-cache", cloudflareHandler.PurgeCache)
 
 			admin.Get("/admin/users", userHandler.List)
 			admin.Get("/admin/users/{id}", userHandler.Get)

@@ -31,6 +31,7 @@ type App struct {
 	searchRepo       *repository.SearchRepository
 	reviewsRepo      *repository.ReviewRepo
 	tripRouteRepo    *repository.TripRouteRepository
+	cloudflareRepo   *repository.CloudflareRepository
 
 	// services
 	AuthService         *services.AuthService
@@ -46,6 +47,7 @@ type App struct {
 	reviewsService      *services.ReviewService
 	tripPageService     *services.TripPageService
 	tripRouteService    *services.TripRouteService
+	cloudflareService   *services.CloudflareService
 
 	// handlers
 	AuthHandler         *handlers.AuthHandler
@@ -65,6 +67,7 @@ type App struct {
 	TripPageHandler     *handlers.TripPageHandler
 	DateHandler         *handlers.DateHandler
 	MediaHandler        *handlers.MediaHandler
+	CloudflareHandler   *handlers.CloudflareHandler
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.SugaredLogger) *App {
@@ -80,6 +83,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	searchRepo := repository.NewSearchRepository(pool)
 	reviewsRepo := repository.NewReviewRepo(pool)
 	tripRouteRepo := repository.NewTripRouteRepository(pool)
+	cloudflareRepo := repository.NewCloudflareRepository(cfg.Cloudflare.APIToken)
 
 	// helpers
 	telegramClient := helpers.NewTelegramClient(cfg.TG.TelegramToken, cfg.TG.TelegramChat)
@@ -106,6 +110,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		currencyService,
 		log,
 	)
+	cloudflareService := services.NewCloudflareService(cloudflareRepo, cfg.Cloudflare.ZoneID, log)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, log)
@@ -125,6 +130,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 	tripRouteHandler := handlers.NewTripRouteHandler(tripRouteService, log)
 	dateHandler := handlers.NewDateHandler(log)
 	mediaHandler := handlers.NewMediaHandler(cfg, pool, log)
+	cloudflareHandler := handlers.NewCloudflareHandler(cloudflareService, log)
 
 	return &App{
 		Config:              cfg,
@@ -158,5 +164,6 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, log *zap.S
 		TripPageHandler:     tripPageHandler,
 		DateHandler:         dateHandler,
 		MediaHandler:        mediaHandler,
+		CloudflareHandler:   cloudflareHandler,
 	}
 }
