@@ -1,5 +1,31 @@
 basePath: https://api.web95.tech/api/v1
 definitions:
+  handlers.purgeCacheRequest:
+    properties:
+      files:
+        items:
+          type: string
+        type: array
+      hosts:
+        items:
+          type: string
+        type: array
+      prefixes:
+        items:
+          type: string
+        type: array
+      purge_everything:
+        type: boolean
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.purgeCacheResponse:
+    properties:
+      request_id:
+        type: string
+    type: object
   helpers.ErrorData:
     properties:
       code:
@@ -861,6 +887,49 @@ info:
   title: Travel API
   version: "1.0"
 paths:
+  /admin/cloudflare/purge-cache:
+    post:
+      consumes:
+      - application/json
+      description: Purge Cloudflare cache for a zone. Supports full purge or selective
+        purge by URLs, tags, hosts, or prefixes.
+      parameters:
+      - description: Purge cache request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.purgeCacheRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.purgeCacheResponse'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Purge Cloudflare cache
+      tags:
+      - Cloudflare
   /admin/feedbacks:
     get:
       description: Получить список заявок (админка) с пагинацией и фильтрацией

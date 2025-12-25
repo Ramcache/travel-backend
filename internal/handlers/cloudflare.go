@@ -37,8 +37,8 @@ type purgeCacheResponse struct {
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        request body PurgeCacheRequest true "Purge cache request"
-// @Success      200 {object} PurgeCacheResponse
+// @Param        request body purgeCacheRequest true "Purge cache request"
+// @Success      200 {object} purgeCacheResponse
 // @Failure      400 {object} map[string]string "Bad request"
 // @Failure      401 {object} map[string]string "Unauthorized"
 // @Failure      403 {object} map[string]string "Forbidden"
