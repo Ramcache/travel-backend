@@ -22,6 +22,7 @@ type Config struct {
 	AppBaseURL  string
 	UploadDir   string
 	MaxUploadMB int
+	Cloudflare  CloudflareConfig
 }
 
 type DBConfig struct {
@@ -35,6 +36,10 @@ type DBConfig struct {
 type TelegramConfig struct {
 	TelegramToken string
 	TelegramChat  string
+}
+type CloudflareConfig struct {
+	APIToken string `env:"CLOUDFLARE_API_TOKEN"`
+	ZoneID   string `env:"CLOUDFLARE_ZONE_ID"`
 }
 
 func Load() *Config {
@@ -74,6 +79,10 @@ func Load() *Config {
 		TG: TelegramConfig{
 			TelegramToken: getEnv("TG_TOKEN", ""),
 			TelegramChat:  getEnv("TG_CHAT", ""),
+		},
+		Cloudflare: CloudflareConfig{
+			APIToken: getEnv("CLOUDFLARE_API_TOKEN", ""),
+			ZoneID:   getEnv("CLOUDFLARE_ZONE_ID", ""),
 		},
 	}
 }
